@@ -1,0 +1,58 @@
+# Cardiac Signals Lab demo
+
+This is a static, browser-only demonstration of two proposed mixed-reality social decision tasks. It is designed to make the grant's behavioral outcomes concrete: what the participant sees, what they decide before and after a cardiac cue, and which variables can be compared across incentive and signal-access conditions.
+
+**Live demo:** https://georgefejer91.github.io/cardiac-signals-lab-demo/
+
+The interface automatically switches to a touch-optimized phone layout on narrow screens. It uses device-safe viewport sizing, notch and home-indicator safe areas, stacked task panels, and touch targets of at least 44 pixels. Both complete game sequences are tested at a 390 × 844 smartphone viewport as well as on desktop.
+
+## Playable paradigms
+
+### Joint Discrimination
+
+The participant sees two candidate shapes and an exactly ambiguous target. A scripted agent sees a more diagnostic target, then sends **A**, **B**, or **Pass**. The participant makes an initial choice before the signal and a final choice plus confidence judgment after it.
+
+The demo calculates initial and final accuracy, choice revision, advice uptake, mean confidence, and payoff. Aligned incentives make the agent truthful. Opposed incentives produce a deterministic sequence of bluffing, withholding, and truth telling.
+
+This is a nonverbal experimental adaptation of Pulford, Mangiarulo, and Colman's dyadic shape-comparison task. Their study used open discussion, individual written decisions, confidence ratings, and Deadlock payoffs; it did not manipulate visible heart rate.
+
+### Concealed Information
+
+A scripted sender privately recognizes one target among four candidates. The participant records a prior card choice and probability, then sees a neutral buffer followed by every candidate in a timed probe sequence. A live, replayed, or hidden cardiac panel appears beside the probes. The participant records a posterior choice and probability before the target is revealed.
+
+The demo calculates prior and final accuracy, belief revision, confidence, payoff, and prior-to-posterior Brier-score improvement. In the live opposed condition, the scripted cardiac response includes a target-contingent deceleration; replay moves the same plausible dip to a non-target card, breaking trial-level contingency.
+
+This is a dyadic, four-alternative adaptation of Klein Selle et al.'s card-based Concealed Information Test. Their original task had one participant select one of six cards, self-select conceal or reveal, and view a buffer, the critical item, four controls, and a catch item with long interstimulus intervals. The accelerated demo is an implementation preview, not an exact reproduction of their timing.
+
+## Experimental factors
+
+- **Incentives:** aligned/cooperative versus opposed/competitive.
+- **Cardiac access:** trial-contingent live signal, plausible noncontingent replay, or hidden display.
+- **Primary behavioral logic:** compare pre-signal and post-signal accuracy and probability judgments.
+- **Interpretation boundary:** the display is an experimental social cue, not an emotion decoder, lie detector, or direct readout of a card.
+
+All partner behavior and physiology are simulated. The demo records, stores, and transmits no participant data.
+
+## Sources
+
+- Pulford BD, Mangiarulo M, Colman AM. [Confidence signalling aids deception in strategic interactions](https://doi.org/10.1038/s41598-025-00279-w). *Scientific Reports*. 2025.
+- Klein Selle N, Verschuere B, Kindt M, Meijer EH, Ben-Shakhar G. [Hide or Seek? Physiological Responses Reflect Both the Decision and the Attempt to Conceal Information](https://doi.org/10.1177/0956797619864598). *Psychological Science*. 2019.
+- Meijer EH, Klein Selle N, Elber L, Ben-Shakhar G. [Memory detection with the Concealed Information Test: A meta-analysis of skin conductance, respiration, heart rate, and P300 data](https://doi.org/10.1111/psyp.12239). *Psychophysiology*. 2014.
+- [Affect Tracker Web](https://github.com/GeorgeFejer91/affect-tracker-web) informed the use of large spatial controls, explicit input/source state, a stylized beating-heart display, keyboard access, reduced-motion support, and the no-decoder boundary. No Affect Tracker source code is copied into this demo.
+
+## Local development
+
+Requirements: Node.js 22.13 or newer.
+
+    npm install
+    npm run dev
+
+The local site opens at `http://localhost:3000/`.
+
+Validation and static GitHub Pages export:
+
+    npm run lint
+    npm run build
+    npm run build:pages
+
+`npm run build` validates the OpenAI Sites/Vinext application. `npm run build:pages` writes the static deployment to `out/`.
