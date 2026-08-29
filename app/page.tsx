@@ -309,7 +309,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <button className="primary-action" type="button" onClick={start} data-testid="start-joint">Start four-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Simulated agent" note="A stylized preview of the available cue." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Simulated agent" note="Switch between NeuroKit ECG, pure pulse, Affect Tracker–style activation, and heart-shaped views." />
             <div className="paper-anchor">
               <span>Published anchor</span>
               <p>Pulford et al. used dyads, two shape options, asymmetric evidence, discussion, individual final choices, confidence ratings, and Deadlock payoffs. This nonverbal demo turns the first suggestion into a discrete A/B/Pass signal and factorially varies incentive alignment.</p>
@@ -618,7 +618,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
             <button className="primary-action warm" type="button" onClick={start} data-testid="start-concealed">Start three-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Simulated sender" note="The target response is scripted for demonstration." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Simulated sender" note="The target response is scripted; all four display modes show the same underlying synthetic signal." />
             <div className="paper-anchor warm">
               <span>Published anchor</span>
               <p>Klein Selle et al. had participants select one of six cards, choose conceal or reveal, and then view a buffer, critical item, controls, and catch item. Cardiac deceleration distinguished concealed critical items. This four-alternative dyadic adaptation adds a receiver and proper-score belief updating.</p>
@@ -808,7 +808,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       <section className="menu-content" aria-labelledby="menu-title">
         <p className="eyebrow">Mixed-reality task preview</p>
         <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">Choose a paradigm. Each playable simulation pairs you with a scripted agent and makes the agent&apos;s cardiac signal available as an experimental cue—not as a lie detector.</p>
+        <p className="lede">Choose a paradigm. Each simulation pairs you with a scripted agent and lets you switch among four views of the same synthetic cardiac signal—not a lie detector.</p>
 
         <div className="game-grid" aria-label="Choose a game">
           <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
@@ -840,7 +840,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
           </div>
           <div className="matrix-row">
             <span><b>Incentives</b>Aligned ↔ Opposed</span>
-            <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden</span>
+            <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · 4 views</span>
             <span><b>Behavior</b>Pre-signal ↔ Post-signal belief</span>
           </div>
         </section>
