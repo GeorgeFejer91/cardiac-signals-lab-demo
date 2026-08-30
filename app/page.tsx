@@ -753,66 +753,24 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
   );
 }
 
-function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
+function Menu() {
   return (
     <main className="menu-shell" id="home">
-      <div className="ambient-grid" aria-hidden="true" />
       <header className="topbar">
         <span className="brand"><LabMark /><span>Cardiac Signals Lab</span></span>
-        <span className="demo-badge"><i /> Interactive research demo</span>
-        <span className="phone-mode-badge"><i /> Phone mode · touch optimized</span>
+        <span className="menu-caption">3D STUDY MODELS</span>
       </header>
 
       <section className="menu-content" aria-labelledby="menu-title">
-        <p className="eyebrow">Mixed-reality task preview</p>
-        <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">See two participants seated across the same table, watch each card move through the decision sequence, then enter the playable trials. Cardiac activity appears as an animated heart or beat-synchronous card edge—never as raw ECG, confidence, or a lie detector.</p>
+        <p className="eyebrow">Mixed-reality study models</p>
+        <h1 id="menu-title">Card games with a visible heartbeat.</h1>
+        <p className="lede concise-lede">Select a scenario to unfold its 3D round.</p>
 
         <ExperimentMiniatures />
-
-        <div className="game-grid" aria-label="Choose a game">
-          <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
-            <span className="card-index">01</span>
-            <div className="card-visual joint-card-preview" aria-hidden="true"><span className="floating-card back card-back-pattern" /><span className="floating-card front printed-preview"><b>A</b><i /></span></div>
-            <span className="card-copy">
-              <span className="card-label">Asymmetric evidence</span>
-              <strong>Joint Discrimination</strong>
-              <span>Play as the less-informed judge: decide privately, receive Player A&apos;s A/B/Pass selection and assigned cardiac cue, then decide again.</span>
-              <b className="launch-link">Enter simulation <i aria-hidden="true">↗</i></b>
-            </span>
-          </button>
-          <button className="game-card coral" type="button" onClick={() => onOpen('concealed')} data-testid="open-concealed">
-            <span className="card-index">02</span>
-            <div className="card-visual concealed-card-preview" aria-hidden="true"><span className="floating-card back card-back-pattern" /><span className="menu-playing-card"><PlayingCardFace card={informationCards[1]} /></span></div>
-            <span className="card-copy">
-              <span className="card-label">Card recognition</span>
-              <strong>Concealed Information</strong>
-              <span>Play as the observer: watch real playing-card probes and decide which card Player 1 privately selected.</span>
-              <b className="launch-link">Enter simulation <i aria-hidden="true">↗</i></b>
-            </span>
-          </button>
-        </div>
-
-        <section className="design-matrix" aria-labelledby="matrix-title">
-          <div>
-            <p className="eyebrow">Shared experimental spine</p>
-            <h2 id="matrix-title">Four previews, the same causal question</h2>
-          </div>
-          <div className="matrix-row">
-            <span><b>Incentives</b>Cooperative ↔ Mixed-motive / competitive</span>
-            <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · heart or card glow</span>
-            <span><b>Behavior</b>Choice · revision · trust · payoff · timing</span>
-          </div>
-        </section>
       </section>
 
       <footer className="menu-footer">
-        <span>Animated WebGL study tables · simulated physiology · no data recorded <b className="phone-footer-note">· phone mode activates automatically</b></span>
-        <span className="source-links">
-          <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Pulford 2025</a>
-          <a href="https://doi.org/10.1177/0956797619864598" target="_blank" rel="noreferrer">Klein Selle 2019</a>
-          <a href="https://doi.org/10.1111/psyp.12239" target="_blank" rel="noreferrer">Meijer 2014</a>
-        </span>
+        <span>WebGL models · simulated heartbeat timing · no data recorded</span>
       </footer>
     </main>
   );
@@ -830,5 +788,5 @@ export default function Home() {
 
   if (activeGame === 'joint') return <JointGame onHome={() => navigate('menu')} />;
   if (activeGame === 'concealed') return <ConcealedGame onHome={() => navigate('menu')} />;
-  return <Menu onOpen={navigate} />;
+  return <Menu />;
 }

@@ -2,316 +2,207 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import { FaceEmotion, getScenario, IncentiveMode, ScenarioId } from './scenarioCatalog';
 
-export type ThreeScenarioId = 'signal' | 'dilemma' | 'concealed' | 'ultimatum';
-export type ThreeIncentiveMode = 'cooperate' | 'compete';
-export type ThreeCueMode = 'edge' | 'heart';
-
-type SceneState = {
+type ThreeTableSceneProps = {
+  scenarioId: ScenarioId;
   phase: number;
-  incentive: ThreeIncentiveMode;
-  cueMode: ThreeCueMode;
+  incentive: IncentiveMode;
 };
 
-type ThreeTableSceneProps = SceneState & {
-  scenarioId: ThreeScenarioId;
-  compact?: boolean;
+type RuntimeState = { phase: number; incentive: IncentiveMode };
+type MinimalAvatar = { root: THREE.Group; face: THREE.MeshStandardMaterial; emotion: FaceEmotion };
+
+const cardLabels: Record<ScenarioId, { private: string; a: string; b: string }> = {
+  signal: { private: 'TARGET\nSUN', a: 'SUN', b: 'SUN' },
+  dilemma: { private: 'PRIVATE', a: 'SHARE', b: 'SHARE' },
+  concealed: { private: 'SECRET\n4♦', a: '4♦', b: '4♦' },
+  ultimatum: { private: '10\nTOKENS', a: '7 / 3', b: 'ACCEPT' },
 };
 
-const labels: Record<ThreeScenarioId, { private: string; far: string; near: string }> = {
-  signal: { private: 'TARGET\nSUN', far: 'SUN', near: 'SUN' },
-  dilemma: { private: 'PRIVATE\nCHOICE', far: 'SHARE', near: 'SHARE' },
-  concealed: { private: 'MEMORIZE\n4♦', far: '4♦', near: '4♦' },
-  ultimatum: { private: '10\nTOKENS', far: '7 / 3', near: 'ACCEPT' },
-};
+function publicAsset(path: string) {
+  const firstSegment = window.location.pathname.split('/').filter(Boolean)[0];
+  const base = firstSegment === 'cardiac-signals-lab-demo' ? `/${firstSegment}` : '';
+  return `${window.location.origin}${base}/${path}`;
+}
 
-function makeCardTexture(label: string, accent = '#78eadf') {
+function makeCardTexture(label: string) {
   const canvas = document.createElement('canvas');
-  canvas.width = 384;
-  canvas.height = 536;
+  canvas.width = 320;
+  canvas.height = 448;
   const context = canvas.getContext('2d');
   if (!context) return new THREE.CanvasTexture(canvas);
-
-  const gradient = context.createLinearGradient(0, 0, 384, 536);
-  gradient.addColorStop(0, '#f7f2e9');
-  gradient.addColorStop(1, '#d9d3ca');
-  context.fillStyle = gradient;
-  context.fillRect(0, 0, 384, 536);
-  context.strokeStyle = accent;
-  context.lineWidth = 16;
-  context.strokeRect(18, 18, 348, 500);
-  context.strokeStyle = '#252b32';
-  context.lineWidth = 3;
-  context.strokeRect(39, 39, 306, 458);
-
-  const lines = label.split('\n');
+  context.fillStyle = '#f1eee7';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.strokeStyle = '#252a31';
+  context.lineWidth = 7;
+  context.strokeRect(18, 18, 284, 412);
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.fillStyle = label.includes('♦') || label.includes('♥') ? '#a72331' : '#171b20';
-  context.font = `700 ${lines.length > 1 ? 56 : label.length > 7 ? 48 : 72}px Arial`;
-  lines.forEach((line, index) => {
-    context.fillText(line, 192, 268 + (index - (lines.length - 1) / 2) * 72);
-  });
-  context.fillStyle = '#4f5963';
-  context.font = '600 22px Arial';
-  context.fillText('CARDIAC SIGNALS LAB', 192, 474);
-
+  context.fillStyle = label.includes('♦') || label.includes('♥') ? '#a92638' : '#1d2228';
+  const lines = label.split('\n');
+  context.font = `700 ${lines.length > 1 ? 46 : label.length > 6 ? 42 : 60}px Arial`;
+  lines.forEach((line, index) => context.fillText(line, 160, 224 + (index - (lines.length - 1) / 2) * 58));
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
   return texture;
 }
 
-function makeCard(label: string, accent: string) {
+function makeCard(label: string) {
   const group = new THREE.Group();
   const glowMaterial = new THREE.MeshStandardMaterial({
-    color: '#ff3d4e',
-    emissive: '#ff182c',
-    emissiveIntensity: 0,
-    transparent: true,
-    opacity: 0,
+    color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0,
+    transparent: true, opacity: 0,
   });
-  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.12, 0.09, 1.52), glowMaterial);
-  glow.position.y = -0.01;
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.075, 1.44), glowMaterial);
   group.add(glow);
-
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.02, 0.075, 1.42),
-    new THREE.MeshStandardMaterial({ color: '#191d23', roughness: 0.48, metalness: 0.22 }),
+    new THREE.BoxGeometry(0.94, 0.07, 1.34),
+    new THREE.MeshStandardMaterial({ color: '#20252b', roughness: 0.52, metalness: 0.12 }),
   );
-  body.castShadow = true;
-  body.receiveShadow = true;
+  body.position.y = 0.004;
   group.add(body);
-
   const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.94, 1.34),
-    new THREE.MeshStandardMaterial({ map: makeCardTexture(label, accent), roughness: 0.7 }),
+    new THREE.PlaneGeometry(0.87, 1.27),
+    new THREE.MeshStandardMaterial({ map: makeCardTexture(label), roughness: 0.76 }),
   );
-  face.position.y = 0.041;
   face.rotation.x = -Math.PI / 2;
+  face.position.y = 0.043;
   group.add(face);
   group.userData.glow = glow;
   group.userData.glowMaterial = glowMaterial;
   return group;
 }
 
-function addChair(scene: THREE.Scene, z: number, color: string) {
-  const group = new THREE.Group();
-  const material = new THREE.MeshStandardMaterial({ color, roughness: 0.65, metalness: 0.12 });
-  const seat = new THREE.Mesh(new THREE.BoxGeometry(1.25, 0.18, 1.05), material);
-  seat.position.y = 0.55;
-  seat.castShadow = true;
-  group.add(seat);
-  const back = new THREE.Mesh(new THREE.BoxGeometry(1.25, 1.25, 0.16), material);
-  back.position.set(0, 1.15, z < 0 ? -0.45 : 0.45);
-  back.castShadow = true;
-  group.add(back);
-  [-0.48, 0.48].forEach((x) => {
-    [-0.38, 0.38].forEach((offset) => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.075, 0.62, 10), material);
-      leg.position.set(x, 0.23, offset);
-      group.add(leg);
-    });
-  });
-  group.position.z = z;
-  scene.add(group);
-}
-
-function addParticipant(scene: THREE.Scene, z: number, color: string, facing: 1 | -1) {
-  const group = new THREE.Group();
-  const clothing = new THREE.MeshStandardMaterial({ color, roughness: 0.58, metalness: 0.05 });
-  const skin = new THREE.MeshStandardMaterial({ color: '#b67c5e', roughness: 0.75 });
-  const dark = new THREE.MeshStandardMaterial({ color: '#15191f', roughness: 0.4 });
-
-  const torso = new THREE.Mesh(new THREE.CapsuleGeometry(0.46, 0.72, 6, 14), clothing);
-  torso.position.y = 1.42;
-  torso.castShadow = true;
-  group.add(torso);
-
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.36, 24, 18), skin);
-  head.scale.y = 1.12;
-  head.position.y = 2.35;
-  head.castShadow = true;
-  group.add(head);
-
-  const hair = new THREE.Mesh(new THREE.SphereGeometry(0.37, 24, 12, 0, Math.PI * 2, 0, Math.PI * 0.52), dark);
-  hair.position.y = 2.39;
-  hair.rotation.z = Math.PI;
-  group.add(hair);
-
-  [-0.12, 0.12].forEach((x) => {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), dark);
-    eye.position.set(x, 2.4, facing * 0.34);
-    group.add(eye);
-  });
-
-  [-0.56, 0.56].forEach((x) => {
-    const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.105, 0.7, 4, 10), clothing);
-    arm.position.set(x, 1.28, facing * 0.23);
-    arm.rotation.z = x < 0 ? -0.4 : 0.4;
-    arm.rotation.x = facing * 0.55;
-    arm.castShadow = true;
-    group.add(arm);
-    const hand = new THREE.Mesh(new THREE.SphereGeometry(0.13, 14, 10), skin);
-    hand.scale.y = 0.7;
-    hand.position.set(x * 1.18, 0.92, facing * 0.62);
-    hand.castShadow = true;
-    group.add(hand);
-  });
-
-  group.position.z = z;
-  scene.add(group);
-}
-
-function makeHeart() {
-  const shape = new THREE.Shape();
-  shape.moveTo(0, 0.25);
-  shape.bezierCurveTo(0, 0.25, -0.48, -0.08, -0.48, -0.42);
-  shape.bezierCurveTo(-0.48, -0.75, -0.08, -0.92, 0, -1.15);
-  shape.bezierCurveTo(0.08, -0.92, 0.48, -0.75, 0.48, -0.42);
-  shape.bezierCurveTo(0.48, -0.08, 0, 0.25, 0, 0.25);
-  const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.12, bevelEnabled: true, bevelSize: 0.035, bevelThickness: 0.035, bevelSegments: 3 });
-  geometry.center();
-  const heart = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({ color: '#ff344c', emissive: '#8d0719', emissiveIntensity: 1.4, roughness: 0.34, metalness: 0.12 }),
+function makeAvatar(color: string, x: number, yaw: number) {
+  const root = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.CapsuleGeometry(0.32, 0.5, 5, 12),
+    new THREE.MeshStandardMaterial({ color, roughness: 0.9 }),
   );
-  heart.scale.setScalar(0.6);
-  heart.rotation.x = 0.08;
-  heart.castShadow = true;
-  return heart;
+  body.position.y = 0.8;
+  root.add(body);
+
+  const head = new THREE.Mesh(
+    new THREE.SphereGeometry(0.36, 28, 20),
+    new THREE.MeshStandardMaterial({ color: '#b68468', roughness: 0.88 }),
+  );
+  head.position.y = 1.55;
+  root.add(head);
+
+  const face = new THREE.MeshStandardMaterial({
+    transparent: true,
+    depthWrite: false,
+    roughness: 0.8,
+    toneMapped: false,
+    alphaTest: 0.02,
+  });
+  const faceShell = new THREE.Mesh(new THREE.SphereGeometry(0.368, 32, 22), face);
+  faceShell.position.copy(head.position);
+  faceShell.renderOrder = 2;
+  root.add(faceShell);
+  root.position.set(x, 0, 0.52);
+  root.rotation.y = yaw;
+  return { root, face, emotion: 'neutral' as FaceEmotion };
 }
 
-function setGlow(card: THREE.Group, visible: boolean, beat: number) {
+function updateAvatarFace(avatar: MinimalAvatar, emotion: FaceEmotion, textures: Map<FaceEmotion, THREE.Texture>) {
+  if (avatar.emotion === emotion && avatar.face.map) return;
+  avatar.emotion = emotion;
+  const texture = textures.get(emotion);
+  if (texture) {
+    avatar.face.map = texture;
+    avatar.face.needsUpdate = true;
+  }
+}
+
+function setCardGlow(card: THREE.Group, visible: boolean, beat: number) {
   const glow = card.userData.glow as THREE.Mesh;
   const material = card.userData.glowMaterial as THREE.MeshStandardMaterial;
   glow.visible = visible;
-  material.opacity = visible ? 0.34 + beat * 0.4 : 0;
-  material.emissiveIntensity = visible ? 1.4 + beat * 4 : 0;
+  material.opacity = visible ? 0.34 + beat * 0.48 : 0;
+  material.emissiveIntensity = visible ? 1.1 + beat * 4.2 : 0;
   glow.scale.setScalar(1 + beat * 0.07);
 }
 
-export default function ThreeTableScene({ scenarioId, phase, incentive, cueMode, compact = false }: ThreeTableSceneProps) {
+export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeTableSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<SceneState>({ phase, incentive, cueMode });
+  const stateRef = useRef<RuntimeState>({ phase, incentive });
 
-  useEffect(() => {
-    stateRef.current = { phase, incentive, cueMode };
-  }, [phase, incentive, cueMode]);
+  useEffect(() => { stateRef.current = { phase, incentive }; }, [phase, incentive]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
+    const definition = getScenario(scenarioId);
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(compact ? 39 : 35, 1, 0.1, 60);
-    camera.position.set(compact ? 6.8 : 7.4, compact ? 5.4 : 5.8, compact ? 7.6 : 8.3);
-    camera.lookAt(0, 0.78, 0);
+    const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
+    camera.position.set(0, 4.55, 7.4);
+    camera.lookAt(0, 0.72, 0);
 
-    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
     renderer.setClearColor(0x000000, 0);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, compact ? 1.25 : 1.75));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
     renderer.outputColorSpace = THREE.SRGBColorSpace;
     renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.08;
-    renderer.shadowMap.enabled = !compact;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.toneMappingExposure = 1.05;
 
-    scene.add(new THREE.HemisphereLight('#d8f3ff', '#14100d', 2.3));
-    const key = new THREE.DirectionalLight('#fff1d8', 4.2);
-    key.position.set(4, 8, 5);
-    key.castShadow = !compact;
-    key.shadow.mapSize.set(1024, 1024);
+    scene.add(new THREE.HemisphereLight('#e8fbff', '#18120f', 2.6));
+    const key = new THREE.DirectionalLight('#fff1df', 4.4);
+    key.position.set(2.8, 6, 4.5);
     scene.add(key);
-    const rim = new THREE.PointLight('#ff5264', 14, 12, 2);
-    rim.position.set(-3, 3.5, -2);
-    scene.add(rim);
-    const fill = new THREE.PointLight('#55d9e9', 10, 12, 2);
-    fill.position.set(3, 2.8, 3);
-    scene.add(fill);
+    const red = new THREE.PointLight('#ff3853', 8, 8, 2);
+    red.position.set(-1.3, 2.4, 1.2);
+    scene.add(red);
 
-    const tableMaterial = new THREE.MeshStandardMaterial({ color: '#3c2b24', roughness: 0.5, metalness: 0.18 });
-    const tableTop = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.28, 3.25), tableMaterial);
-    tableTop.position.y = 0.25;
-    tableTop.castShadow = true;
-    tableTop.receiveShadow = true;
-    scene.add(tableTop);
-    [-2.2, 2.2].forEach((x) => [-1.22, 1.22].forEach((z) => {
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.18, 1.55, 12), tableMaterial);
-      leg.position.set(x, -0.58, z);
-      leg.castShadow = true;
-      scene.add(leg);
-    }));
-
-    const anchor = new THREE.Mesh(
-      new THREE.RingGeometry(0.52, 0.58, 48),
-      new THREE.MeshBasicMaterial({ color: '#6edfea', transparent: true, opacity: 0.34, side: THREE.DoubleSide }),
+    const table = new THREE.Mesh(
+      new THREE.CylinderGeometry(2.45, 2.45, 0.16, 48),
+      new THREE.MeshStandardMaterial({ color: '#37423f', roughness: 0.64, metalness: 0.12 }),
     );
-    anchor.position.y = 0.405;
-    anchor.rotation.x = -Math.PI / 2;
-    scene.add(anchor);
+    table.scale.z = 0.48;
+    table.position.y = 0.18;
+    scene.add(table);
 
-    addChair(scene, -3.08, '#343c49');
-    addChair(scene, 3.08, '#453740');
-    addParticipant(scene, -2.58, '#486c78', 1);
-    addParticipant(scene, 2.58, '#704b59', -1);
+    const avatarA = makeAvatar('#527b7d', -2.0, 0.46);
+    const avatarB = makeAvatar('#805467', 2.0, -0.46);
+    scene.add(avatarA.root, avatarB.root);
 
-    const accent = scenarioId === 'dilemma' ? '#a9d785' : scenarioId === 'concealed' ? '#ff8c78' : scenarioId === 'ultimatum' ? '#d6b6ff' : '#78eadf';
-    const scenarioLabels = labels[scenarioId];
-    const privateCard = makeCard(scenarioLabels.private, accent);
-    const farCard = makeCard(scenarioLabels.far, accent);
-    const nearCard = makeCard(scenarioLabels.near, accent);
-    scene.add(privateCard, farCard, nearCard);
+    const textures = new Map<FaceEmotion, THREE.Texture>();
+    const loader = new THREE.TextureLoader();
+    const emotions: FaceEmotion[] = ['neutral', 'happiness', 'sadness', 'fear', 'anger', 'surprise'];
+    emotions.forEach((emotion) => {
+      loader.load(publicAsset(`assets/faces/spherical/${emotion}.svg`), (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.anisotropy = 4;
+        textures.set(emotion, texture);
+        if (emotion === 'neutral') {
+          avatarA.face.map = texture;
+          avatarB.face.map = texture;
+          avatarA.face.needsUpdate = true;
+          avatarB.face.needsUpdate = true;
+        }
+      });
+    });
+
+    const labels = cardLabels[scenarioId];
+    const privateCard = makeCard(labels.private);
+    const cardA = makeCard(labels.a);
+    const cardB = makeCard(labels.b);
+    scene.add(privateCard, cardA, cardB);
+    privateCard.position.set(-1.12, 0.37, 0.2);
+    cardA.position.set(-1.32, 0.62, 0.6);
+    cardB.position.set(1.32, 0.62, 0.6);
 
     const probeCards = scenarioId === 'concealed'
-      ? ['7♥', 'Q♠', '4♦', '9♣'].map((label) => {
-          const card = makeCard(label, label === '4♦' ? '#ff5a6f' : '#8d969f');
+      ? ['7♥', 'Q♠', '4♦', '9♣'].map((label, index) => {
+          const card = makeCard(label);
+          card.position.set((index - 1.5) * 0.92, 0.38, 0.02);
+          card.scale.setScalar(0.76);
           scene.add(card);
           return card;
         })
       : [];
-
-    const heart = makeHeart();
-    heart.position.set(-0.72, 1.45, -0.35);
-    heart.visible = false;
-    scene.add(heart);
-
-    const tokenGroup = new THREE.Group();
-    const tokenMaterial = new THREE.MeshStandardMaterial({ color: '#f7c34d', metalness: 0.7, roughness: 0.25 });
-    for (let index = 0; index < 6; index += 1) {
-      const token = new THREE.Mesh(new THREE.CylinderGeometry(0.19, 0.19, 0.07, 24), tokenMaterial);
-      token.rotation.x = Math.PI / 2;
-      token.position.set((index % 3) * 0.42 - 0.42, Math.floor(index / 3) * 0.08, (index % 2) * 0.34 - 0.17);
-      token.castShadow = true;
-      tokenGroup.add(token);
-    }
-    tokenGroup.position.set(0, 0.53, 0);
-    tokenGroup.visible = false;
-    scene.add(tokenGroup);
-
-    const farStart = new THREE.Vector3(-0.72, 1.05, -1.76);
-    const farTable = new THREE.Vector3(-0.72, 0.52, -0.42);
-    const nearStart = new THREE.Vector3(0.72, 1.05, 1.76);
-    const nearTable = new THREE.Vector3(0.72, 0.52, 0.48);
-    privateCard.position.set(0.65, 0.54, -1.2);
-    privateCard.rotation.y = 0.14;
-    farCard.position.copy(farStart);
-    nearCard.position.copy(nearStart);
-
-    if (probeCards.length) {
-      probeCards.forEach((card, index) => card.position.set((index - 1.5) * 1.12, 0.53, -0.28));
-      farCard.visible = false;
-    }
-
-    let pointerX = 0;
-    let pointerY = 0;
-    const onPointerMove = (event: PointerEvent) => {
-      if (compact) return;
-      const rect = canvas.getBoundingClientRect();
-      pointerX = ((event.clientX - rect.left) / rect.width - 0.5) * 0.75;
-      pointerY = ((event.clientY - rect.top) / rect.height - 0.5) * 0.3;
-    };
-    canvas.addEventListener('pointermove', onPointerMove);
+    if (probeCards.length) cardA.visible = false;
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -326,68 +217,68 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, cueMode,
     resize();
 
     const clock = new THREE.Clock();
-    const animate = () => {
+    const aStart = new THREE.Vector3(-1.32, 0.88, 0.8);
+    const aCenter = new THREE.Vector3(-0.52, 0.38, 0.05);
+    const bStart = new THREE.Vector3(1.32, 0.88, 0.8);
+    const bCenter = new THREE.Vector3(0.52, 0.38, 0.05);
+
+    renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
       const state = stateRef.current;
       const cueVisible = state.phase === 2 || state.phase === 3;
-      const beatA = Math.pow(Math.max(0, Math.sin(elapsed * 6.7)), 16);
-      const beatB = Math.pow(Math.max(0, Math.sin(elapsed * 6.7 - 0.48)), 18) * 0.65;
-      const beat = Math.max(beatA, beatB);
+      const beat = Math.max(
+        Math.pow(Math.max(0, Math.sin(elapsed * 6.8)), 18),
+        Math.pow(Math.max(0, Math.sin(elapsed * 6.8 - 0.48)), 20) * 0.66,
+      );
 
-      const farTarget = state.phase === 0 ? farStart : farTable;
-      const nearMovesEarly = scenarioId === 'dilemma';
-      const nearTarget = state.phase >= (nearMovesEarly ? 1 : 3) ? nearTable : nearStart;
-      farCard.position.lerp(farTarget, 0.085);
-      nearCard.position.lerp(nearTarget, 0.085);
-      farCard.rotation.x += (((state.phase === 0 ? -0.72 : 0)) - farCard.rotation.x) * 0.075;
-      nearCard.rotation.x += (((state.phase < (nearMovesEarly ? 1 : 3) ? 0.72 : 0)) - nearCard.rotation.x) * 0.075;
+      cardA.position.lerp(state.phase === 0 ? aStart : aCenter, 0.09);
+      const bMovesAt = scenarioId === 'dilemma' ? 1 : 3;
+      cardB.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
+      cardA.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardA.rotation.x) * 0.08;
+      cardB.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardB.rotation.x) * 0.08;
       privateCard.visible = state.phase === 0;
-      nearCard.visible = scenarioId !== 'concealed' || state.phase >= 3;
+      cardB.visible = scenarioId !== 'concealed' || state.phase >= 3;
 
       probeCards.forEach((card, index) => {
         card.visible = state.phase >= 1;
-        card.position.y = 0.53 + (state.phase === 2 && index === 2 ? beat * 0.055 : 0);
-        setGlow(card, cueVisible && state.cueMode === 'edge' && index === 2, beat);
+        card.position.y = 0.38 + (state.phase === 2 && index === 2 ? beat * 0.06 : 0);
+        setCardGlow(card, cueVisible && index === 2, beat);
       });
-      if (!probeCards.length) setGlow(farCard, cueVisible && state.cueMode === 'edge', beat);
-      setGlow(nearCard, false, beat);
+      if (!probeCards.length) setCardGlow(cardA, cueVisible, beat);
 
-      heart.visible = cueVisible && state.cueMode === 'heart';
-      heart.scale.setScalar(0.58 + beat * 0.13);
-      heart.rotation.y = Math.sin(elapsed * 0.65) * 0.18;
-      heart.position.y = 1.48 + Math.sin(elapsed * 1.2) * 0.05;
-
-      tokenGroup.visible = state.phase === 4;
-      tokenGroup.position.y += ((state.phase === 4 ? 0.57 : 0.25) - tokenGroup.position.y) * 0.08;
-      tokenGroup.rotation.y = elapsed * 0.22;
-      (tokenMaterial as THREE.MeshStandardMaterial).color.set(state.incentive === 'cooperate' ? '#f7c34d' : '#ff6f55');
-
-      anchor.rotation.z = elapsed * 0.24;
-      (anchor.material as THREE.MeshBasicMaterial).opacity = 0.22 + beat * 0.2;
-      camera.position.x += ((compact ? 6.8 : 7.4) + pointerX - camera.position.x) * 0.035;
-      camera.position.y += ((compact ? 5.4 : 5.8) - pointerY - camera.position.y) * 0.035;
-      camera.lookAt(0, 0.78, 0);
+      let expressionA = definition.expressionsA[state.phase];
+      let expressionB = definition.expressionsB[state.phase];
+      if (state.phase === 4 && state.incentive === 'compete') {
+        expressionA = 'happiness';
+        expressionB = 'sadness';
+      }
+      updateAvatarFace(avatarA, expressionA, textures);
+      updateAvatarFace(avatarB, expressionB, textures);
+      avatarA.root.position.y = Math.sin(elapsed * 1.15) * 0.012;
+      avatarB.root.position.y = Math.sin(elapsed * 1.15 + 1.2) * 0.012;
+      camera.position.x = Math.sin(elapsed * 0.16) * 0.08;
+      camera.lookAt(0, 0.72, 0);
       renderer.render(scene, camera);
-    };
-    renderer.setAnimationLoop(animate);
+    });
 
     return () => {
       renderer.setAnimationLoop(null);
       observer.disconnect();
-      canvas.removeEventListener('pointermove', onPointerMove);
+      const faceTextures = new Set(textures.values());
+      textures.forEach((texture) => texture.dispose());
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           materials.forEach((material) => {
-            if (material instanceof THREE.MeshStandardMaterial && material.map) material.map.dispose();
+            if (material instanceof THREE.MeshStandardMaterial && material.map && !faceTextures.has(material.map)) material.map.dispose();
             material.dispose();
           });
         }
       });
       renderer.dispose();
     };
-  }, [compact, scenarioId]);
+  }, [scenarioId]);
 
   return <canvas ref={canvasRef} className="three-table-canvas" aria-hidden="true" />;
 }

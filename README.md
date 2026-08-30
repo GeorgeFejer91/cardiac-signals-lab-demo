@@ -8,18 +8,18 @@ The interface uses a transparent, passthrough-first canvas: only physical cards 
 
 It automatically switches to a touch-optimized phone layout on narrow screens. It uses device-safe viewport sizing, notch and home-indicator safe areas, stacked task panels, and touch targets of at least 44 pixels. Both complete game sequences are tested at a 390 × 844 smartphone viewport as well as on desktop.
 
-## Animated tabletop preview
+## Minimal 3D scenario accordion
 
-The landing page contains participant-facing WebGL miniatures built from actual 3D geometry: two seated participant figures, chairs, a table, textured cards, heartbeat-driven edge lighting, payoff tokens, shadows, and four selectable animated card flows:
+The one-page landing menu contains four collapsed game choices. Selecting one expands exactly two stacked panels: a minimalist WebGL round preview and a short summary of the game, its logic, behavioral measures, and incentive manipulation.
 
 - **Hidden Target:** an informed sender plays a Sun/Moon signal and an uninformed receiver selects the target.
 - **Share / Keep:** both players commit privately and reveal together under cooperative or mixed-motive payoffs.
 - **Concealed Card:** candidate playing cards are probed while the informed player's cardiac cue is visible.
 - **Offer / Response:** a proposer places a split card and the responder answers with Accept or Reject.
 
-The preview can be switched between cooperative and competitive incentives. A five-step rail shows the exact sequence of private information, card commitment, cardiac observation, response, and outcome. Speech bubbles state what each participant knows or decides in each phase, while compact activity panels state what each player is doing. The selected game also has a plain-language instruction panel covering the goal, three-step procedure, incentive manipulation, and recorded outcomes. Four smaller WebGL scenes preview all scenarios at once.
+The WebGL panel contains only an oval table surface, required cards, and two floating avatar busts. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and wrap that project's spherical SVG expressions over the 3D heads; the expression changes with the illustrated phase. A compact phase indicator identifies the current step.
 
-The 3D preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. This keeps the visualization minimal and makes the manipulated information source visually unambiguous.
+The preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. The summary panel offers Collaboration and Competition modes and changes the stated payoff logic accordingly.
 
 `public/og.png` is a project-bound social-preview image generated for this redesign on 2026-08-30. It is link-preview artwork and is never presented as an experimental stimulus.
 
