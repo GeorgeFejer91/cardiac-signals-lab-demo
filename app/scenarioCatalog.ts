@@ -2,6 +2,15 @@ export type ScenarioId = 'signal' | 'dilemma' | 'concealed' | 'ultimatum';
 export type IncentiveMode = 'cooperate' | 'compete';
 export type FaceEmotion = 'neutral' | 'happiness' | 'sadness' | 'fear' | 'anger' | 'surprise';
 
+export type ScenarioPublication = {
+  authors: string;
+  year: number;
+  title: string;
+  venue: string;
+  href: string;
+  relevance: string;
+};
+
 export type ScenarioDefinition = {
   id: ScenarioId;
   title: string;
@@ -15,6 +24,7 @@ export type ScenarioDefinition = {
   speechBCompete: [string, string, string, string, string];
   cooperate: string;
   compete: string;
+  publications: ScenarioPublication[];
   expressionsA: [FaceEmotion, FaceEmotion, FaceEmotion, FaceEmotion, FaceEmotion];
   expressionsB: [FaceEmotion, FaceEmotion, FaceEmotion, FaceEmotion, FaceEmotion];
 };
@@ -22,39 +32,91 @@ export type ScenarioDefinition = {
 export const scenarios: ScenarioDefinition[] = [
   {
     id: 'signal',
-    title: 'Hidden Target',
-    summary: 'A knows the target; B must infer it from A’s card and visible heartbeat cue.',
-    logic: 'Asymmetric information: A knows the correct card and B combines A’s card choice with the heartbeat cue.',
+    title: 'Joint Discrimination Task',
+    summary: 'Both players judge whether A or B is closer in size to a private target; one player receives stronger evidence.',
+    logic: 'The card adaptation makes the better-informed player’s A/B suggestion—and its cardiac cue—visible before the less-informed player decides.',
     measures: 'Target accuracy, decision time, cue use, payoff, and cardiac coupling.',
     phases: ['Private target', 'Signal card', 'Heartbeat cue', 'Receiver choice', 'Reveal'],
-    speechA: ['I see the SUN target.', 'I play SUN.', 'My card shows my pulse.', 'I wait for your choice.', 'The target was SUN.'],
-    speechB: ['I cannot see the target.', 'I watch your card.', 'I can use the pulse.', 'I pick SUN.', 'We matched.'],
-    speechACompete: ['I see the SUN target.', 'I play MOON.', 'My card shows my pulse.', 'Will you detect the bluff?', 'I tried to mislead you.'],
-    speechBCompete: ['I cannot see the target.', 'Is that card truthful?', 'The pulse may help me.', 'I still pick SUN.', 'I detected the bluff.'],
-    cooperate: 'Both players score when B finds the target.',
-    compete: 'A scores by concealing the target; B scores by finding it.',
+    speechA: ['A is closer to my target.', 'I signal A.', 'My card shows my pulse.', 'I wait for your choice.', 'A was correct.'],
+    speechB: ['My target is ambiguous.', 'I watch your A/B card.', 'I can use the pulse.', 'I choose A.', 'We chose correctly.'],
+    speechACompete: ['A is closer to my target.', 'I signal B.', 'My card shows my pulse.', 'Will you detect the bluff?', 'I secretly chose A.'],
+    speechBCompete: ['My target is ambiguous.', 'Is B misleading?', 'The pulse may help me.', 'I still choose A.', 'I resisted the signal.'],
+    cooperate: 'Common-interest payoffs reward both players for selecting the correct alternative.',
+    compete: 'Deadlock-game payoffs let the better-informed player gain more by misleading the less-informed player.',
+    publications: [
+      {
+        authors: 'Pulford, Mangiarulo & Colman',
+        year: 2025,
+        title: 'Confidence signalling aids deception in strategic interactions',
+        venue: 'Scientific Reports',
+        href: 'https://doi.org/10.1038/s41598-025-00279-w',
+        relevance: 'Original asymmetric-information size-judgment task with Deadlock-game incentives.',
+      },
+      {
+        authors: 'Pulford, Colman, Buabang & Krockow',
+        year: 2018,
+        title: 'The persuasive power of knowledge: Testing the confidence heuristic',
+        venue: 'Journal of Experimental Psychology: General',
+        href: 'https://doi.org/10.1037/xge0000471',
+        relevance: 'Common-interest precursor using dyadic discrimination and unequal evidence quality.',
+      },
+      {
+        authors: 'Thomas & McFadyen',
+        year: 1995,
+        title: 'The confidence heuristic: A game-theoretic analysis',
+        venue: 'Journal of Economic Psychology',
+        href: 'https://doi.org/10.1016/0167-4870(94)00032-6',
+        relevance: 'Foundational model of confidence signalling under asymmetric information.',
+      },
+    ],
     expressionsA: ['neutral', 'neutral', 'surprise', 'neutral', 'happiness'],
     expressionsB: ['neutral', 'surprise', 'surprise', 'neutral', 'happiness'],
   },
   {
     id: 'dilemma',
-    title: 'Share / Keep',
-    summary: 'Both players privately choose Share or Keep, then reveal together.',
-    logic: 'A repeated social dilemma: each payoff depends on the two cards revealed together.',
+    title: 'Iterated Prisoner’s Dilemma',
+    summary: 'Both players privately choose Cooperate or Defect, reveal simultaneously, and repeat the interaction.',
+    logic: 'Mutual cooperation benefits both players, but unilateral defection can produce the largest individual payoff.',
     measures: 'Cooperation, reciprocity, switching, decision time, payoff, and cardiac coupling.',
     phases: ['Private choice', 'Cards locked', 'Heartbeat cue', 'Joint reveal', 'Payoff'],
-    speechA: ['I choose privately.', 'My card is locked.', 'My card shows my pulse.', 'Reveal together.', 'Our choices set the payoff.'],
-    speechB: ['I choose privately.', 'My card is locked.', 'I can see your pulse.', 'Reveal together.', 'I will adapt next round.'],
-    speechACompete: ['I choose KEEP.', 'My card is locked.', 'My card shows my pulse.', 'I reveal KEEP.', 'I gain while you shared.'],
-    speechBCompete: ['I choose SHARE.', 'My card is locked.', 'Can I predict your choice?', 'I reveal SHARE.', 'You kept while I shared.'],
-    cooperate: 'The largest joint payoff follows mutual Share.',
-    compete: 'Keep can exploit a partner who chose Share.',
+    speechA: ['I choose privately.', 'My card is locked.', 'My card shows my pulse.', 'We reveal together.', 'We both cooperated.'],
+    speechB: ['I choose privately.', 'My card is locked.', 'I can see your pulse.', 'We reveal together.', 'I will adapt next round.'],
+    speechACompete: ['I choose DEFECT.', 'My card is locked.', 'My card shows my pulse.', 'I reveal DEFECT.', 'I gain while you cooperated.'],
+    speechBCompete: ['I choose COOPERATE.', 'My card is locked.', 'Can I predict your choice?', 'I reveal COOPERATE.', 'You defected against me.'],
+    cooperate: 'The cooperative demonstration shows mutual cooperation and its shared payoff.',
+    compete: 'The mixed-motive demonstration shows unilateral defection exploiting a cooperative partner.',
+    publications: [
+      {
+        authors: 'Merrill & Cheshire',
+        year: 2017,
+        title: 'Trust Your Heart: Assessing Cooperation and Trust with Biosignals in Computer-Mediated Interactions',
+        venue: 'ACM CSCW',
+        href: 'https://doi.org/10.1145/2998181.2998286',
+        relevance: 'Directly manipulated visibility of a partner’s heart rate in a social-dilemma game.',
+      },
+      {
+        authors: 'Behrens et al.',
+        year: 2020,
+        title: 'Physiological synchrony is associated with cooperative success in real-life interactions',
+        venue: 'Scientific Reports',
+        href: 'https://doi.org/10.1038/s41598-020-76539-8',
+        relevance: 'Measured cardiac and electrodermal synchrony during face-to-face Prisoner’s Dilemma play.',
+      },
+      {
+        authors: 'Jahng et al.',
+        year: 2017,
+        title: 'Neural dynamics of two players when using nonverbal cues to gauge intentions to cooperate during the Prisoner’s Dilemma Game',
+        venue: 'NeuroImage',
+        href: 'https://doi.org/10.1016/j.neuroimage.2017.06.024',
+        relevance: 'Hyperscanning evidence for nonverbal cue use during iterated dyadic decisions.',
+      },
+    ],
     expressionsA: ['neutral', 'neutral', 'surprise', 'neutral', 'happiness'],
     expressionsB: ['neutral', 'neutral', 'surprise', 'neutral', 'happiness'],
   },
   {
     id: 'concealed',
-    title: 'Concealed Card',
+    title: 'Concealed Information Test',
     summary: 'A recognizes one secret card; B tries to detect which card A knows.',
     logic: 'Concealed recognition: only one candidate is meaningful to A, while B searches for a card-specific cardiac change.',
     measures: 'Detection accuracy, response time, probe-related cardiac change, and concealment success.',
@@ -65,12 +127,38 @@ export const scenarios: ScenarioDefinition[] = [
     speechBCompete: ['I do not know the card.', 'I search for your reaction.', 'Did the pulse change?', 'I choose 4♦.', 'Detection is scored.'],
     cooperate: 'Both players score when B identifies the remembered card.',
     compete: 'A scores by concealing it; B scores by detecting it.',
+    publications: [
+      {
+        authors: 'klein Selle et al.',
+        year: 2019,
+        title: 'Hide or Seek? Physiological Responses Reflect Both the Decision and the Attempt to Conceal Information',
+        venue: 'Psychological Science',
+        href: 'https://doi.org/10.1177/0956797619864598',
+        relevance: 'Separates anticipatory concealment decisions from physiological responses during concealment.',
+      },
+      {
+        authors: 'Meijer et al.',
+        year: 2014,
+        title: 'Memory detection with the Concealed Information Test: A meta-analysis of skin conductance, respiration, heart rate, and P300 data',
+        venue: 'Psychophysiology',
+        href: 'https://doi.org/10.1111/psyp.12239',
+        relevance: 'Quantifies the evidence base for heart-rate and other psychophysiological CIT effects.',
+      },
+      {
+        authors: 'Zaitsu',
+        year: 2016,
+        title: 'External validity of Concealed Information Test experiment: Comparison of respiration, skin conductance, and heart rate between experimental and field card tests',
+        venue: 'Psychophysiology',
+        href: 'https://doi.org/10.1111/psyp.12650',
+        relevance: 'Especially relevant validation using card tests and heart-rate deceleration.',
+      },
+    ],
     expressionsA: ['neutral', 'neutral', 'fear', 'neutral', 'sadness'],
     expressionsB: ['neutral', 'neutral', 'surprise', 'neutral', 'happiness'],
   },
   {
     id: 'ultimatum',
-    title: 'Offer / Response',
+    title: 'Ultimatum Game',
     summary: 'A divides ten tokens; B accepts the split or rejects it for both players.',
     logic: 'Sequential bargaining: A chooses a split and B decides whether that split is implemented.',
     measures: 'Offer size, acceptance, costly rejection, response time, payoff, and cardiac coupling.',
@@ -81,6 +169,32 @@ export const scenarios: ScenarioDefinition[] = [
     speechBCompete: ['I wait for the offer.', 'This split favors A.', 'I can see your pulse.', 'I choose REJECT.', 'We both receive zero.'],
     cooperate: 'A balanced accepted offer benefits both players.',
     compete: 'A can demand more, while B can punish the offer by rejecting it.',
+    publications: [
+      {
+        authors: 'Osumi & Ohira',
+        year: 2009,
+        title: 'Cardiac responses predict decisions: An investigation of the relation between orienting response and decisions in the ultimatum game',
+        venue: 'International Journal of Psychophysiology',
+        href: 'https://doi.org/10.1016/j.ijpsycho.2009.07.007',
+        relevance: 'Links phasic cardiac deceleration to offers that responders subsequently reject.',
+      },
+      {
+        authors: 'Osumi & Ohira',
+        year: 2016,
+        title: 'Heart-rate deceleration predicting the determination of costly punishment',
+        venue: 'International Journal of Psychophysiology',
+        href: 'https://doi.org/10.1016/j.ijpsycho.2016.09.017',
+        relevance: 'Qualifies cardiac deceleration as a marker of effort or conflict in costly punishment.',
+      },
+      {
+        authors: 'Dulleck, Schaffner & Torgler',
+        year: 2014,
+        title: 'Heartbeat and Economic Decisions: Observing Mental Stress among Proposers and Responders in the Ultimatum Bargaining Game',
+        venue: 'PLOS ONE',
+        href: 'https://doi.org/10.1371/journal.pone.0108218',
+        relevance: 'Records cardiovascular dynamics from both proposer and responder roles.',
+      },
+    ],
     expressionsA: ['neutral', 'neutral', 'fear', 'neutral', 'happiness'],
     expressionsB: ['neutral', 'surprise', 'surprise', 'anger', 'happiness'],
   },

@@ -12,7 +12,7 @@
 
 * { box-sizing: border-box; }
 
-html { background: transparent; scroll-behavior: smooth; overflow-x: hidden; }
+html { background: var(--background); scroll-behavior: smooth; overflow-x: hidden; }
 
 body {
   margin: 0;
@@ -20,7 +20,7 @@ body {
   min-height: 100vh;
   min-height: 100dvh;
   overflow-x: hidden;
-  background: transparent;
+  background: var(--background);
   color: var(--ink);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -40,6 +40,10 @@ button, a { -webkit-tap-highlight-color: transparent; touch-action: manipulation
   min-height: 100dvh;
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
+  background:
+    radial-gradient(circle at 16% 4%, rgba(31, 91, 88, .16), transparent 34%),
+    radial-gradient(circle at 90% 80%, rgba(81, 36, 57, .12), transparent 38%),
+    var(--background);
 }
 
 .ambient-grid {
@@ -1317,6 +1321,17 @@ output { font-variant-numeric: tabular-nums; }
 .scenario-mode-prose b { color: var(--cyan); font-size: 8px; letter-spacing: .03em; }
 .scenario-summary-box > small { display: flex; align-items: center; gap: 7px; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.065); color: #687277; font-size: 8px; line-height: 1.4; }
 .scenario-summary-box > small i { flex: 0 0 auto; width: 11px; height: 8px; border: 2px solid #ff3b53; border-radius: 2px; box-shadow: 0 0 8px rgba(255,47,73,.75); animation: edgeHeartbeat .82s cubic-bezier(.17,.67,.2,1) infinite; }
+.scenario-publications { padding: 17px 18px 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: #0a0d12; }
+.scenario-publications > header { display: flex; align-items: baseline; justify-content: space-between; gap: 18px; margin-bottom: 12px; }
+.scenario-publications > header span { color: var(--cyan); font: 850 7px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .13em; text-transform: uppercase; }
+.scenario-publications h2 { margin: 0; color: #dce2df; font-family: Georgia, 'Times New Roman', serif; font-size: 16px; font-weight: 400; letter-spacing: -.02em; }
+.scenario-publications > div { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.scenario-publications a { position: relative; display: grid; align-content: start; min-width: 0; min-height: 124px; gap: 6px; padding: 13px 28px 13px 13px; border: 1px solid rgba(255,255,255,.075); border-radius: 10px; background: rgba(255,255,255,.018); transition: border-color .18s ease, background .18s ease, transform .18s ease; }
+.scenario-publications a:hover { border-color: rgba(128,241,231,.28); background: rgba(128,241,231,.045); transform: translateY(-2px); }
+.scenario-publications a > span { color: #7e8988; font: 800 7px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .025em; text-transform: uppercase; }
+.scenario-publications a > strong { color: #d2d9d6; font-size: 9px; font-weight: 720; line-height: 1.42; }
+.scenario-publications a > small { color: #77817f; font-size: 8px; line-height: 1.45; }
+.scenario-publications a > i { position: absolute; top: 11px; right: 11px; color: var(--cyan); font-size: 10px; font-style: normal; }
 .scenario-flow { display: flex; flex-wrap: wrap; gap: 8px 0; margin-top: 12px; }
 .scenario-flow span { display: flex; align-items: center; gap: 7px; color: #7e8889; font-size: 8px; font-weight: 740; }
 .scenario-flow span b { display: grid; width: 18px; height: 18px; place-items: center; border: 1px solid rgba(128,241,231,.19); border-radius: 50%; color: var(--cyan); font: 800 6px ui-monospace, SFMono-Regular, Consolas, monospace; }
@@ -1346,6 +1361,9 @@ output { font-variant-numeric: tabular-nums; }
   .sequence-speech.player-b { right: 8px; bottom: 70px; }
   .scenario-mode-row { grid-template-columns: 1fr; gap: 8px; }
   .scenario-summary-footer { align-items: flex-start; flex-direction: column; }
+  .scenario-publications > header { align-items: flex-start; flex-direction: column; gap: 3px; }
+  .scenario-publications > div { grid-template-columns: 1fr; }
+  .scenario-publications a { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

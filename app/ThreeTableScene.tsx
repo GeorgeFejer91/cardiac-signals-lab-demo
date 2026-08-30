@@ -29,8 +29,8 @@ type MinimalAvatar = {
 };
 
 const cardLabels: Record<ScenarioId, { private: string; a: string; aCompete: string; b: string; bCompete: string }> = {
-  signal: { private: 'TARGET\nSUN', a: 'SUN', aCompete: 'MOON', b: 'SUN', bCompete: 'SUN' },
-  dilemma: { private: 'PRIVATE', a: 'SHARE', aCompete: 'KEEP', b: 'SHARE', bCompete: 'SHARE' },
+  signal: { private: 'TARGET\nA', a: 'A', aCompete: 'B', b: 'A', bCompete: 'A' },
+  dilemma: { private: 'PRIVATE', a: 'COOP', aCompete: 'DEFECT', b: 'COOP', bCompete: 'COOP' },
   concealed: { private: 'SECRET\n4♦', a: '4♦', aCompete: '4♦', b: '4♦', bCompete: '4♦' },
   ultimatum: { private: '10\nTOKENS', a: 'B7 / A3', aCompete: 'B3 / A7', b: 'ACCEPT', bCompete: 'REJECT' },
 };

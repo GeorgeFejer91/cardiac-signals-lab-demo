@@ -4,18 +4,18 @@ This is a static, browser-only demonstration of proposed mixed-reality social ca
 
 **Live demo:** https://georgefejer91.github.io/cardiac-signals-lab-demo/
 
-The interface uses a transparent, passthrough-first canvas: only physical cards and translucent research controls are rendered, so the task can sit over a mixed-reality camera or WebXR passthrough layer without a synthetic room or tabletop. The ordinary GitHub Pages preview shows the same transparent composition in a standard browser.
+The report-facing GitHub Pages menu uses a dark, high-contrast background. The 3D scene itself remains deliberately sparse so its cards and avatars can later be transferred to a passthrough mixed-reality implementation without requiring a synthetic room.
 
 It automatically switches to a touch-optimized phone layout on narrow screens. It uses device-safe viewport sizing, notch and home-indicator safe areas, stacked task panels, and touch targets of at least 44 pixels. Both complete game sequences are tested at a 390 × 844 smartphone viewport as well as on desktop.
 
 ## Minimal 3D scenario accordion
 
-The one-page landing menu contains four collapsed game choices, each with a small card widget identifying its interaction. Selecting one expands exactly two stacked panels: a minimalist WebGL round preview and a short prose summary of the game, its logic, behavioral measures, and incentive manipulation.
+The one-page landing menu contains four collapsed game choices, each with a small card widget identifying its interaction. Selecting one expands three stacked panels: a minimalist WebGL round preview, a short prose summary of the game, and a compact evidence panel with three directly linked publications.
 
-- **Hidden Target:** an informed sender plays a Sun/Moon signal and an uninformed receiver selects the target.
-- **Share / Keep:** both players commit privately and reveal together under cooperative or mixed-motive payoffs.
-- **Concealed Card:** candidate playing cards are probed while the informed player's cardiac cue is visible.
-- **Offer / Response:** a proposer places a split card and the responder answers with Accept or Reject.
+- **Joint Discrimination Task:** an informed sender plays an A/B suggestion and a less-informed receiver selects the alternative closest to the target.
+- **Iterated Prisoner’s Dilemma:** both players commit to Cooperate or Defect and reveal together over repeated rounds.
+- **Concealed Information Test:** candidate playing cards are probed while the informed player's cardiac cue is visible.
+- **Ultimatum Game:** a proposer places a split card and the responder answers with Accept or Reject.
 
 The dark WebGL panel restores the across-the-table composition: a rectangular shared table, required cards, and two Social Threat Lab-style avatar busts on opposing sides. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and its canonical cubic-Bézier facial-expression geometry. The SVG-compatible features are tessellated directly onto the orb surface and continuously morph between phase-specific emotions. Short speech bubbles perform the current interaction, while a compact phase indicator identifies the current step.
 
@@ -62,7 +62,7 @@ All partner behavior and physiology are simulated. The demo records, stores, and
 ## Sources
 
 - Pulford BD, Mangiarulo M, Colman AM. [Confidence signalling aids deception in strategic interactions](https://doi.org/10.1038/s41598-025-00279-w). *Scientific Reports*. 2025.
-- Pulford BD, Colman AM, Buabang EK, Krockow EM. [The persuasive power of knowledge: Testing the confidence heuristic](https://doi.org/10.1037/gdn0000090). *Journal of Experimental Psychology: General*. 2018.
+- Pulford BD, Colman AM, Buabang EK, Krockow EM. [The persuasive power of knowledge: Testing the confidence heuristic](https://doi.org/10.1037/xge0000471). *Journal of Experimental Psychology: General*. 2018.
 - Bahrami B, et al. [Optimally interacting minds](https://doi.org/10.1126/science.1185718). *Science*. 2010.
 - Klein Selle N, Verschuere B, Kindt M, Meijer EH, Ben-Shakhar G. [Hide or Seek? Physiological Responses Reflect Both the Decision and the Attempt to Conceal Information](https://doi.org/10.1177/0956797619864598). *Psychological Science*. 2019.
 - Meijer EH, Klein Selle N, Elber L, Ben-Shakhar G. [Memory detection with the Concealed Information Test: A meta-analysis of skin conductance, respiration, heart rate, and P300 data](https://doi.org/10.1111/psyp.12239). *Psychophysiology*. 2014.
