@@ -55,16 +55,6 @@ export function probeBpm(
   return incentive === 'opposed' ? 65 : 72;
 }
 
-export function brierScore(choice: CardId, confidencePercent: number, target: CardId): number {
-  const p = Math.max(0.25, Math.min(0.97, confidencePercent / 100));
-  const remainder = (1 - p) / 3;
-  return informationCards.reduce((score, card) => {
-    const predicted = card.id === choice ? p : remainder;
-    const observed = card.id === target ? 1 : 0;
-    return score + (predicted - observed) ** 2;
-  }, 0);
-}
-
 export function mean(values: number[]): number {
   return values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : 0;
 }

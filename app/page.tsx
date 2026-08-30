@@ -1,9 +1,9 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import ExperimentMiniatures from './ExperimentMiniatures';
 import HeartMonitor, { cardiacCueStrength, type CardiacDisplayMode } from './HeartMonitor';
 import {
-  brierScore,
   concealedRounds,
   informationCards,
   jointAgentMove,
@@ -190,8 +190,6 @@ type JointResult = {
   correct: Choice;
   advice: Choice | 'PASS';
   strategy: 'truth' | 'bluff' | 'withhold';
-  initialConfidence: number;
-  finalConfidence: number;
   points: number;
 };
 
@@ -244,8 +242,6 @@ function JointGame({ onHome }: { onHome: () => void }) {
   const [roundIndex, setRoundIndex] = useState(0);
   const [initialChoice, setInitialChoice] = useState<Choice | null>(null);
   const [finalChoice, setFinalChoice] = useState<Choice | null>(null);
-  const [initialConfidence, setInitialConfidence] = useState(65);
-  const [finalConfidence, setFinalConfidence] = useState(65);
   const [cueMode, setCueMode] = useState<CardiacDisplayMode>('heart');
   const [results, setResults] = useState<JointResult[]>([]);
 
@@ -263,8 +259,6 @@ function JointGame({ onHome }: { onHome: () => void }) {
     setResults([]);
     setInitialChoice(null);
     setFinalChoice(null);
-    setInitialConfidence(65);
-    setFinalConfidence(65);
     setPhase('initial');
   };
 
@@ -277,8 +271,6 @@ function JointGame({ onHome }: { onHome: () => void }) {
       correct: round.correct,
       advice: move.advice,
       strategy: move.strategy,
-      initialConfidence,
-      finalConfidence,
       points,
     }]);
     setPhase('result');
@@ -292,13 +284,11 @@ function JointGame({ onHome }: { onHome: () => void }) {
     setRoundIndex((index) => index + 1);
     setInitialChoice(null);
     setFinalChoice(null);
-    setInitialConfidence(65);
-    setFinalConfidence(65);
     setPhase('initial');
   };
 
   const shownBpm = phase === 'thinking' || phase === 'advice' || phase === 'result' ? move.bpm : 74;
-  const jointCueStrength = cardiacCueStrength(shownBpm, access, 'confidence');
+  const jointCueStrength = cardiacCueStrength(shownBpm, access, 'decision');
   const displayedChoice = phase === 'initial'
     ? initialChoice
     : phase === 'advice'
@@ -317,21 +307,21 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <h1>You are Player B. Make two private judgments.</h1>
             <p className="lede">You and Player A see the same candidates but different target cards. Your target is deliberately ambiguous; Player A sees a clearer target and later sends one discrete A, B, or Pass selection.</p>
             <div className="sequence-strip" aria-label="Task sequence">
-              <span><b>1</b> Private choice + confidence</span>
+              <span><b>1</b> Private initial choice</span>
               <i>→</i>
               <span><b>2</b> Player A selection + cardiac cue</span>
               <i>→</i>
               <span><b>3</b> Private final response</span>
             </div>
             <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} game="joint" />
-            <p className="participant-clarifier"><b>Who sees your confidence?</b> Only the research system. Player A never sees either slider value or your private response during the trial.</p>
+            <p className="participant-clarifier"><b>No confidence report.</b> The only public information is Player A&apos;s selected card and, when enabled, their cardiac-state cue.</p>
             <button className="primary-action" type="button" onClick={start} data-testid="start-joint">Start four-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Player A · simulated confidence cue" note="Choose an animated heart or a glow that will appear on Player A’s selected card." displayMode={cueMode} onDisplayModeChange={setCueMode} cueMeaning="confidence" />
+            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Player A · simulated cardiac-state cue" note="Choose an animated heart or a glow that will appear on Player A’s selected card." displayMode={cueMode} onDisplayModeChange={setCueMode} cueMeaning="decision" />
             <div className="paper-anchor">
               <span>Published anchor</span>
-              <p>In Pulford et al., dyads discussed A/B face to face, then privately wrote their answer and confidence. The numeric rating was not shown to the partner. This proposed nonverbal extension replaces discussion with an A/B/Pass selection, adds a private pre-signal response, and renders Player A&apos;s cardiac state as a public heart or card-edge confidence cue.</p>
+              <p>In Pulford et al., dyads discussed A/B face to face and later recorded private judgments. This proposed nonverbal extension replaces discussion with an A/B/Pass card, adds a private pre-signal choice, and renders Player A&apos;s cardiac activity as a public heart or card-edge cue.</p>
               <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Open publication ↗</a>
             </div>
           </aside>
@@ -400,11 +390,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
 
           {phase === 'initial' ? (
             <div className="decision-dock">
-              <div><span>Stage 1 · Private</span><strong>Choose A or B, then rate confidence</strong></div>
-              <label className="private-rating">
-                Confidence <small>not shown to Player A</small>
-                <span><input type="range" min="50" max="100" value={initialConfidence} onChange={(event) => setInitialConfidence(Number(event.target.value))} /><output>{initialConfidence}%</output></span>
-              </label>
+              <div><span>Stage 1 · Private</span><strong>Choose A or B</strong></div>
               <button className="primary-action small" type="button" disabled={!initialChoice} onClick={() => setPhase('thinking')}>Lock {initialChoice ?? 'choice'} <span>→</span></button>
             </div>
           ) : null}
@@ -413,11 +399,11 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <HeartMonitor
               bpm={shownBpm}
               access={access}
-              label="Player A · public confidence cue"
+              label="Player A · public cardiac-state cue"
               note={accessCopy[access]}
               displayMode={cueMode}
               onDisplayModeChange={setCueMode}
-              cueMeaning="confidence"
+              cueMeaning="decision"
             />
           ) : null}
 
@@ -430,13 +416,9 @@ function JointGame({ onHome }: { onHome: () => void }) {
               <div className="agent-advice">
                 <span>Player A selected</span>
                 <strong>{move.advice === 'PASS' ? 'Pass · no selection' : move.advice}</strong>
-                <small>The selected card and its stylized cardiac-confidence cue are visible. Now choose your own final answer.</small>
+                <small>The selected card and its stylized cardiac-state cue are visible. Now choose your own final answer.</small>
               </div>
               <div className="final-controls">
-                <label>
-                  Final confidence <small>private · not shown to Player A</small>
-                  <span><input type="range" min="50" max="100" value={finalConfidence} onChange={(event) => setFinalConfidence(Number(event.target.value))} /><output>{finalConfidence}%</output></span>
-                </label>
                 <button className="primary-action small" type="button" disabled={!finalChoice} onClick={submitFinal}>Submit final {finalChoice ?? 'choice'} <span>→</span></button>
               </div>
             </div>
@@ -457,8 +439,8 @@ function JointGame({ onHome }: { onHome: () => void }) {
         <ParticipantSidebar
           you="Player B · less-informed judge"
           other="Player A sees a more diagnostic target card."
-          receive={`An A, B, or Pass selection${access === 'hidden' ? '; the cardiac cue is hidden' : ' plus a heart or card-edge confidence cue'}.`}
-          privateItems={['Your first choice', 'Your final choice', 'Both numeric confidence ratings']}
+          receive={`An A, B, or Pass selection${access === 'hidden' ? '; the cardiac cue is hidden' : ' plus a heart or card-edge cardiac-state cue'}.`}
+          privateItems={['Your first choice', 'Your final choice', 'Your response times']}
           incentive={incentive}
           game="joint"
         />
@@ -471,9 +453,6 @@ type ConcealedResult = {
   prior: CardId;
   final: CardId;
   target: CardId;
-  priorConfidence: number;
-  finalConfidence: number;
-  scoreGain: number;
   points: number;
 };
 
@@ -540,9 +519,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
   const [access, setAccess] = useState<HeartAccess>('live');
   const [roundIndex, setRoundIndex] = useState(0);
   const [priorChoice, setPriorChoice] = useState<CardId | null>(null);
-  const [priorConfidence, setPriorConfidence] = useState(35);
   const [finalChoice, setFinalChoice] = useState<CardId | null>(null);
-  const [finalConfidence, setFinalConfidence] = useState(55);
   const [cueMode, setCueMode] = useState<CardiacDisplayMode>('heart');
   const [probeIndex, setProbeIndex] = useState(0);
   const [results, setResults] = useState<ConcealedResult[]>([]);
@@ -571,8 +548,6 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
     setResults([]);
     setPriorChoice(null);
     setFinalChoice(null);
-    setPriorConfidence(35);
-    setFinalConfidence(55);
     setProbeIndex(0);
     setPhase('prior');
   };
@@ -585,15 +560,10 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
 
   const submitFinal = () => {
     if (!priorChoice || !finalChoice) return;
-    const priorScore = brierScore(priorChoice, priorConfidence, round.target);
-    const finalScore = brierScore(finalChoice, finalConfidence, round.target);
     setResults((current) => [...current, {
       prior: priorChoice,
       final: finalChoice,
       target: round.target,
-      priorConfidence,
-      finalConfidence,
-      scoreGain: priorScore - finalScore,
       points: finalChoice === round.target ? 40 : 0,
     }]);
     setPhase('result');
@@ -607,8 +577,6 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
     setRoundIndex((index) => index + 1);
     setPriorChoice(null);
     setFinalChoice(null);
-    setPriorConfidence(35);
-    setFinalConfidence(55);
     setProbeIndex(0);
     setPhase('prior');
   };
@@ -630,7 +598,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
               <span><b>3</b> Posterior belief</span>
             </div>
             <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} game="concealed" />
-            <p className="participant-clarifier"><b>Who sees your confidence?</b> Only the research system. Player 1 never sees your guesses or either confidence value during the trial.</p>
+            <p className="participant-clarifier"><b>No confidence report.</b> Your initial and final card choices remain private. Only the cardiac-state cue is publicly visible.</p>
             <button className="primary-action warm" type="button" onClick={start} data-testid="start-concealed">Start three-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
@@ -706,10 +674,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
 
           {phase === 'prior' ? (
             <div className="belief-dock">
-              <label>
-                Initial confidence for {priorChoice ?? 'your chosen card'} <small>private · not shown to Player 1</small>
-                <span><input type="range" min="25" max="80" value={priorConfidence} onChange={(event) => setPriorConfidence(Number(event.target.value))} /><output>{priorConfidence}%</output></span>
-              </label>
+              <div><span>Stage 1 · Private</span><strong>Select your initial candidate</strong></div>
               <button className="primary-action small warm" type="button" disabled={!priorChoice} onClick={startProbes}>Lock prior and begin <span>→</span></button>
             </div>
           ) : null}
@@ -757,11 +722,8 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
                 })}
               </div>
               <div className="belief-dock">
-                <label>
-                  Final confidence for {finalChoice ?? 'your chosen card'} <small>private · not shown to Player 1</small>
-                  <span><input type="range" min="25" max="97" value={finalConfidence} onChange={(event) => setFinalConfidence(Number(event.target.value))} /><output>{finalConfidence}%</output></span>
-                </label>
-                <button className="primary-action small warm" type="button" disabled={!finalChoice} onClick={submitFinal}>Submit posterior <span>→</span></button>
+                <div><span>Stage 3 · Private</span><strong>Select your final candidate</strong></div>
+                <button className="primary-action small warm" type="button" disabled={!finalChoice} onClick={submitFinal}>Submit final choice <span>→</span></button>
               </div>
             </div>
           ) : null}
@@ -782,7 +744,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
           you="Observer · identify the private card"
           other="Player 1 selected one of the four cards before the trial."
           receive={access === 'hidden' ? 'The four timed card probes; the cardiac cue is hidden.' : 'The four timed card probes plus a heart or card-edge cardiac-change cue.'}
-          privateItems={['Your initial card guess', 'Your final card guess', 'Both numeric confidence ratings']}
+          privateItems={['Your initial card guess', 'Your final card guess', 'Your response times']}
           incentive={incentive}
           game="concealed"
         />
@@ -804,7 +766,9 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       <section className="menu-content" aria-labelledby="menu-title">
         <p className="eyebrow">Mixed-reality task preview</p>
         <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">Choose a participant role and play the complete trial sequence. Physical cards and a restrained HUD float on a transparent passthrough canvas. Cardiac activity is translated into an animated heart or card-edge glow—never shown as raw ECG or BPM.</p>
+        <p className="lede">See two participants seated across the same table, watch each card move through the decision sequence, then enter the playable trials. Cardiac activity appears as an animated heart or beat-synchronous card edge—never as raw ECG, confidence, or a lie detector.</p>
+
+        <ExperimentMiniatures />
 
         <div className="game-grid" aria-label="Choose a game">
           <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
@@ -832,18 +796,18 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
         <section className="design-matrix" aria-labelledby="matrix-title">
           <div>
             <p className="eyebrow">Shared experimental spine</p>
-            <h2 id="matrix-title">Two games, the same causal question</h2>
+            <h2 id="matrix-title">Four previews, the same causal question</h2>
           </div>
           <div className="matrix-row">
             <span><b>Incentives</b>Cooperative ↔ Mixed-motive / competitive</span>
             <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · heart or card glow</span>
-            <span><b>Behavior</b>Pre-signal ↔ Post-signal belief</span>
+            <span><b>Behavior</b>Choice · revision · trust · payoff · timing</span>
           </div>
         </section>
       </section>
 
       <footer className="menu-footer">
-        <span>2D preview of spatial card panels · simulated partner · no data recorded <b className="phone-footer-note">· phone mode activates automatically</b></span>
+        <span>Animated MR table miniatures · simulated physiology · no data recorded <b className="phone-footer-note">· phone mode activates automatically</b></span>
         <span className="source-links">
           <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Pulford 2025</a>
           <a href="https://doi.org/10.1177/0956797619864598" target="_blank" rel="noreferrer">Klein Selle 2019</a>

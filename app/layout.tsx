@@ -2,9 +2,21 @@ import type { Metadata, Viewport } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Cardiac Signals Lab — Interactive Paradigms',
+  metadataBase: new URL('https://georgefejer91.github.io/cardiac-signals-lab-demo/'),
+  title: 'Cardiac Signals Lab — MR Tabletop Previews',
   description:
-    'Playable 2D simulations of two mixed-reality social decision tasks using visible cardiac cues.',
+    'Animated participant-facing tabletop previews of mixed-reality card games using visible cardiac-state cues.',
+  openGraph: {
+    title: 'Cardiac Signals Lab',
+    description: 'Mixed-reality social card games with visible cardiac-state cues.',
+    images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Cardiac Signals Lab',
+    description: 'Mixed-reality social card games with visible cardiac-state cues.',
+    images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
+  },
 };
 
 export const viewport: Viewport = {

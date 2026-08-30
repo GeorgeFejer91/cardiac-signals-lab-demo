@@ -5,7 +5,7 @@ import type { HeartAccess } from './gameData';
 import { nearestNeurokitProfile } from './neurokitProfiles';
 
 export type CardiacDisplayMode = 'heart' | 'glow';
-export type CardiacCueMeaning = 'confidence' | 'recognition';
+export type CardiacCueMeaning = 'decision' | 'recognition';
 
 type HeartMonitorProps = {
   bpm: number;
@@ -29,7 +29,7 @@ function clamp(value: number, minimum: number, maximum: number) {
 
 export function cardiacCueStrength(bpm: number, access: HeartAccess, cueMeaning: CardiacCueMeaning) {
   if (access === 'hidden') return 0;
-  if (cueMeaning === 'confidence') return clamp(Math.round(42 + (bpm - 70) * 3.1), 18, 96);
+  if (cueMeaning === 'decision') return clamp(Math.round(42 + (bpm - 70) * 3.1), 18, 96);
   return clamp(Math.round(32 + Math.abs(bpm - 78) * 6.2), 18, 96);
 }
 
@@ -46,7 +46,7 @@ export default function HeartMonitor({
   const profile = useMemo(() => nearestNeurokitProfile(bpm || 72), [bpm]);
   const cueStrength = cardiacCueStrength(bpm, access, cueMeaning);
   const cueBand = cueStrength < 40 ? 'subtle' : cueStrength < 70 ? 'moderate' : 'strong';
-  const cueLabel = cueMeaning === 'confidence' ? 'confidence cue' : 'recognition-change cue';
+  const cueLabel = cueMeaning === 'decision' ? 'cardiac-state cue' : 'recognition-change cue';
   const cueStyle = {
     '--beat-duration': `${profile.meanRrMs / 1000}s`,
     '--cue-strength': `${cueStrength}%`,
@@ -61,7 +61,7 @@ export default function HeartMonitor({
         <span className="monitor-mode">{access === 'live' ? 'CONTINGENT' : access === 'replay' ? 'REPLAY' : 'HIDDEN'}</span>
       </div>
 
-      <div className="monitor-view-switch two" role="group" aria-label="Cardiac confidence display style">
+      <div className="monitor-view-switch two" role="group" aria-label="Cardiac display style">
         {displayModes.map((mode) => (
           <button
             className={displayMode === mode.id ? 'selected' : ''}
@@ -87,9 +87,9 @@ export default function HeartMonitor({
           </div>
         )}
         <div className="confidence-cue-copy">
-          <small>{cueMeaning === 'confidence' ? 'Player A’s public confidence display' : 'Player 1’s public cardiac-change display'}</small>
+          <small>{cueMeaning === 'decision' ? 'Player A’s public cardiac-state display' : 'Player 1’s public cardiac-change display'}</small>
           <strong>{access === 'hidden' ? 'Cue hidden' : `${cueBand} ${cueLabel}`}</strong>
-          <span>{displayMode === 'heart' ? 'Communicated through beat rhythm and animation intensity.' : 'Communicated as light on the active card edge.'}</span>
+          <span>{displayMode === 'heart' ? 'Shown through beat rhythm and animation intensity.' : 'Shown as beat-synchronous light on the active card edge.'}</span>
         </div>
         <div className="cue-strength-meter" aria-label={access === 'hidden' ? 'Cardiac cue hidden' : `${cueBand} ${cueLabel}`}>
           <i />
