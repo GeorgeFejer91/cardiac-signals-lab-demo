@@ -10,6 +10,7 @@ const child = spawn(process.execPath, [nextCli, 'build'], {
   env: {
     ...process.env,
     STATIC_EXPORT: '1',
+    PAGES_BASE_PATH: process.env.PAGES_BASE_PATH ?? '/cardiac-signals-lab-demo',
   },
   stdio: 'inherit',
 });
