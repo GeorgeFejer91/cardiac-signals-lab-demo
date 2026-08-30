@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import HeartMonitor from './HeartMonitor';
+import HeartMonitor, { cardiacCueStrength, type CardiacDisplayMode } from './HeartMonitor';
 import {
   brierScore,
   concealedRounds,
@@ -19,9 +19,9 @@ type ActiveGame = 'menu' | 'joint' | 'concealed';
 type GamePhase = 'intro' | 'initial' | 'thinking' | 'advice' | 'prior' | 'probes' | 'final' | 'result' | 'summary';
 
 const accessCopy: Record<HeartAccess, string> = {
-  live: 'The trace is contingent on the other player and this trial.',
-  replay: 'A plausible recording is shown, but it is not contingent on this trial.',
-  hidden: 'The display is present but carries no cardiac information.',
+  live: 'The stylized cue is contingent on the other player and this trial.',
+  replay: 'A plausible stylized cue is shown, but it is not contingent on this trial.',
+  hidden: 'The cue location is present but carries no cardiac information.',
 };
 
 function LabMark() {
@@ -179,7 +179,7 @@ function ParticipantSidebar({
         ))}
         </ul>
       </div>
-      <p className="boundary-note"><b>Important.</b> The cardiac display is an experimental cue, not a truth or emotion detector.</p>
+      <p className="boundary-note"><b>Important.</b> The stylized cardiac cue is not a literal readout of confidence, truth, recognition, or emotion.</p>
     </aside>
   );
 }
@@ -202,6 +202,7 @@ function ShapePanel({
   onSelect,
   disabled,
   target = false,
+  cueStrength = 0,
 }: {
   label: string;
   size: number;
@@ -209,6 +210,7 @@ function ShapePanel({
   onSelect?: () => void;
   disabled?: boolean;
   target?: boolean;
+  cueStrength?: number;
 }) {
   const content = (
     <>
@@ -223,11 +225,12 @@ function ShapePanel({
   if (!onSelect) return <div className="shape-panel target-panel">{content}</div>;
   return (
     <button
-      className={selected ? 'shape-panel selectable selected' : 'shape-panel selectable'}
+      className={`${selected ? 'shape-panel selectable selected' : 'shape-panel selectable'}${cueStrength ? ' cardiac-edge-glow' : ''}`}
       type="button"
       onClick={onSelect}
       disabled={disabled}
       aria-pressed={selected}
+      style={{ '--cue-strength': `${cueStrength}%`, '--cue-alpha': `${0.2 + cueStrength / 140}` } as React.CSSProperties}
     >
       {content}
     </button>
@@ -243,6 +246,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
   const [finalChoice, setFinalChoice] = useState<Choice | null>(null);
   const [initialConfidence, setInitialConfidence] = useState(65);
   const [finalConfidence, setFinalConfidence] = useState(65);
+  const [cueMode, setCueMode] = useState<CardiacDisplayMode>('heart');
   const [results, setResults] = useState<JointResult[]>([]);
 
   const round = jointRounds[roundIndex];
@@ -294,6 +298,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
   };
 
   const shownBpm = phase === 'thinking' || phase === 'advice' || phase === 'result' ? move.bpm : 74;
+  const jointCueStrength = cardiacCueStrength(shownBpm, access, 'confidence');
   const displayedChoice = phase === 'initial'
     ? initialChoice
     : phase === 'advice'
@@ -323,10 +328,10 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <button className="primary-action" type="button" onClick={start} data-testid="start-joint">Start four-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Player A · simulated" note="Switch between NeuroKit ECG, pure pulse, Affect Tracker–style activation, and heart-shaped views." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Player A · simulated confidence cue" note="Choose an animated heart or a glow that will appear on Player A’s selected card." displayMode={cueMode} onDisplayModeChange={setCueMode} cueMeaning="confidence" />
             <div className="paper-anchor">
               <span>Published anchor</span>
-              <p>In Pulford et al., dyads discussed A/B face to face, then privately wrote their answer and confidence. The numeric rating was not shown to the partner. This proposed nonverbal extension replaces discussion with an A/B/Pass selection, adds a private pre-signal response, and shows Player A&apos;s assigned cardiac display.</p>
+              <p>In Pulford et al., dyads discussed A/B face to face, then privately wrote their answer and confidence. The numeric rating was not shown to the partner. This proposed nonverbal extension replaces discussion with an A/B/Pass selection, adds a private pre-signal response, and renders Player A&apos;s cardiac state as a public heart or card-edge confidence cue.</p>
               <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Open publication ↗</a>
             </div>
           </aside>
@@ -377,6 +382,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
                 size={round.aSize}
                 selected={displayedChoice === 'A'}
                 disabled={phase === 'thinking' || phase === 'result'}
+                cueStrength={cueMode === 'glow' && (phase === 'advice' || phase === 'result') && move.advice === 'A' ? jointCueStrength : 0}
                 onSelect={() => phase === 'initial' ? setInitialChoice('A') : phase === 'advice' ? setFinalChoice('A') : undefined}
               />
               <ShapePanel label="Your target" size={round.receiverTarget} target />
@@ -385,6 +391,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
                 size={round.bSize}
                 selected={displayedChoice === 'B'}
                 disabled={phase === 'thinking' || phase === 'result'}
+                cueStrength={cueMode === 'glow' && (phase === 'advice' || phase === 'result') && move.advice === 'B' ? jointCueStrength : 0}
                 onSelect={() => phase === 'initial' ? setInitialChoice('B') : phase === 'advice' ? setFinalChoice('B') : undefined}
               />
             </div>
@@ -406,8 +413,11 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <HeartMonitor
               bpm={shownBpm}
               access={access}
-              label="Player A · assigned cardiac panel"
+              label="Player A · public confidence cue"
               note={accessCopy[access]}
+              displayMode={cueMode}
+              onDisplayModeChange={setCueMode}
+              cueMeaning="confidence"
             />
           ) : null}
 
@@ -420,7 +430,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
               <div className="agent-advice">
                 <span>Player A selected</span>
                 <strong>{move.advice === 'PASS' ? 'Pass · no selection' : move.advice}</strong>
-                <small>This discrete selection and the cardiac display are separate cues. Now choose your own final answer.</small>
+                <small>The selected card and its stylized cardiac-confidence cue are visible. Now choose your own final answer.</small>
               </div>
               <div className="final-controls">
                 <label>
@@ -447,7 +457,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
         <ParticipantSidebar
           you="Player B · less-informed judge"
           other="Player A sees a more diagnostic target card."
-          receive={`An A, B, or Pass selection${access === 'hidden' ? '; no cardiac values' : ' plus the assigned cardiac display'}.`}
+          receive={`An A, B, or Pass selection${access === 'hidden' ? '; the cardiac cue is hidden' : ' plus a heart or card-edge confidence cue'}.`}
           privateItems={['Your first choice', 'Your final choice', 'Both numeric confidence ratings']}
           incentive={incentive}
           game="joint"
@@ -490,6 +500,7 @@ function InformationCard({
   active,
   seen,
   disabled,
+  cueStrength = 0,
   onClick,
 }: {
   id: CardId;
@@ -501,14 +512,15 @@ function InformationCard({
   active?: boolean;
   seen?: boolean;
   disabled?: boolean;
+  cueStrength?: number;
   onClick?: () => void;
 }) {
-  const classes = ['information-card', selected ? 'selected' : '', active ? 'active' : '', seen ? 'seen' : ''].filter(Boolean).join(' ');
+  const classes = ['information-card', selected ? 'selected' : '', active ? 'active' : '', seen ? 'seen' : '', cueStrength ? 'cardiac-edge-glow' : ''].filter(Boolean).join(' ');
   return (
     <button
       className={classes}
       type="button"
-      style={{ '--card-color': color } as React.CSSProperties}
+      style={{ '--card-color': color, '--cue-strength': `${cueStrength}%`, '--cue-alpha': `${0.2 + cueStrength / 140}` } as React.CSSProperties}
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
@@ -531,6 +543,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
   const [priorConfidence, setPriorConfidence] = useState(35);
   const [finalChoice, setFinalChoice] = useState<CardId | null>(null);
   const [finalConfidence, setFinalConfidence] = useState(55);
+  const [cueMode, setCueMode] = useState<CardiacDisplayMode>('heart');
   const [probeIndex, setProbeIndex] = useState(0);
   const [results, setResults] = useState<ConcealedResult[]>([]);
 
@@ -608,7 +621,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
           <section className="intro-copy">
             <p className="eyebrow warm">Paradigm 02 · Card recognition</p>
             <h1>You are the observer. Identify Player 1&apos;s private card.</h1>
-            <p className="lede">Player 1 has privately selected one card. First make a private guess, then watch each candidate beside Player 1&apos;s assigned cardiac display, and finally submit an updated guess.</p>
+            <p className="lede">Player 1 has privately selected one card. First make a private guess, then watch each candidate with Player 1&apos;s stylized heart or card-edge cue, and finally submit an updated guess.</p>
             <div className="sequence-strip warm" aria-label="Task sequence">
               <span><b>1</b> Prior belief</span>
               <i>→</i>
@@ -621,7 +634,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
             <button className="primary-action warm" type="button" onClick={start} data-testid="start-concealed">Start three-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Player 1 · simulated" note="The target response is scripted; all four display modes show the same underlying synthetic signal." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Player 1 · simulated cardiac cue" note="Choose an animated heart or a glow that will appear on each card as it is probed." displayMode={cueMode} onDisplayModeChange={setCueMode} cueMeaning="recognition" />
             <div className="paper-anchor warm">
               <span>Published anchor</span>
               <p>Klein Selle et al. studied one instrumented participant—there was no observer guessing the card. Participants selected from six cards, chose conceal or reveal, and then saw a buffer, critical item, controls, and catch item. This proposed dyadic extension adds you as the observer, displays cardiac activity, and measures pre/post belief updating.</p>
@@ -685,6 +698,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
                 active={activeCard === card.id}
                 seen={seenCards.includes(card.id)}
                 disabled={phase === 'probes' || phase === 'result'}
+                cueStrength={cueMode === 'glow' && activeCard === card.id ? cardiacCueStrength(currentBpm, access, 'recognition') : 0}
                 onClick={() => phase === 'prior' ? setPriorChoice(card.id) : phase === 'final' ? setFinalChoice(card.id) : undefined}
               />
             ))}
@@ -716,8 +730,11 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
               <HeartMonitor
                 bpm={currentBpm}
                 access={access}
-                label="Player 1 · assigned cardiac panel"
+                label="Player 1 · public cardiac-change cue"
                 note={currentProbe === 'BUFFER' ? 'Use this interval as a visual baseline.' : accessCopy[access]}
+                displayMode={cueMode}
+                onDisplayModeChange={setCueMode}
+                cueMeaning="recognition"
               />
               <div className="probe-timeline" aria-hidden="true">
                 {probeSequence.map((probe, index) => <i className={index < probeIndex ? 'seen' : index === probeIndex ? 'active' : ''} key={String(probe)} />)}
@@ -728,10 +745,16 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
 
           {phase === 'final' ? (
             <div className="posterior-panel">
-              <div className="observation-row" aria-label="Observed heart rate by card">
-                {informationCards.map((card) => (
-                  <span key={card.id}><b>{card.id}</b><small>{access === 'hidden' ? 'hidden' : probeBpm(card.id, round.target, round.replayDip, incentive, access) + ' bpm'}</small></span>
-                ))}
+              <div className="observation-row cue-memory" aria-label="Remembered stylized cardiac cue by card">
+                {informationCards.map((card) => {
+                  const strength = cardiacCueStrength(probeBpm(card.id, round.target, round.replayDip, incentive, access), access, 'recognition');
+                  const band = strength < 40 ? 'subtle' : strength < 70 ? 'moderate' : 'strong';
+                  return (
+                    <span key={card.id} style={{ '--cue-strength': `${strength}%`, '--cue-alpha': `${0.2 + strength / 140}` } as React.CSSProperties}>
+                      <b>{card.id}</b><i aria-hidden="true" /><small>{access === 'hidden' ? 'hidden' : `${band} cue`}</small>
+                    </span>
+                  );
+                })}
               </div>
               <div className="belief-dock">
                 <label>
@@ -758,7 +781,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
         <ParticipantSidebar
           you="Observer · identify the private card"
           other="Player 1 selected one of the four cards before the trial."
-          receive={access === 'hidden' ? 'The four timed card probes; cardiac values are hidden.' : 'The four timed card probes plus Player 1’s assigned cardiac display.'}
+          receive={access === 'hidden' ? 'The four timed card probes; the cardiac cue is hidden.' : 'The four timed card probes plus a heart or card-edge cardiac-change cue.'}
           privateItems={['Your initial card guess', 'Your final card guess', 'Both numeric confidence ratings']}
           incentive={incentive}
           game="concealed"
@@ -781,7 +804,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       <section className="menu-content" aria-labelledby="menu-title">
         <p className="eyebrow">Mixed-reality task preview</p>
         <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">Choose a participant role and play the complete trial sequence. Physical cards and a restrained HUD float on a transparent passthrough canvas. Researcher-only outcomes are hidden during play; the synthetic cardiac display is an experimental cue, not a lie detector.</p>
+        <p className="lede">Choose a participant role and play the complete trial sequence. Physical cards and a restrained HUD float on a transparent passthrough canvas. Cardiac activity is translated into an animated heart or card-edge glow—never shown as raw ECG or BPM.</p>
 
         <div className="game-grid" aria-label="Choose a game">
           <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
@@ -813,7 +836,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
           </div>
           <div className="matrix-row">
             <span><b>Incentives</b>Cooperative ↔ Mixed-motive / competitive</span>
-            <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · 4 views</span>
+            <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · heart or card glow</span>
             <span><b>Behavior</b>Pre-signal ↔ Post-signal belief</span>
           </div>
         </section>

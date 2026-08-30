@@ -485,6 +485,7 @@ button {
 .access-replay .monitor-mode { color: #f3bb72; }
 .access-hidden .monitor-mode { color: #7f8490; }
 .monitor-view-switch { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 5px; margin: 13px 0 10px; }
+.monitor-view-switch.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .monitor-view-switch button { display: flex; align-items: center; justify-content: center; gap: 5px; min-height: 32px; padding: 0 7px; border: 1px solid rgba(255,255,255,.1); border-radius: 8px; background: rgba(255,255,255,.025); color: #7d8590; cursor: pointer; font-size: 8px; font-weight: 800; letter-spacing: .065em; text-transform: uppercase; transition: border-color .18s ease, background .18s ease, color .18s ease; }
 .monitor-view-switch button:hover { border-color: rgba(128,241,231,.3); color: #c8d0d7; }
 .monitor-view-switch button.selected { border-color: rgba(128,241,231,.42); background: rgba(128,241,231,.1); color: var(--cyan); }
@@ -540,6 +541,85 @@ button {
 .access-hidden .pulse-orbit::before { background: #5d6169; box-shadow: none; }
 .access-hidden .affect-orb { filter: grayscale(1); opacity: .5; }
 .monitor-note { margin: 0; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.08); color: #767d87; font-size: 10px; line-height: 1.45; }
+
+.confidence-cue-view {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  align-items: center;
+  gap: 14px 18px;
+  min-height: 164px;
+}
+.stylized-heart-cue,
+.glow-card-preview { position: relative; display: grid; width: 108px; height: 108px; place-items: center; }
+.stylized-heart-cue span {
+  position: relative;
+  z-index: 2;
+  color: #ff6474;
+  font-size: 82px;
+  line-height: 1;
+  filter: drop-shadow(0 0 22px rgba(255,82,103,var(--cue-alpha)));
+  animation: cuePulse var(--beat-duration, .82s) ease-in-out infinite;
+  transform-origin: center;
+}
+.cue-ring { position: absolute; border: 1px solid rgba(255,100,116,var(--cue-alpha)); border-radius: 50%; animation: cueRing var(--beat-duration, .82s) ease-out infinite; }
+.cue-ring.outer { inset: 2px; }
+.cue-ring.inner { inset: 17px; animation-delay: calc(var(--beat-duration, .82s) * -.18); }
+.glow-card-edge {
+  position: relative;
+  display: block;
+  width: 65px;
+  height: 91px;
+  border: 2px solid rgba(255,108,122,var(--cue-alpha));
+  border-radius: 8px;
+  background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.015));
+  box-shadow: 0 0 8px rgba(255,91,111,var(--cue-alpha)), 0 0 34px rgba(255,91,111,var(--cue-alpha)), inset 0 0 18px rgba(255,91,111,.08);
+  animation: edgeCue var(--beat-duration, .82s) ease-in-out infinite;
+}
+.glow-card-edge i { position: absolute; inset: 8px; border: 1px solid rgba(255,255,255,.11); border-radius: 5px; }
+.confidence-cue-copy { display: flex; min-width: 0; flex-direction: column; gap: 4px; }
+.confidence-cue-copy small { color: #747c87; font-size: 8px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.confidence-cue-copy strong { font-size: 18px; text-transform: capitalize; }
+.confidence-cue-copy span { color: #959ca6; font-size: 10px; line-height: 1.45; }
+.cue-strength-meter { grid-column: 1 / -1; height: 4px; overflow: hidden; border-radius: 99px; background: rgba(255,255,255,.07); }
+.cue-strength-meter i { display: block; width: var(--cue-strength); height: 100%; border-radius: inherit; background: #ff6474; box-shadow: 0 0 12px rgba(255,100,116,.6); transition: width .3s ease; }
+.confidence-cue-view > p { grid-column: 1 / -1; margin: 0; color: #6f7680; font-size: 8px; line-height: 1.45; }
+.access-replay .stylized-heart-cue span { color: #f3bb72; }
+.access-replay .cue-ring,
+.access-replay .glow-card-edge { border-color: rgba(243,187,114,var(--cue-alpha)); }
+.access-replay .glow-card-edge { box-shadow: 0 0 8px rgba(243,187,114,var(--cue-alpha)), 0 0 34px rgba(243,187,114,var(--cue-alpha)); }
+.access-replay .cue-strength-meter i { background: #f3bb72; }
+.access-hidden .stylized-heart-cue span { color: #5d6169; filter: none; animation: none; }
+.access-hidden .cue-ring { border-color: rgba(255,255,255,.08); animation: none; }
+.access-hidden .glow-card-edge { border-color: rgba(255,255,255,.1); box-shadow: none; animation: none; }
+
+.cardiac-edge-glow {
+  outline: 2px solid rgba(255,99,116,var(--cue-alpha));
+  outline-offset: 3px;
+  filter: drop-shadow(0 0 18px rgba(255,87,108,var(--cue-alpha)));
+  animation: cardEdgeCue var(--beat-duration, .82s) ease-in-out infinite;
+}
+
+@keyframes cuePulse {
+  0%, 38%, 100% { transform: scale(.94); }
+  10% { transform: scale(var(--cue-scale)); }
+  20% { transform: scale(.98); }
+  28% { transform: scale(calc(var(--cue-scale) - .035)); }
+}
+
+@keyframes cueRing {
+  0%, 25% { opacity: calc(var(--cue-alpha) + .12); transform: scale(.72); }
+  70%, 100% { opacity: 0; transform: scale(1.08); }
+}
+
+@keyframes edgeCue {
+  0%, 42%, 100% { transform: scale(.97); }
+  12%, 26% { transform: scale(var(--cue-scale)); }
+}
+
+@keyframes cardEdgeCue {
+  0%, 42%, 100% { outline-color: rgba(255,99,116,calc(var(--cue-alpha) * .58)); filter: drop-shadow(0 0 10px rgba(255,87,108,calc(var(--cue-alpha) * .58))); }
+  12%, 26% { outline-color: rgba(255,99,116,var(--cue-alpha)); filter: drop-shadow(0 0 25px rgba(255,87,108,var(--cue-alpha))); }
+}
 
 @keyframes heartBeat {
   0%, 32%, 100% { transform: scale(1); }
@@ -887,6 +967,8 @@ output { font-variant-numeric: tabular-nums; }
 .observation-row > span { display: flex; align-items: center; justify-content: space-between; min-height: 42px; padding: 0 12px; border: 1px solid rgba(255,255,255,.09); border-radius: 10px; background: rgba(255,255,255,.025); }
 .observation-row b { font: 750 11px ui-monospace, SFMono-Regular, Consolas, monospace; }
 .observation-row small { color: #858b96; font: 650 9px ui-monospace, SFMono-Regular, Consolas, monospace; }
+.cue-memory > span { display: grid; grid-template-columns: auto 1fr auto; gap: 9px; }
+.cue-memory > span > i { display: block; width: var(--cue-strength); min-width: 5px; max-width: 100%; height: 3px; border-radius: 99px; background: rgba(255,100,116,var(--cue-alpha)); box-shadow: 0 0 9px rgba(255,100,116,var(--cue-alpha)); }
 .target-card-mini { min-width: 100px; min-height: 112px; border: 1px solid rgba(255,142,118,.3); border-radius: 14px; background: rgba(255,142,118,.06); }
 .target-card-mini small { color: #a18883; font-size: 9px; text-transform: uppercase; }
 
@@ -965,5 +1047,5 @@ output { font-variant-numeric: tabular-nums; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .pulse-orbit, .beat-train i, .heart-stage span, .agent-thinking i, .enlarged-probe { animation: none !important; }
+  .pulse-orbit, .beat-train i, .heart-stage span, .stylized-heart-cue span, .cue-ring, .glow-card-edge, .cardiac-edge-glow, .agent-thinking i, .enlarged-probe { animation: none !important; }
 }
