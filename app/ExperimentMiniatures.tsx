@@ -5,6 +5,12 @@ import ThreeTableScene from './ThreeTableScene';
 import { IncentiveMode, ScenarioId, scenarios } from './scenarioCatalog';
 
 function GameWidget({ id }: { id: ScenarioId }) {
+  if (id === 'lemons') {
+    return <span className="game-choice-widget lemons" aria-hidden="true"><i>CAR</i><i>?</i></span>;
+  }
+  if (id === 'truthlie') {
+    return <span className="game-choice-widget truthlie" aria-hidden="true"><i>4</i><i>?</i></span>;
+  }
   if (id === 'concealed') {
     return <span className="game-choice-widget concealed" aria-hidden="true">{['7', 'Q', '4', '9'].map((card) => <i key={card}>{card}</i>)}</span>;
   }
@@ -14,7 +20,7 @@ function GameWidget({ id }: { id: ScenarioId }) {
   if (id === 'ultimatum') {
     return <span className="game-choice-widget ultimatum" aria-hidden="true"><i>7/3</i><i>✓</i></span>;
   }
-  return <span className="game-choice-widget signal" aria-hidden="true"><i>A</i><i>B</i></span>;
+  return <span className="game-choice-widget signal" aria-hidden="true"><i /><i /><b /></span>;
 }
 
 export default function ExperimentMiniatures() {
@@ -31,6 +37,7 @@ export default function ExperimentMiniatures() {
   const select = (id: ScenarioId) => {
     setActiveId((current) => current === id ? null : id);
     setPhase(0);
+    setIncentive('cooperate');
   };
 
   return (
@@ -64,8 +71,8 @@ export default function ExperimentMiniatures() {
                     <button type="button" className={incentive === 'compete' ? 'active compete' : ''} onClick={() => setIncentive('compete')}>Compete</button>
                   </div>
 
-                  <div className="sequence-speech player-a"><span>PLAYER A</span>{speechA[phase]}</div>
-                  <div className="sequence-speech player-b"><span>PLAYER B</span>{speechB[phase]}</div>
+                  <div className="sequence-speech player-a"><span>{scenario.roleA}</span>{speechA[phase]}</div>
+                  <div className="sequence-speech player-b"><span>{scenario.roleB}</span>{speechB[phase]}</div>
 
                   <div className="minimal-phase">
                     <div>{scenario.phases.map((label, index) => <i key={label} className={index === phase ? 'active' : ''} />)}</div>
@@ -76,7 +83,7 @@ export default function ExperimentMiniatures() {
                 <div className="scenario-summary-box">
                   <p><strong>{scenario.summary}</strong> {scenario.logic} The recorded outcomes are {scenario.measures.toLowerCase()}</p>
                   <p className="scenario-mode-prose"><b>{incentive === 'cooperate' ? 'Collaborative mode:' : 'Competitive mode:'}</b> {modeText}</p>
-                  <small><i /> The red card edge follows Player A&apos;s heartbeat timing; it is not labelled as confidence or deception.</small>
+                  <small><i /> {scenario.cueNote}</small>
                 </div>
 
                 <section className="scenario-publications" aria-labelledby={`publications-${scenario.id}`}>

@@ -1280,6 +1280,8 @@ output { font-variant-numeric: tabular-nums; }
 .scenario-mode button.active.compete { border-color: rgba(255,122,101,.27); background: rgba(255,122,101,.07); color: #ff967f; }
 .scenario-accordion-item { border-bottom: 1px solid rgba(255,255,255,.12); }
 .scenario-accordion-trigger { display: grid; width: 100%; grid-template-columns: 62px 1fr 30px; align-items: center; gap: 12px; min-height: 76px; padding: 0 4px; border: 0; background: transparent; color: #cbd1cf; cursor: pointer; text-align: left; }
+.scenario-accordion-trigger:focus { outline: none; }
+.scenario-accordion-trigger:focus-visible { border-radius: 10px; box-shadow: inset 0 0 0 1px rgba(128,241,231,.48); }
 .scenario-accordion-trigger > strong { font-family: Georgia, 'Times New Roman', serif; font-size: 19px; font-weight: 400; letter-spacing: -.025em; }
 .scenario-accordion-trigger > i { color: #6b7679; font-size: 20px; font-style: normal; font-weight: 300; text-align: right; }
 .scenario-accordion-item.open .scenario-accordion-trigger > strong { color: #f0f4f1; }
@@ -1289,9 +1291,17 @@ output { font-variant-numeric: tabular-nums; }
 .game-choice-widget i:first-child { left: 8px; top: 7px; transform: rotate(-8deg); }
 .game-choice-widget i:last-child { right: 8px; top: 7px; transform: rotate(8deg); }
 .game-choice-widget.signal i:first-child { border-color: #ff6478; box-shadow: 0 0 8px rgba(255,63,88,.45); color: #aa2437; font-size: 12px; }
+.game-choice-widget.lemons i:first-child { border-color: #9ed8cf; color: #315f59; font-size: 6px; }
+.game-choice-widget.lemons i:last-child { border-color: #ff6478; color: #aa2437; font-size: 12px; box-shadow: 0 0 8px rgba(255,63,88,.32); }
+.game-choice-widget.truthlie i:first-child { color: #263f59; font-size: 13px; }
+.game-choice-widget.truthlie i:last-child { border-color: #ff6478; color: #aa2437; font-size: 12px; }
 .game-choice-widget.concealed i { width: 17px; height: 27px; top: 9px; font-size: 6px; }
 .game-choice-widget.concealed i:nth-child(1) { left: 5px; transform: rotate(-12deg); }.game-choice-widget.concealed i:nth-child(2) { left: 15px; transform: rotate(-4deg); }.game-choice-widget.concealed i:nth-child(3) { left: 25px; transform: rotate(4deg); border-color: #ff6175; }.game-choice-widget.concealed i:nth-child(4) { left: 35px; transform: rotate(12deg); }
 .game-choice-widget.ultimatum i:first-child { color: #5e447e; }.game-choice-widget.ultimatum i:last-child { color: #25795f; font-size: 11px; }
+.game-choice-widget.signal i { width: 18px; height: 18px; top: 14px; border: 0; border-radius: 50%; background: #dce2de; box-shadow: 0 4px 8px rgba(0,0,0,.28); }
+.game-choice-widget.signal i:first-child { left: 7px; border: 0; box-shadow: 0 4px 8px rgba(0,0,0,.28); transform: none; }
+.game-choice-widget.signal i:nth-child(2) { right: 6px; left: auto; width: 25px; height: 25px; top: 10px; transform: none; }
+.game-choice-widget.signal b { position: absolute; left: 22px; top: 17px; width: 13px; height: 13px; border: 2px solid var(--cyan); border-radius: 50%; box-shadow: 0 0 8px rgba(128,241,231,.42); }
 .scenario-accordion-panel { display: grid; gap: 8px; padding: 0 0 18px; animation: accordionIn .28s ease both; }
 @keyframes accordionIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
 .minimal-scene-pane { position: relative; height: 420px; overflow: hidden; border: 1px solid rgba(255,255,255,.1); border-radius: 16px; background: radial-gradient(ellipse at center, rgba(60,89,83,.1), transparent 60%), #06080c; }
@@ -1310,9 +1320,9 @@ output { font-variant-numeric: tabular-nums; }
 .sequence-speech { position: absolute; z-index: 4; max-width: 190px; padding: 9px 11px; border-radius: 11px; background: rgba(239,241,236,.93); color: #17201e; box-shadow: 0 10px 26px rgba(0,0,0,.28); font-size: 9px; font-weight: 720; line-height: 1.35; transition: opacity .2s ease, transform .2s ease; }
 .sequence-speech span { display: block; margin-bottom: 2px; color: #687370; font: 850 6px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
 .sequence-speech::after { position: absolute; width: 12px; height: 12px; background: inherit; content: ''; transform: rotate(45deg); }
-.sequence-speech.player-a { top: 72px; left: 18px; }
+.sequence-speech.player-a { top: 66px; right: 18px; }
 .sequence-speech.player-a::after { right: 20px; bottom: -6px; }
-.sequence-speech.player-b { right: 18px; bottom: 77px; }
+.sequence-speech.player-b { left: 18px; bottom: 77px; }
 .sequence-speech.player-b::after { left: 20px; bottom: -6px; }
 .scenario-summary-box { padding: 17px 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: #0a0d12; }
 .scenario-summary-box > p { max-width: 850px; margin: 0; color: #9ea8a6; font-size: 10px; line-height: 1.58; }
@@ -1353,12 +1363,13 @@ output { font-variant-numeric: tabular-nums; }
 @media (max-width: 720px) {
   .scenario-mode { justify-content: flex-start; }
   .scenario-accordion-trigger { min-height: 60px; }
+  .scenario-accordion-trigger > strong { font-size: 16px; line-height: 1.12; }
   .minimal-scene-pane { height: 330px; }
   .preview-mode-toggle { top: 8px; right: 8px; }
   .preview-mode-toggle button { min-height: 26px; padding: 0 8px; font-size: 6px; }
   .sequence-speech { max-width: 135px; padding: 7px 8px; font-size: 7px; }
-  .sequence-speech.player-a { top: 57px; left: 8px; }
-  .sequence-speech.player-b { right: 8px; bottom: 70px; }
+  .sequence-speech.player-a { top: 53px; right: 8px; }
+  .sequence-speech.player-b { left: 8px; bottom: 70px; }
   .scenario-mode-row { grid-template-columns: 1fr; gap: 8px; }
   .scenario-summary-footer { align-items: flex-start; flex-direction: column; }
   .scenario-publications > header { align-items: flex-start; flex-direction: column; gap: 3px; }

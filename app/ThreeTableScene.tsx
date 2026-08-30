@@ -29,6 +29,8 @@ type MinimalAvatar = {
 };
 
 const cardLabels: Record<ScenarioId, { private: string; a: string; aCompete: string; b: string; bCompete: string }> = {
+  lemons: { private: 'INSPECTION\nLEMON', a: 'NEEDS\nREPAIR', aCompete: 'RELIABLE\nCAR', b: 'PASS', bCompete: 'BUY' },
+  truthlie: { private: 'PRIVATE\n4', a: 'MESSAGE\n4', aCompete: 'MESSAGE\n2', b: 'TRUE', bCompete: 'LIE' },
   signal: { private: 'TARGET\nA', a: 'A', aCompete: 'B', b: 'A', bCompete: 'A' },
   dilemma: { private: 'PRIVATE', a: 'COOP', aCompete: 'DEFECT', b: 'COOP', bCompete: 'COOP' },
   concealed: { private: 'SECRET\n4♦', a: '4♦', aCompete: '4♦', b: '4♦', bCompete: '4♦' },
@@ -80,6 +82,72 @@ function makeCard(label: string) {
   group.add(face);
   group.userData.glow = glow;
   group.userData.glowMaterial = glowMaterial;
+  return group;
+}
+
+function makeToyCar() {
+  const group = new THREE.Group();
+  const paint = new THREE.MeshStandardMaterial({ color: '#9ba8a4', roughness: 0.42, metalness: 0.3 });
+  const glass = new THREE.MeshStandardMaterial({ color: '#26383d', roughness: 0.25, metalness: 0.18 });
+  const rubber = new THREE.MeshStandardMaterial({ color: '#111519', roughness: 0.9 });
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.28, 0.62), paint);
+  body.position.y = 0.27;
+  group.add(body);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.3, 0.52), glass);
+  cabin.position.set(0.1, 0.52, 0);
+  group.add(cabin);
+  [-0.4, 0.4].forEach((x) => {
+    [-0.34, 0.34].forEach((z) => {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.09, 16), rubber);
+      wheel.rotation.x = Math.PI / 2;
+      wheel.position.set(x, 0.15, z);
+      group.add(wheel);
+    });
+  });
+  group.scale.setScalar(0.72);
+  return group;
+}
+
+function makeTextSprite(label: string) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 256;
+  canvas.height = 96;
+  const context = canvas.getContext('2d');
+  if (context) {
+    context.fillStyle = 'rgba(7, 11, 14, 0.82)';
+    context.roundRect(8, 8, 240, 80, 22);
+    context.fill();
+    context.fillStyle = '#dce6e2';
+    context.textAlign = 'center';
+    context.textBaseline = 'middle';
+    context.font = '700 34px Arial';
+    context.fillText(label, 128, 50);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
+  sprite.scale.set(0.85, 0.32, 1);
+  return sprite;
+}
+
+function makeDiscriminationStimuli() {
+  const group = new THREE.Group();
+  const definitions = [
+    { x: -1.25, radius: 0.43, color: '#d7dfdb', label: 'A' },
+    { x: 0, radius: 0.57, color: '#8fd8cf', label: 'TARGET' },
+    { x: 1.25, radius: 0.7, color: '#d7dfdb', label: 'B' },
+  ];
+  definitions.forEach(({ x, radius, color, label }) => {
+    const disc = new THREE.Mesh(
+      new THREE.CylinderGeometry(radius, radius, 0.05, 48),
+      new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.04 }),
+    );
+    disc.position.set(x, 0.39, 0);
+    group.add(disc);
+    const sprite = makeTextSprite(label);
+    sprite.position.set(x, 0.48, 0);
+    group.add(sprite);
+  });
   return group;
 }
 
@@ -240,6 +308,26 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     cardB.position.set(0.68, 0.82, 1.72);
     cardBCompetitive.position.copy(cardB.position);
 
+    const evidenceCard = scenarioId === 'lemons' ? makeCard('82K\nMILES') : null;
+    if (evidenceCard) {
+      evidenceCard.position.set(1.12, 0.39, -0.48);
+      evidenceCard.scale.setScalar(0.66);
+      scene.add(evidenceCard);
+    }
+
+    const toyCar = scenarioId === 'lemons' ? makeToyCar() : null;
+    if (toyCar) {
+      toyCar.position.set(0.55, 0.43, 0.35);
+      toyCar.rotation.y = -0.34;
+      scene.add(toyCar);
+    }
+
+    const discriminationStimuli = scenarioId === 'signal' ? makeDiscriminationStimuli() : null;
+    if (discriminationStimuli) {
+      discriminationStimuli.position.z = -0.1;
+      scene.add(discriminationStimuli);
+    }
+
     const probeCards = scenarioId === 'concealed'
       ? ['7♥', 'Q♠', '4♦', '9♣'].map((label, index) => {
           const card = makeCard(label);
@@ -290,8 +378,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       cardACompetitive.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardACompetitive.rotation.x) * 0.08;
       cardB.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardB.rotation.x) * 0.08;
       cardBCompetitive.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardBCompetitive.rotation.x) * 0.08;
-      privateCard.visible = state.phase === 0;
-      const bShouldShow = scenarioId !== 'concealed' || state.phase >= 3;
+      privateCard.visible = state.phase === 0 && scenarioId !== 'signal';
+      if (evidenceCard) evidenceCard.visible = state.phase >= 1;
+      if (toyCar) toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
+      const bShouldShow = state.phase >= bMovesAt;
       cardB.visible = bShouldShow && state.incentive === 'cooperate';
       cardBCompetitive.visible = bShouldShow && state.incentive === 'compete';
 
@@ -301,8 +391,9 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
         setCardGlow(card, cueVisible && index === 2, beat);
       });
       if (!probeCards.length) {
-        cardA.visible = state.incentive === 'cooperate';
-        cardACompetitive.visible = state.incentive === 'compete';
+        const aShouldShow = scenarioId === 'dilemma' || state.phase >= 1;
+        cardA.visible = aShouldShow && state.incentive === 'cooperate';
+        cardACompetitive.visible = aShouldShow && state.incentive === 'compete';
         setCardGlow(cardA, cueVisible && state.incentive === 'cooperate', beat);
         setCardGlow(cardACompetitive, cueVisible && state.incentive === 'compete', beat);
       }
@@ -310,8 +401,12 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
       if (state.phase === 4 && state.incentive === 'compete') {
-        expressionA = scenarioId === 'dilemma' ? 'happiness' : 'sadness';
-        expressionB = scenarioId === 'dilemma' ? 'sadness' : scenarioId === 'ultimatum' ? 'anger' : 'happiness';
+        expressionA = scenarioId === 'dilemma' || scenarioId === 'lemons' ? 'happiness' : 'sadness';
+        expressionB = scenarioId === 'dilemma' || scenarioId === 'lemons'
+          ? 'sadness'
+          : scenarioId === 'ultimatum'
+            ? 'anger'
+            : 'happiness';
       }
       updateAvatarFace(avatarA, expressionA, elapsed);
       updateAvatarFace(avatarB, expressionB, elapsed);
@@ -333,6 +428,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
             if (material instanceof THREE.MeshStandardMaterial && material.map) material.map.dispose();
             material.dispose();
           });
+        } else if (object instanceof THREE.Sprite) {
+          const material = object.material as THREE.SpriteMaterial;
+          material.map?.dispose();
+          material.dispose();
         }
       });
       renderer.dispose();
