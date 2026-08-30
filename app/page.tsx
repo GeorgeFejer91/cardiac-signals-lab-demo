@@ -758,20 +758,13 @@ function Menu() {
     <main className="menu-shell" id="home">
       <header className="topbar">
         <span className="brand"><LabMark /><span>Cardiac Signals Lab</span></span>
-        <span className="menu-caption">3D STUDY MODELS</span>
       </header>
 
       <section className="menu-content" aria-labelledby="menu-title">
-        <p className="eyebrow">Mixed-reality study models</p>
-        <h1 id="menu-title">Card games with a visible heartbeat.</h1>
-        <p className="lede concise-lede">Select a scenario to unfold its 3D round.</p>
+        <h1 id="menu-title" className="sr-only">Card game scenarios</h1>
 
         <ExperimentMiniatures />
       </section>
-
-      <footer className="menu-footer">
-        <span>WebGL models · simulated heartbeat timing · no data recorded</span>
-      </footer>
     </main>
   );
 }

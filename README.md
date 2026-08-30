@@ -17,7 +17,7 @@ The one-page landing menu contains four collapsed game choices. Selecting one ex
 - **Concealed Card:** candidate playing cards are probed while the informed player's cardiac cue is visible.
 - **Offer / Response:** a proposer places a split card and the responder answers with Accept or Reject.
 
-The WebGL panel contains only an oval table surface, required cards, and two floating avatar busts. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and wrap that project's spherical SVG expressions over the 3D heads; the expression changes with the illustrated phase. A compact phase indicator identifies the current step.
+The dark WebGL panel restores the across-the-table composition: a rectangular shared table, required cards, and two Social Threat Lab-style avatar busts on opposing sides. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and wrap that project's spherical SVG expressions over the 3D heads; the expression changes with the illustrated phase. A compact phase indicator identifies the current step.
 
 The preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. The summary panel offers Collaboration and Competition modes and changes the stated payoff logic accordingly.
 
@@ -83,4 +83,6 @@ Validation and static GitHub Pages export:
     npm run build
     npm run build:pages
 
-`npm run build` validates the OpenAI Sites/Vinext application. `npm run build:pages` writes the static deployment to `out/`.
+`npm run build` validates the Vinext application. `npm run build:pages` writes the static deployment to `out/`.
+
+GitHub Pages is the sole publication target. The former ChatGPT Sites binding was removed at the user's request.

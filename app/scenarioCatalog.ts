@@ -4,12 +4,10 @@ export type FaceEmotion = 'neutral' | 'happiness' | 'sadness' | 'fear' | 'anger'
 
 export type ScenarioDefinition = {
   id: ScenarioId;
-  number: string;
   title: string;
   summary: string;
   logic: string;
   measures: string;
-  flow: [string, string, string];
   phases: [string, string, string, string, string];
   cooperate: string;
   compete: string;
@@ -20,12 +18,10 @@ export type ScenarioDefinition = {
 export const scenarios: ScenarioDefinition[] = [
   {
     id: 'signal',
-    number: '01',
     title: 'Hidden Target',
     summary: 'A knows the target; B must infer it from A’s card and visible heartbeat cue.',
     logic: 'Asymmetric information: A knows the correct card and B combines A’s card choice with the heartbeat cue.',
     measures: 'Target accuracy, decision time, cue use, payoff, and cardiac coupling.',
-    flow: ['A sees target', 'Card edge pulses', 'B chooses'],
     phases: ['Private target', 'Signal card', 'Heartbeat cue', 'Receiver choice', 'Reveal'],
     cooperate: 'Both players score when B finds the target.',
     compete: 'A scores by concealing the target; B scores by finding it.',
@@ -34,12 +30,10 @@ export const scenarios: ScenarioDefinition[] = [
   },
   {
     id: 'dilemma',
-    number: '02',
     title: 'Share / Keep',
     summary: 'Both players privately choose Share or Keep, then reveal together.',
     logic: 'A repeated social dilemma: each payoff depends on the two cards revealed together.',
     measures: 'Cooperation, reciprocity, switching, decision time, payoff, and cardiac coupling.',
-    flow: ['Both choose', 'Card edge pulses', 'Reveal + payoff'],
     phases: ['Private choice', 'Cards locked', 'Heartbeat cue', 'Joint reveal', 'Payoff'],
     cooperate: 'The largest joint payoff follows mutual Share.',
     compete: 'Keep can exploit a partner who chose Share.',
@@ -48,12 +42,10 @@ export const scenarios: ScenarioDefinition[] = [
   },
   {
     id: 'concealed',
-    number: '03',
     title: 'Concealed Card',
     summary: 'A recognizes one secret card; B tries to detect which card A knows.',
     logic: 'Concealed recognition: only one candidate is meaningful to A, while B searches for a card-specific cardiac change.',
     measures: 'Detection accuracy, response time, probe-related cardiac change, and concealment success.',
-    flow: ['A memorizes', 'Cards are probed', 'B identifies'],
     phases: ['Memorize card', 'Candidate cards', 'Heartbeat cue', 'Observer choice', 'Reveal'],
     cooperate: 'Both players score when B identifies the remembered card.',
     compete: 'A scores by concealing it; B scores by detecting it.',
@@ -62,12 +54,10 @@ export const scenarios: ScenarioDefinition[] = [
   },
   {
     id: 'ultimatum',
-    number: '04',
     title: 'Offer / Response',
     summary: 'A divides ten tokens; B accepts the split or rejects it for both players.',
     logic: 'Sequential bargaining: A chooses a split and B decides whether that split is implemented.',
     measures: 'Offer size, acceptance, costly rejection, response time, payoff, and cardiac coupling.',
-    flow: ['A makes offer', 'Card edge pulses', 'B responds'],
     phases: ['Prepare offer', 'Offer card', 'Heartbeat cue', 'Accept / reject', 'Payout'],
     cooperate: 'A balanced accepted offer benefits both players.',
     compete: 'A can demand more, while B can punish the offer by rejecting it.',

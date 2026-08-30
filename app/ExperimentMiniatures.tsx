@@ -33,7 +33,6 @@ export default function ExperimentMiniatures() {
               aria-controls={`scenario-panel-${scenario.id}`}
               onClick={() => select(scenario.id)}
             >
-              <span>{scenario.number}</span>
               <strong>{scenario.title}</strong>
               <i>{open ? '−' : '+'}</i>
             </button>
@@ -52,11 +51,6 @@ export default function ExperimentMiniatures() {
 
                 <div className="scenario-summary-box">
                   <p className="scenario-summary-lede">{scenario.summary}</p>
-                  <div className="scenario-flow" aria-label="Round flow">
-                    {scenario.flow.map((step, index) => (
-                      <span key={step}><b>{index + 1}</b>{step}{index < scenario.flow.length - 1 ? <i>→</i> : null}</span>
-                    ))}
-                  </div>
                   <dl className="scenario-facts">
                     <div><dt>Game logic</dt><dd>{scenario.logic}</dd></div>
                     <div><dt>Measures</dt><dd>{scenario.measures}</dd></div>

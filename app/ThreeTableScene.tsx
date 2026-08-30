@@ -74,7 +74,7 @@ function makeCard(label: string) {
   return group;
 }
 
-function makeAvatar(color: string, x: number, yaw: number) {
+function makeAvatar(color: string, z: number, yaw: number) {
   const root = new THREE.Group();
   const body = new THREE.Mesh(
     new THREE.CapsuleGeometry(0.32, 0.5, 5, 12),
@@ -101,7 +101,7 @@ function makeAvatar(color: string, x: number, yaw: number) {
   faceShell.position.copy(head.position);
   faceShell.renderOrder = 2;
   root.add(faceShell);
-  root.position.set(x, 0, 0.52);
+  root.position.set(0, 0, z);
   root.rotation.y = yaw;
   return { root, face, emotion: 'neutral' as FaceEmotion };
 }
@@ -137,7 +137,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     const definition = getScenario(scenarioId);
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
-    camera.position.set(0, 4.55, 7.4);
+    camera.position.set(7.4, 5.8, 8.3);
     camera.lookAt(0, 0.72, 0);
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -156,15 +156,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     scene.add(red);
 
     const table = new THREE.Mesh(
-      new THREE.CylinderGeometry(2.45, 2.45, 0.16, 48),
+      new THREE.BoxGeometry(5.5, 0.24, 3.25),
       new THREE.MeshStandardMaterial({ color: '#37423f', roughness: 0.64, metalness: 0.12 }),
     );
-    table.scale.z = 0.48;
-    table.position.y = 0.18;
+    table.position.y = 0.22;
     scene.add(table);
 
-    const avatarA = makeAvatar('#527b7d', -2.0, 0.46);
-    const avatarB = makeAvatar('#805467', 2.0, -0.46);
+    const avatarA = makeAvatar('#527b7d', -2.55, 0.68);
+    const avatarB = makeAvatar('#805467', 2.55, 2.36);
     scene.add(avatarA.root, avatarB.root);
 
     const textures = new Map<FaceEmotion, THREE.Texture>();
@@ -189,14 +188,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     const cardA = makeCard(labels.a);
     const cardB = makeCard(labels.b);
     scene.add(privateCard, cardA, cardB);
-    privateCard.position.set(-1.12, 0.37, 0.2);
-    cardA.position.set(-1.32, 0.62, 0.6);
-    cardB.position.set(1.32, 0.62, 0.6);
+    privateCard.position.set(0.72, 0.38, -1.15);
+    cardA.position.set(-0.68, 0.82, -1.72);
+    cardB.position.set(0.68, 0.82, 1.72);
 
     const probeCards = scenarioId === 'concealed'
       ? ['7♥', 'Q♠', '4♦', '9♣'].map((label, index) => {
           const card = makeCard(label);
-          card.position.set((index - 1.5) * 0.92, 0.38, 0.02);
+          card.position.set((index - 1.5) * 1.02, 0.39, 0.02);
           card.scale.setScalar(0.76);
           scene.add(card);
           return card;
@@ -217,10 +216,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     resize();
 
     const clock = new THREE.Clock();
-    const aStart = new THREE.Vector3(-1.32, 0.88, 0.8);
-    const aCenter = new THREE.Vector3(-0.52, 0.38, 0.05);
-    const bStart = new THREE.Vector3(1.32, 0.88, 0.8);
-    const bCenter = new THREE.Vector3(0.52, 0.38, 0.05);
+    const aStart = new THREE.Vector3(-0.68, 0.88, -1.72);
+    const aCenter = new THREE.Vector3(-0.68, 0.39, -0.42);
+    const bStart = new THREE.Vector3(0.68, 0.88, 1.72);
+    const bCenter = new THREE.Vector3(0.68, 0.39, 0.46);
 
     renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
@@ -256,7 +255,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       updateAvatarFace(avatarB, expressionB, textures);
       avatarA.root.position.y = Math.sin(elapsed * 1.15) * 0.012;
       avatarB.root.position.y = Math.sin(elapsed * 1.15 + 1.2) * 0.012;
-      camera.position.x = Math.sin(elapsed * 0.16) * 0.08;
+      camera.position.x = 7.4 + Math.sin(elapsed * 0.16) * 0.08;
       camera.lookAt(0, 0.72, 0);
       renderer.render(scene, camera);
     });
