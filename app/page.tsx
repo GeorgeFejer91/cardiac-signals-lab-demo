@@ -8,7 +8,6 @@ import {
   informationCards,
   jointAgentMove,
   jointRounds,
-  mean,
   probeBpm,
   type CardId,
   type Choice,
@@ -20,7 +19,7 @@ type ActiveGame = 'menu' | 'joint' | 'concealed';
 type GamePhase = 'intro' | 'initial' | 'thinking' | 'advice' | 'prior' | 'probes' | 'final' | 'result' | 'summary';
 
 const accessCopy: Record<HeartAccess, string> = {
-  live: 'The trace is contingent on this agent and this trial.',
+  live: 'The trace is contingent on the other player and this trial.',
   replay: 'A plausible recording is shown, but it is not contingent on this trial.',
   hidden: 'The display is present but carries no cardiac information.',
 };
@@ -44,6 +43,7 @@ function GameHeader({
   incentive: Incentive;
   access: HeartAccess;
 }) {
+  const opposedLabel = title === 'Joint Discrimination' ? 'Mixed motive' : 'Competitive';
   return (
     <header className="game-header">
       <button className="brand brand-button" type="button" onClick={onHome}>
@@ -58,7 +58,7 @@ function GameHeader({
       <div className="condition-pills" aria-label="Current experimental condition">
         <span className="phone-mode-badge">Phone · touch</span>
         <span className={incentive === 'aligned' ? 'pill aligned' : 'pill opposed'}>
-          {incentive === 'aligned' ? 'Aligned' : 'Opposed'}
+          {incentive === 'aligned' ? 'Cooperative' : opposedLabel}
         </span>
         <span className={'pill access ' + access}>{access}</span>
       </div>
@@ -85,11 +85,13 @@ function ModeSetup({
   access,
   setIncentive,
   setAccess,
+  game,
 }: {
   incentive: Incentive;
   access: HeartAccess;
   setIncentive: (value: Incentive) => void;
   setAccess: (value: HeartAccess) => void;
+  game: 'joint' | 'concealed';
 }) {
   return (
     <div className="mode-setup">
@@ -103,7 +105,7 @@ function ModeSetup({
             onClick={() => setIncentive('aligned')}
           >
             <strong>Cooperate</strong>
-            <span>We win together</span>
+            <span>{game === 'joint' ? 'Shared decision reward' : 'Both score if you identify it'}</span>
           </button>
           <button
             type="button"
@@ -111,8 +113,8 @@ function ModeSetup({
             aria-pressed={incentive === 'opposed'}
             onClick={() => setIncentive('opposed')}
           >
-            <strong>Compete</strong>
-            <span>Only one side wins</span>
+            <strong>{game === 'joint' ? 'Mixed motive' : 'Compete'}</strong>
+            <span>{game === 'joint' ? 'Rewards can diverge' : 'You identify; they conceal'}</span>
           </button>
         </div>
       </fieldset>
@@ -138,46 +140,46 @@ function ModeSetup({
   );
 }
 
-function Metric({
-  value,
-  label,
-  note,
-  accent = false,
+function ParticipantSidebar({
+  you,
+  other,
+  receive,
+  privateItems,
+  incentive,
+  game,
 }: {
-  value: string;
-  label: string;
-  note: string;
-  accent?: boolean;
+  you: string;
+  other: string;
+  receive: string;
+  privateItems: string[];
+  incentive: Incentive;
+  game: 'joint' | 'concealed';
 }) {
+  const reward = game === 'joint'
+    ? incentive === 'aligned'
+      ? 'You are rewarded for reaching the same correct answer.'
+      : 'The payoff is mixed-motive: agreement can help both players, but being the only correct player pays most.'
+    : incentive === 'aligned'
+      ? 'Both players score if you identify the private card.'
+      : 'You score if you identify it; Player 1 scores if you miss.';
   return (
-    <div className={accent ? 'metric accent' : 'metric'}>
-      <strong>{value}</strong>
-      <span>{label}</span>
-      <small>{note}</small>
-    </div>
-  );
-}
-
-function ResearchSidebar({
-  title,
-  measures,
-  children,
-}: {
-  title: string;
-  measures: string[];
-  children?: React.ReactNode;
-}) {
-  return (
-    <aside className="research-sidebar">
-      <p className="eyebrow">What is measured?</p>
-      <h3>{title}</h3>
-      <ol className="measure-list">
-        {measures.map((measure, index) => (
-          <li key={measure}><span>{String(index + 1).padStart(2, '0')}</span>{measure}</li>
+    <aside className="research-sidebar participant-sidebar">
+      <p className="eyebrow">Your role in this trial</p>
+      <h3>{you}</h3>
+      <dl className="role-facts">
+        <div><dt>Other player</dt><dd>{other}</dd></div>
+        <div><dt>You receive</dt><dd>{receive}</dd></div>
+        <div><dt>Reward rule</dt><dd>{reward}</dd></div>
+      </dl>
+      <div className="privacy-card">
+        <span>Private · not shown to the other player</span>
+        <ul>
+        {privateItems.map((item) => (
+          <li key={item}>{item}</li>
         ))}
-      </ol>
-      {children}
-      <p className="boundary-note"><b>Interpretation boundary.</b> A cardiac display may alter how advice is weighted; it does not identify thoughts, emotions, truth, or a card by itself.</p>
+        </ul>
+      </div>
+      <p className="boundary-note"><b>Important.</b> The cardiac display is an experimental cue, not a truth or emotion detector.</p>
     </aside>
   );
 }
@@ -188,7 +190,8 @@ type JointResult = {
   correct: Choice;
   advice: Choice | 'PASS';
   strategy: 'truth' | 'bluff' | 'withhold';
-  confidence: number;
+  initialConfidence: number;
+  finalConfidence: number;
   points: number;
 };
 
@@ -238,7 +241,8 @@ function JointGame({ onHome }: { onHome: () => void }) {
   const [roundIndex, setRoundIndex] = useState(0);
   const [initialChoice, setInitialChoice] = useState<Choice | null>(null);
   const [finalChoice, setFinalChoice] = useState<Choice | null>(null);
-  const [confidence, setConfidence] = useState(65);
+  const [initialConfidence, setInitialConfidence] = useState(65);
+  const [finalConfidence, setFinalConfidence] = useState(65);
   const [results, setResults] = useState<JointResult[]>([]);
 
   const round = jointRounds[roundIndex];
@@ -255,7 +259,8 @@ function JointGame({ onHome }: { onHome: () => void }) {
     setResults([]);
     setInitialChoice(null);
     setFinalChoice(null);
-    setConfidence(65);
+    setInitialConfidence(65);
+    setFinalConfidence(65);
     setPhase('initial');
   };
 
@@ -268,7 +273,8 @@ function JointGame({ onHome }: { onHome: () => void }) {
       correct: round.correct,
       advice: move.advice,
       strategy: move.strategy,
-      confidence,
+      initialConfidence,
+      finalConfidence,
       points,
     }]);
     setPhase('result');
@@ -282,12 +288,19 @@ function JointGame({ onHome }: { onHome: () => void }) {
     setRoundIndex((index) => index + 1);
     setInitialChoice(null);
     setFinalChoice(null);
-    setConfidence(65);
+    setInitialConfidence(65);
+    setFinalConfidence(65);
     setPhase('initial');
   };
 
   const shownBpm = phase === 'thinking' || phase === 'advice' || phase === 'result' ? move.bpm : 74;
-  const latest = results[results.length - 1];
+  const displayedChoice = phase === 'initial'
+    ? initialChoice
+    : phase === 'advice'
+      ? finalChoice
+      : phase === 'result'
+        ? finalChoice
+        : initialChoice;
 
   if (phase === 'intro') {
     return (
@@ -296,23 +309,24 @@ function JointGame({ onHome }: { onHome: () => void }) {
         <div className="intro-layout">
           <section className="intro-copy">
             <p className="eyebrow">Paradigm 01 · Asymmetric evidence</p>
-            <h1>Decide under uncertainty. Then decide whom to trust.</h1>
-            <p className="lede">You and the simulated agent see the same candidates but different target evidence. Your view is deliberately ambiguous; the agent has the clearer comparison.</p>
+            <h1>You are Player B. Make two private judgments.</h1>
+            <p className="lede">You and Player A see the same candidates but different target cards. Your target is deliberately ambiguous; Player A sees a clearer target and later sends one discrete A, B, or Pass selection.</p>
             <div className="sequence-strip" aria-label="Task sequence">
-              <span><b>1</b> Initial A/B choice</span>
+              <span><b>1</b> Private choice + confidence</span>
               <i>→</i>
-              <span><b>2</b> Agent signal + advice</span>
+              <span><b>2</b> Player A selection + cardiac cue</span>
               <i>→</i>
-              <span><b>3</b> Final choice + confidence</span>
+              <span><b>3</b> Private final response</span>
             </div>
-            <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} />
+            <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} game="joint" />
+            <p className="participant-clarifier"><b>Who sees your confidence?</b> Only the research system. Player A never sees either slider value or your private response during the trial.</p>
             <button className="primary-action" type="button" onClick={start} data-testid="start-joint">Start four-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Simulated agent" note="Switch between NeuroKit ECG, pure pulse, Affect Tracker–style activation, and heart-shaped views." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 84 : 74} access={access} label="Player A · simulated" note="Switch between NeuroKit ECG, pure pulse, Affect Tracker–style activation, and heart-shaped views." />
             <div className="paper-anchor">
               <span>Published anchor</span>
-              <p>Pulford et al. used dyads, two shape options, asymmetric evidence, discussion, individual final choices, confidence ratings, and Deadlock payoffs. This nonverbal demo turns the first suggestion into a discrete A/B/Pass signal and factorially varies incentive alignment.</p>
+              <p>In Pulford et al., dyads discussed A/B face to face, then privately wrote their answer and confidence. The numeric rating was not shown to the partner. This proposed nonverbal extension replaces discussion with an A/B/Pass selection, adds a private pre-signal response, and shows Player A&apos;s assigned cardiac display.</p>
               <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Open publication ↗</a>
             </div>
           </aside>
@@ -322,36 +336,17 @@ function JointGame({ onHome }: { onHome: () => void }) {
   }
 
   if (phase === 'summary') {
-    const initialAccuracy = mean(results.map((item) => item.initial === item.correct ? 1 : 0));
-    const finalAccuracy = mean(results.map((item) => item.final === item.correct ? 1 : 0));
-    const adviceTrials = results.filter((item) => item.advice !== 'PASS');
-    const uptake = mean(adviceTrials.map((item) => item.final === item.advice ? 1 : 0));
-    const switches = results.filter((item) => item.initial !== item.final).length;
-    const points = results.reduce((sum, item) => sum + item.points, 0);
     return (
       <main className="game-shell">
         <GameHeader title="Joint Discrimination" round={jointRounds.length} total={jointRounds.length} onHome={onHome} incentive={incentive} access={access} />
         <section className="summary-view">
           <p className="eyebrow">Session complete</p>
-          <h1>Your behavioral outcome profile</h1>
-          <p className="lede">The core outcome is not whether a heartbeat “revealed” an answer. It is whether access to a trial-contingent signal changed the accuracy and calibration of your belief revision.</p>
-          <div className="metric-grid">
-            <Metric value={Math.round(initialAccuracy * 100) + '%'} label="Initial accuracy" note="Before the agent signal" />
-            <Metric value={Math.round(finalAccuracy * 100) + '%'} label="Final accuracy" note="Primary decision outcome" accent />
-            <Metric value={Math.round(uptake * 100) + '%'} label="Advice uptake" note="Final choices matching advice" />
-            <Metric value={String(switches)} label="Choice revisions" note="Initial → final switches" />
-            <Metric value={Math.round(mean(results.map((item) => item.confidence))) + '%'} label="Mean confidence" note="Calibration companion" />
-            <Metric value={String(points)} label="Your points" note="Incentivized performance" />
-          </div>
-          <div className="round-ledger">
-            {results.map((item, index) => (
-              <div key={index}>
-                <span>R{index + 1}</span>
-                <b>{item.initial} → {item.final}</b>
-                <small>Agent: {item.advice} · Truth: {item.correct}</small>
-                <em className={item.final === item.correct ? 'correct' : 'incorrect'}>{item.final === item.correct ? 'Correct' : 'Incorrect'}</em>
-              </div>
-            ))}
+          <h1>Your responses have been recorded.</h1>
+          <p className="lede">You completed {results.length} rounds. Trial accuracy, Player A&apos;s private evidence, strategy, and payoff are withheld during the session so they cannot shape later decisions.</p>
+          <div className="completion-card">
+            <span>Participant view</span>
+            <strong>No trial-by-trial truth feedback</strong>
+            <p>In a real study, any performance summary or explanation of the simulated partner would appear only in the debriefing.</p>
           </div>
           <div className="summary-actions">
             <button className="primary-action" type="button" onClick={start}>Run again <span>↻</span></button>
@@ -369,8 +364,8 @@ function JointGame({ onHome }: { onHome: () => void }) {
         <section className="task-stage">
           <div className="stage-topline">
             <div>
-              <p className="eyebrow">Your private view</p>
-              <h2>{phase === 'initial' ? 'Which candidate is closer in size?' : phase === 'thinking' ? 'The agent is deciding…' : phase === 'advice' ? 'Review the signal and advice' : 'Outcome revealed'}</h2>
+              <p className="eyebrow">You are Player B · your target card is private</p>
+              <h2>{phase === 'initial' ? 'Which candidate is closer in size?' : phase === 'thinking' ? 'Player A is viewing their target' : phase === 'advice' ? 'Review Player A’s selection' : 'Response recorded'}</h2>
             </div>
             <ProgressDots current={roundIndex} total={jointRounds.length} />
           </div>
@@ -380,7 +375,7 @@ function JointGame({ onHome }: { onHome: () => void }) {
               <ShapePanel
                 label="A"
                 size={round.aSize}
-                selected={(phase === 'initial' ? initialChoice : finalChoice) === 'A'}
+                selected={displayedChoice === 'A'}
                 disabled={phase === 'thinking' || phase === 'result'}
                 onSelect={() => phase === 'initial' ? setInitialChoice('A') : phase === 'advice' ? setFinalChoice('A') : undefined}
               />
@@ -388,17 +383,21 @@ function JointGame({ onHome }: { onHome: () => void }) {
               <ShapePanel
                 label="B"
                 size={round.bSize}
-                selected={(phase === 'initial' ? initialChoice : finalChoice) === 'B'}
+                selected={displayedChoice === 'B'}
                 disabled={phase === 'thinking' || phase === 'result'}
                 onSelect={() => phase === 'initial' ? setInitialChoice('B') : phase === 'advice' ? setFinalChoice('B') : undefined}
               />
             </div>
-            <p className="ambiguity-callout"><i /> Your target is exactly midway. The agent sees a more diagnostic target.</p>
+            <p className="ambiguity-callout"><i /> Your target is exactly midway. Player A sees a more diagnostic target.</p>
           </div>
 
           {phase === 'initial' ? (
             <div className="decision-dock">
-              <div><span>Stage 1</span><strong>Make an independent choice</strong></div>
+              <div><span>Stage 1 · Private</span><strong>Choose A or B, then rate confidence</strong></div>
+              <label className="private-rating">
+                Confidence <small>not shown to Player A</small>
+                <span><input type="range" min="50" max="100" value={initialConfidence} onChange={(event) => setInitialConfidence(Number(event.target.value))} /><output>{initialConfidence}%</output></span>
+              </label>
               <button className="primary-action small" type="button" disabled={!initialChoice} onClick={() => setPhase('thinking')}>Lock {initialChoice ?? 'choice'} <span>→</span></button>
             </div>
           ) : null}
@@ -407,63 +406,52 @@ function JointGame({ onHome }: { onHome: () => void }) {
             <HeartMonitor
               bpm={shownBpm}
               access={access}
-              label="Agent 07 · cardiac panel"
+              label="Player A · assigned cardiac panel"
               note={accessCopy[access]}
             />
           ) : null}
 
           {phase === 'thinking' ? (
-            <div className="agent-thinking" role="status"><i /><span>Agent 07 is comparing private evidence</span><i /><i /></div>
+            <div className="agent-thinking" role="status"><i /><span>Player A is comparing their private target</span><i /><i /></div>
           ) : null}
 
           {phase === 'advice' ? (
             <div className="advice-dock">
               <div className="agent-advice">
-                <span>Agent 07 signals</span>
-                <strong>{move.advice === 'PASS' ? 'No recommendation' : 'Choose ' + move.advice}</strong>
-                <small>This message and the cardiac cue are separate information channels.</small>
+                <span>Player A selected</span>
+                <strong>{move.advice === 'PASS' ? 'Pass · no selection' : move.advice}</strong>
+                <small>This discrete selection and the cardiac display are separate cues. Now choose your own final answer.</small>
               </div>
               <div className="final-controls">
                 <label>
-                  Final-choice confidence
-                  <span><input type="range" min="50" max="100" value={confidence} onChange={(event) => setConfidence(Number(event.target.value))} /><output>{confidence}%</output></span>
+                  Final confidence <small>private · not shown to Player A</small>
+                  <span><input type="range" min="50" max="100" value={finalConfidence} onChange={(event) => setFinalConfidence(Number(event.target.value))} /><output>{finalConfidence}%</output></span>
                 </label>
                 <button className="primary-action small" type="button" disabled={!finalChoice} onClick={submitFinal}>Submit final {finalChoice ?? 'choice'} <span>→</span></button>
               </div>
             </div>
           ) : null}
 
-          {phase === 'result' && latest ? (
-            <div className={latest.final === latest.correct ? 'result-dock success' : 'result-dock miss'} role="status">
+          {phase === 'result' ? (
+            <div className="result-dock recorded" role="status">
               <div>
-                <span>{latest.final === latest.correct ? 'Correct judgment' : 'Incorrect judgment'}</span>
-                <strong>The diagnostic target was closer to {latest.correct}.</strong>
-                <p>The agent used a <b>{latest.strategy}</b> strategy. Your initial choice was {latest.initial}, your final choice was {latest.final}, and you reported {latest.confidence}% confidence.</p>
+                <span>Response recorded</span>
+                <strong>Your private final answer is locked.</strong>
+                <p>You will not see the correct answer, Player A&apos;s private target, or their strategy during the session.</p>
               </div>
-              <div className="revealed-evidence">
-                <span>Agent&apos;s private target</span>
-                <i style={{ width: round.senderTarget, height: round.senderTarget }} />
-              </div>
-              <button className="primary-action small" type="button" onClick={nextRound}>{roundIndex === jointRounds.length - 1 ? 'View outcomes' : 'Next round'} <span>→</span></button>
+              <button className="primary-action small" type="button" onClick={nextRound}>{roundIndex === jointRounds.length - 1 ? 'Finish session' : 'Next round'} <span>→</span></button>
             </div>
           ) : null}
         </section>
 
-        <ResearchSidebar
-          title="Belief revision under asymmetric information"
-          measures={[
-            'Initial versus final discrimination accuracy',
-            'Switching toward or away from the agent signal',
-            'Advice uptake conditional on incentive structure',
-            'Confidence and calibration after social evidence',
-            'Dyadic payoff under aligned versus opposed goals',
-          ]}
-        >
-          <div className="live-measure">
-            <span>Initial choice</span><strong>{initialChoice ?? '—'}</strong>
-            <span>Final choice</span><strong>{finalChoice ?? '—'}</strong>
-          </div>
-        </ResearchSidebar>
+        <ParticipantSidebar
+          you="Player B · less-informed judge"
+          other="Player A sees a more diagnostic target card."
+          receive={`An A, B, or Pass selection${access === 'hidden' ? '; no cardiac values' : ' plus the assigned cardiac display'}.`}
+          privateItems={['Your first choice', 'Your final choice', 'Both numeric confidence ratings']}
+          incentive={incentive}
+          game="joint"
+        />
       </div>
     </main>
   );
@@ -612,8 +600,6 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
     setPhase('prior');
   };
 
-  const latest = results[results.length - 1];
-
   if (phase === 'intro') {
     return (
       <main className="game-shell">
@@ -621,8 +607,8 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
         <div className="intro-layout">
           <section className="intro-copy">
             <p className="eyebrow warm">Paradigm 02 · Card recognition</p>
-            <h1>Find the card the agent is trying to keep private.</h1>
-            <p className="lede">A simulated sender privately recognizes one target. You first state a prior belief, then watch every candidate appear beside the sender&apos;s cardiac display, and finally update your choice.</p>
+            <h1>You are the observer. Identify Player 1&apos;s private card.</h1>
+            <p className="lede">Player 1 has privately selected one card. First make a private guess, then watch each candidate beside Player 1&apos;s assigned cardiac display, and finally submit an updated guess.</p>
             <div className="sequence-strip warm" aria-label="Task sequence">
               <span><b>1</b> Prior belief</span>
               <i>→</i>
@@ -630,14 +616,15 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
               <i>→</i>
               <span><b>3</b> Posterior belief</span>
             </div>
-            <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} />
+            <ModeSetup incentive={incentive} access={access} setIncentive={setIncentive} setAccess={setAccess} game="concealed" />
+            <p className="participant-clarifier"><b>Who sees your confidence?</b> Only the research system. Player 1 never sees your guesses or either confidence value during the trial.</p>
             <button className="primary-action warm" type="button" onClick={start} data-testid="start-concealed">Start three-round game <span>→</span></button>
           </section>
           <aside className="intro-preview">
-            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Simulated sender" note="The target response is scripted; all four display modes show the same underlying synthetic signal." />
+            <HeartMonitor bpm={incentive === 'opposed' ? 68 : 74} access={access} label="Player 1 · simulated" note="The target response is scripted; all four display modes show the same underlying synthetic signal." />
             <div className="paper-anchor warm">
               <span>Published anchor</span>
-              <p>Klein Selle et al. had participants select one of six cards, choose conceal or reveal, and then view a buffer, critical item, controls, and catch item. Cardiac deceleration distinguished concealed critical items. This four-alternative dyadic adaptation adds a receiver and proper-score belief updating.</p>
+              <p>Klein Selle et al. studied one instrumented participant—there was no observer guessing the card. Participants selected from six cards, chose conceal or reveal, and then saw a buffer, critical item, controls, and catch item. This proposed dyadic extension adds you as the observer, displays cardiac activity, and measures pre/post belief updating.</p>
               <a href="https://doi.org/10.1177/0956797619864598" target="_blank" rel="noreferrer">Open publication ↗</a>
             </div>
           </aside>
@@ -647,35 +634,17 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
   }
 
   if (phase === 'summary') {
-    const accuracy = mean(results.map((item) => item.final === item.target ? 1 : 0));
-    const priorAccuracy = mean(results.map((item) => item.prior === item.target ? 1 : 0));
-    const scoreGain = mean(results.map((item) => item.scoreGain));
-    const revisions = results.filter((item) => item.prior !== item.final).length;
-    const points = results.reduce((sum, item) => sum + item.points, 0);
     return (
       <main className="game-shell">
         <GameHeader title="Concealed Information" round={concealedRounds.length} total={concealedRounds.length} onHome={onHome} incentive={incentive} access={access} />
         <section className="summary-view">
           <p className="eyebrow warm">Session complete</p>
-          <h1>Your information-gain profile</h1>
-          <p className="lede">The primary outcome compares your pre-signal and post-signal probability judgments. Positive proper-score gain means the probe sequence moved your belief closer to the hidden target.</p>
-          <div className="metric-grid">
-            <Metric value={Math.round(priorAccuracy * 100) + '%'} label="Prior accuracy" note="Before cardiac access" />
-            <Metric value={Math.round(accuracy * 100) + '%'} label="Final accuracy" note="Target identification" accent />
-            <Metric value={(scoreGain >= 0 ? '+' : '') + scoreGain.toFixed(2)} label="Proper-score gain" note="Primary belief-update outcome" />
-            <Metric value={String(revisions)} label="Belief revisions" note="Prior → posterior switches" />
-            <Metric value={Math.round(mean(results.map((item) => item.finalConfidence))) + '%'} label="Mean confidence" note="Posterior certainty" />
-            <Metric value={String(points)} label="Your points" note="Incentivized identification" />
-          </div>
-          <div className="round-ledger">
-            {results.map((item, index) => (
-              <div key={index}>
-                <span>R{index + 1}</span>
-                <b>{item.prior} → {item.final}</b>
-                <small>Hidden target: {item.target} · Gain: {item.scoreGain >= 0 ? '+' : ''}{item.scoreGain.toFixed(2)}</small>
-                <em className={item.final === item.target ? 'correct' : 'incorrect'}>{item.final === item.target ? 'Found' : 'Missed'}</em>
-              </div>
-            ))}
+          <h1>Your responses have been recorded.</h1>
+          <p className="lede">You completed {results.length} rounds. The private card and trial accuracy are withheld so feedback cannot train you to read the scripted cardiac pattern across later trials.</p>
+          <div className="completion-card warm">
+            <span>Participant view</span>
+            <strong>No target reveal during the task</strong>
+            <p>Any explanation of the simulated signal, concealed card, or scoring would be reserved for the debriefing.</p>
           </div>
           <div className="summary-actions">
             <button className="primary-action warm" type="button" onClick={start}>Run again <span>↻</span></button>
@@ -701,8 +670,8 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
         <section className="task-stage">
           <div className="stage-topline">
             <div>
-              <p className="eyebrow warm">Receiver view · Agent target hidden</p>
-              <h2>{phase === 'prior' ? 'Which card is your best guess?' : phase === 'probes' ? currentProbe === 'BUFFER' ? 'Baseline buffer' : `Probe ${currentProbe}: ${probeCard?.name}` : phase === 'final' ? 'Update your belief' : 'Target revealed'}</h2>
+              <p className="eyebrow warm">You are the observer · Player 1&apos;s card is hidden</p>
+              <h2>{phase === 'prior' ? 'Which card is your best guess?' : phase === 'probes' ? currentProbe === 'BUFFER' ? 'Baseline buffer' : `Probe ${currentProbe}: ${probeCard?.name}` : phase === 'final' ? 'Update your private guess' : 'Response recorded'}</h2>
             </div>
             <ProgressDots current={roundIndex} total={concealedRounds.length} />
           </div>
@@ -724,7 +693,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
           {phase === 'prior' ? (
             <div className="belief-dock">
               <label>
-                Prior probability for {priorChoice ?? 'your chosen card'}
+                Initial confidence for {priorChoice ?? 'your chosen card'} <small>private · not shown to Player 1</small>
                 <span><input type="range" min="25" max="80" value={priorConfidence} onChange={(event) => setPriorConfidence(Number(event.target.value))} /><output>{priorConfidence}%</output></span>
               </label>
               <button className="primary-action small warm" type="button" disabled={!priorChoice} onClick={startProbes}>Lock prior and begin <span>→</span></button>
@@ -747,7 +716,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
               <HeartMonitor
                 bpm={currentBpm}
                 access={access}
-                label="Agent 12 · cardiac panel"
+                label="Player 1 · assigned cardiac panel"
                 note={currentProbe === 'BUFFER' ? 'Use this interval as a visual baseline.' : accessCopy[access]}
               />
               <div className="probe-timeline" aria-hidden="true">
@@ -766,7 +735,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
               </div>
               <div className="belief-dock">
                 <label>
-                  Posterior probability for {finalChoice ?? 'your chosen card'}
+                  Final confidence for {finalChoice ?? 'your chosen card'} <small>private · not shown to Player 1</small>
                   <span><input type="range" min="25" max="97" value={finalConfidence} onChange={(event) => setFinalConfidence(Number(event.target.value))} /><output>{finalConfidence}%</output></span>
                 </label>
                 <button className="primary-action small warm" type="button" disabled={!finalChoice} onClick={submitFinal}>Submit posterior <span>→</span></button>
@@ -774,37 +743,26 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
             </div>
           ) : null}
 
-          {phase === 'result' && latest ? (
-            <div className={latest.final === latest.target ? 'result-dock success' : 'result-dock miss'} role="status">
+          {phase === 'result' ? (
+            <div className="result-dock recorded" role="status">
               <div>
-                <span>{latest.final === latest.target ? 'Target identified' : 'Target missed'}</span>
-                <strong>The agent&apos;s private card was {latest.target}: {informationCards.find((card) => card.id === latest.target)?.name}.</strong>
-                <p>You moved from {latest.prior} at {latest.priorConfidence}% to {latest.final} at {latest.finalConfidence}%. Proper-score gain: <b>{latest.scoreGain >= 0 ? '+' : ''}{latest.scoreGain.toFixed(2)}</b>.</p>
+                <span>Response recorded</span>
+                <strong>Your final guess is locked.</strong>
+                <p>Player 1&apos;s card and your accuracy will not be shown during the session.</p>
               </div>
-              <div className="target-card-mini">
-                {informationCards.find((card) => card.id === latest.target) ? <PlayingCardFace card={informationCards.find((card) => card.id === latest.target)!} compact /> : null}
-                <small>Target {latest.target}</small>
-              </div>
-              <button className="primary-action small warm" type="button" onClick={nextRound}>{roundIndex === concealedRounds.length - 1 ? 'View outcomes' : 'Next round'} <span>→</span></button>
+              <button className="primary-action small warm" type="button" onClick={nextRound}>{roundIndex === concealedRounds.length - 1 ? 'Finish session' : 'Next round'} <span>→</span></button>
             </div>
           ) : null}
         </section>
 
-        <ResearchSidebar
-          title="Information gain from another person’s cardiac cue"
-          measures={[
-            'Prior-to-posterior proper-score improvement',
-            'Four-alternative target identification accuracy',
-            'Direction and magnitude of belief revision',
-            'Confidence calibration and overconfidence',
-            'Signal benefit under live, replay, and hidden access',
-          ]}
-        >
-          <div className="live-measure">
-            <span>Prior belief</span><strong>{priorChoice ?? '—'}</strong>
-            <span>Posterior belief</span><strong>{finalChoice ?? '—'}</strong>
-          </div>
-        </ResearchSidebar>
+        <ParticipantSidebar
+          you="Observer · identify the private card"
+          other="Player 1 selected one of the four cards before the trial."
+          receive={access === 'hidden' ? 'The four timed card probes; cardiac values are hidden.' : 'The four timed card probes plus Player 1’s assigned cardiac display.'}
+          privateItems={['Your initial card guess', 'Your final card guess', 'Both numeric confidence ratings']}
+          incentive={incentive}
+          game="concealed"
+        />
       </div>
     </main>
   );
@@ -823,7 +781,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       <section className="menu-content" aria-labelledby="menu-title">
         <p className="eyebrow">Mixed-reality task preview</p>
         <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">Choose a paradigm. Physical cards and a restrained HUD float directly on a transparent passthrough canvas. Each simulation pairs you with a scripted agent and four views of the same synthetic cardiac signal—not a lie detector.</p>
+        <p className="lede">Choose a participant role and play the complete trial sequence. Physical cards and a restrained HUD float on a transparent passthrough canvas. Researcher-only outcomes are hidden during play; the synthetic cardiac display is an experimental cue, not a lie detector.</p>
 
         <div className="game-grid" aria-label="Choose a game">
           <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
@@ -832,7 +790,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
             <span className="card-copy">
               <span className="card-label">Asymmetric evidence</span>
               <strong>Joint Discrimination</strong>
-              <span>Judge which shape matches a target while a better-informed agent can advise, withhold, or mislead.</span>
+              <span>Play as the less-informed judge: decide privately, receive Player A&apos;s A/B/Pass selection and assigned cardiac cue, then decide again.</span>
               <b className="launch-link">Enter simulation <i aria-hidden="true">↗</i></b>
             </span>
           </button>
@@ -842,7 +800,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
             <span className="card-copy">
               <span className="card-label">Card recognition</span>
               <strong>Concealed Information</strong>
-              <span>Watch real playing-card probes and decide which one the agent privately selected.</span>
+              <span>Play as the observer: watch real playing-card probes and decide which card Player 1 privately selected.</span>
               <b className="launch-link">Enter simulation <i aria-hidden="true">↗</i></b>
             </span>
           </button>
@@ -854,7 +812,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
             <h2 id="matrix-title">Two games, the same causal question</h2>
           </div>
           <div className="matrix-row">
-            <span><b>Incentives</b>Aligned ↔ Opposed</span>
+            <span><b>Incentives</b>Cooperative ↔ Mixed-motive / competitive</span>
             <span><b>Cardiac access</b>Live ↔ Replay ↔ Hidden · 4 views</span>
             <span><b>Behavior</b>Pre-signal ↔ Post-signal belief</span>
           </div>
