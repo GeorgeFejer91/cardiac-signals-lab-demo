@@ -807,7 +807,7 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       </section>
 
       <footer className="menu-footer">
-        <span>Animated MR table miniatures · simulated physiology · no data recorded <b className="phone-footer-note">· phone mode activates automatically</b></span>
+        <span>Animated WebGL study tables · simulated physiology · no data recorded <b className="phone-footer-note">· phone mode activates automatically</b></span>
         <span className="source-links">
           <a href="https://doi.org/10.1038/s41598-025-00279-w" target="_blank" rel="noreferrer">Pulford 2025</a>
           <a href="https://doi.org/10.1177/0956797619864598" target="_blank" rel="noreferrer">Klein Selle 2019</a>

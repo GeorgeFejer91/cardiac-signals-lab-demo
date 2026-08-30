@@ -10,16 +10,16 @@ It automatically switches to a touch-optimized phone layout on narrow screens. I
 
 ## Animated tabletop preview
 
-The landing page contains a participant-facing 3D-style miniature with two simplified seated avatars and four selectable, automatically animated card flows:
+The landing page contains participant-facing WebGL miniatures built from actual 3D geometry: two seated participant figures, chairs, a table, textured cards, heartbeat-driven edge lighting, payoff tokens, shadows, and four selectable animated card flows:
 
 - **Hidden Target:** an informed sender plays a Sun/Moon signal and an uninformed receiver selects the target.
 - **Share / Keep:** both players commit privately and reveal together under cooperative or mixed-motive payoffs.
 - **Concealed Card:** candidate playing cards are probed while the informed player's cardiac cue is visible.
 - **Offer / Response:** a proposer places a split card and the responder answers with Accept or Reject.
 
-The same scene can be switched between cooperative and competitive incentives and between a beat-synchronous card edge and a floating stylized heart. A five-step rail shows the exact sequence of private information, card commitment, cardiac observation, response, and outcome. Four smaller tabletop miniatures preview all scenarios at once.
+The preview can be switched between cooperative and competitive incentives. A five-step rail shows the exact sequence of private information, card commitment, cardiac observation, response, and outcome. Speech bubbles state what each participant knows or decides in each phase, while compact activity panels state what each player is doing. The selected game also has a plain-language instruction panel covering the goal, three-step procedure, incentive manipulation, and recorded outcomes. Four smaller WebGL scenes preview all scenarios at once.
 
-The miniature avatars reuse the project-authored neutral and happiness SVG face assets from [`minimal-social-threat-webxr`](https://github.com/GeorgeFejer91/minimal-social-threat-webxr). The assets are MIT-licensed visual prototypes, not validated emotional stimuli.
+The 3D preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. This keeps the visualization minimal and makes the manipulated information source visually unambiguous.
 
 `public/og.png` is a project-bound social-preview image generated for this redesign on 2026-08-30. It is link-preview artwork and is never presented as an experimental stimulus.
 
