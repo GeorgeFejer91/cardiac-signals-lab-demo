@@ -479,9 +479,23 @@ type ConcealedResult = {
   points: number;
 };
 
+type InformationCardData = (typeof informationCards)[number];
+
+function PlayingCardFace({ card, compact = false }: { card: InformationCardData; compact?: boolean }) {
+  const red = card.suit === '♥' || card.suit === '♦';
+  return (
+    <span className={`playing-card-face ${red ? 'red-suit' : 'black-suit'}${compact ? ' compact' : ''}`} aria-hidden="true">
+      <span className="playing-card-corner top"><b>{card.rank}</b><i>{card.suit}</i></span>
+      <span className="playing-card-center"><b>{card.rank}</b><i>{card.suit}</i></span>
+      <span className="playing-card-corner bottom"><b>{card.rank}</b><i>{card.suit}</i></span>
+    </span>
+  );
+}
+
 function InformationCard({
   id,
-  symbol,
+  rank,
+  suit,
   name,
   color,
   selected,
@@ -491,7 +505,8 @@ function InformationCard({
   onClick,
 }: {
   id: CardId;
-  symbol: string;
+  rank: string;
+  suit: string;
   name: string;
   color: string;
   selected?: boolean;
@@ -509,9 +524,10 @@ function InformationCard({
       onClick={onClick}
       disabled={disabled}
       aria-pressed={selected}
+      aria-label={`Candidate ${id}, ${name}`}
     >
-      <span className="info-card-id">{id}</span>
-      <span className="info-card-symbol" aria-hidden="true">{symbol}</span>
+      <span className="info-card-id">Candidate {id}</span>
+      <PlayingCardFace card={{ id, rank, suit, name, color } as InformationCardData} />
       <small>{name}</small>
       {seen ? <i className="seen-dot" aria-label="Probe already shown" /> : null}
     </button>
@@ -676,6 +692,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
       ? round.order
       : [];
   const activeCard = phase === 'probes' && currentProbe !== 'BUFFER' ? currentProbe : undefined;
+  const probeCard = currentProbe === 'BUFFER' ? undefined : informationCards.find((card) => card.id === currentProbe);
 
   return (
     <main className="game-shell">
@@ -685,7 +702,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
           <div className="stage-topline">
             <div>
               <p className="eyebrow warm">Receiver view · Agent target hidden</p>
-              <h2>{phase === 'prior' ? 'Which card is your best guess?' : phase === 'probes' ? currentProbe === 'BUFFER' ? 'Baseline buffer' : 'Probe ' + currentProbe + ' is on screen' : phase === 'final' ? 'Update your belief' : 'Target revealed'}</h2>
+              <h2>{phase === 'prior' ? 'Which card is your best guess?' : phase === 'probes' ? currentProbe === 'BUFFER' ? 'Baseline buffer' : `Probe ${currentProbe}: ${probeCard?.name}` : phase === 'final' ? 'Update your belief' : 'Target revealed'}</h2>
             </div>
             <ProgressDots current={roundIndex} total={concealedRounds.length} />
           </div>
@@ -724,9 +741,7 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
                 {currentProbe === 'BUFFER' ? (
                   <div className="buffer-symbol" aria-label="Neutral buffer stimulus">+</div>
                 ) : (
-                  <div className="enlarged-probe" style={{ '--card-color': informationCards.find((card) => card.id === currentProbe)?.color } as React.CSSProperties}>
-                    <span>{informationCards.find((card) => card.id === currentProbe)?.symbol}</span>
-                  </div>
+                  probeCard ? <div className="enlarged-probe"><PlayingCardFace card={probeCard} /></div> : null
                 )}
               </div>
               <HeartMonitor
@@ -763,11 +778,11 @@ function ConcealedGame({ onHome }: { onHome: () => void }) {
             <div className={latest.final === latest.target ? 'result-dock success' : 'result-dock miss'} role="status">
               <div>
                 <span>{latest.final === latest.target ? 'Target identified' : 'Target missed'}</span>
-                <strong>The agent&apos;s private card was {latest.target}.</strong>
+                <strong>The agent&apos;s private card was {latest.target}: {informationCards.find((card) => card.id === latest.target)?.name}.</strong>
                 <p>You moved from {latest.prior} at {latest.priorConfidence}% to {latest.final} at {latest.finalConfidence}%. Proper-score gain: <b>{latest.scoreGain >= 0 ? '+' : ''}{latest.scoreGain.toFixed(2)}</b>.</p>
               </div>
               <div className="target-card-mini">
-                <span>{informationCards.find((card) => card.id === latest.target)?.symbol}</span>
+                {informationCards.find((card) => card.id === latest.target) ? <PlayingCardFace card={informationCards.find((card) => card.id === latest.target)!} compact /> : null}
                 <small>Target {latest.target}</small>
               </div>
               <button className="primary-action small warm" type="button" onClick={nextRound}>{roundIndex === concealedRounds.length - 1 ? 'View outcomes' : 'Next round'} <span>→</span></button>
@@ -808,12 +823,12 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
       <section className="menu-content" aria-labelledby="menu-title">
         <p className="eyebrow">Mixed-reality task preview</p>
         <h1 id="menu-title">Can another person&apos;s heartbeat change your decision?</h1>
-        <p className="lede">Choose a paradigm. Each simulation pairs you with a scripted agent and lets you switch among four views of the same synthetic cardiac signal—not a lie detector.</p>
+        <p className="lede">Choose a paradigm. Physical cards and a restrained HUD float directly on a transparent passthrough canvas. Each simulation pairs you with a scripted agent and four views of the same synthetic cardiac signal—not a lie detector.</p>
 
         <div className="game-grid" aria-label="Choose a game">
           <button className="game-card cyan" type="button" onClick={() => onOpen('joint')} data-testid="open-joint">
             <span className="card-index">01</span>
-            <div className="card-visual" aria-hidden="true"><span className="floating-card back" /><span className="floating-card front"><i /></span></div>
+            <div className="card-visual joint-card-preview" aria-hidden="true"><span className="floating-card back card-back-pattern" /><span className="floating-card front printed-preview"><b>A</b><i /></span></div>
             <span className="card-copy">
               <span className="card-label">Asymmetric evidence</span>
               <strong>Joint Discrimination</strong>
@@ -823,11 +838,11 @@ function Menu({ onOpen }: { onOpen: (game: ActiveGame) => void }) {
           </button>
           <button className="game-card coral" type="button" onClick={() => onOpen('concealed')} data-testid="open-concealed">
             <span className="card-index">02</span>
-            <div className="card-visual" aria-hidden="true"><span className="floating-card back" /><span className="floating-card front"><i /></span></div>
+            <div className="card-visual concealed-card-preview" aria-hidden="true"><span className="floating-card back card-back-pattern" /><span className="menu-playing-card"><PlayingCardFace card={informationCards[1]} /></span></div>
             <span className="card-copy">
               <span className="card-label">Card recognition</span>
               <strong>Concealed Information</strong>
-              <span>Watch a sequence of card probes and decide which one the agent privately selected.</span>
+              <span>Watch real playing-card probes and decide which one the agent privately selected.</span>
               <b className="launch-link">Enter simulation <i aria-hidden="true">↗</i></b>
             </span>
           </button>

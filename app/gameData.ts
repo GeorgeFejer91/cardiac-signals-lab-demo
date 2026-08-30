@@ -28,10 +28,10 @@ export function jointAgentMove(roundIndex: number, correct: Choice, incentive: I
 }
 
 export const informationCards = [
-  { id: 'A', symbol: '●', name: 'Indigo orbit', color: '#8f9dff' },
-  { id: 'B', symbol: '◆', name: 'Amber prism', color: '#f2b765' },
-  { id: 'C', symbol: '▲', name: 'Coral peak', color: '#ff8578' },
-  { id: 'D', symbol: '✦', name: 'Mint signal', color: '#74e8cc' },
+  { id: 'A', rank: '7', suit: '♥', name: 'Seven of hearts', color: '#b32635' },
+  { id: 'B', rank: 'Q', suit: '♠', name: 'Queen of spades', color: '#171a1e' },
+  { id: 'C', rank: '4', suit: '♦', name: 'Four of diamonds', color: '#b32635' },
+  { id: 'D', rank: '9', suit: '♣', name: 'Nine of clubs', color: '#171a1e' },
 ] as const;
 
 export type CardId = (typeof informationCards)[number]['id'];
