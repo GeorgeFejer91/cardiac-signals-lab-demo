@@ -2,6 +2,14 @@
 
 import { useEffect, useRef } from 'react';
 import * as THREE from 'three';
+import {
+  FACE_PROTOTYPES,
+  faceGeometryToSphereMeshData,
+  interpolateFaceGeometry,
+  smoothMorphProgress,
+  type BaseFaceEmotion,
+  type TriangleMeshData,
+} from './facial-expression';
 import { FaceEmotion, getScenario, IncentiveMode, ScenarioId } from './scenarioCatalog';
 
 type ThreeTableSceneProps = {
@@ -11,20 +19,21 @@ type ThreeTableSceneProps = {
 };
 
 type RuntimeState = { phase: number; incentive: IncentiveMode };
-type MinimalAvatar = { root: THREE.Group; face: THREE.MeshStandardMaterial; emotion: FaceEmotion };
-
-const cardLabels: Record<ScenarioId, { private: string; a: string; b: string }> = {
-  signal: { private: 'TARGET\nSUN', a: 'SUN', b: 'SUN' },
-  dilemma: { private: 'PRIVATE', a: 'SHARE', b: 'SHARE' },
-  concealed: { private: 'SECRET\n4♦', a: '4♦', b: '4♦' },
-  ultimatum: { private: '10\nTOKENS', a: '7 / 3', b: 'ACCEPT' },
+type FaceSurface = { group: THREE.Group; strokes: THREE.Mesh; eyeFills: THREE.Mesh; darkFills: THREE.Mesh; signature: string };
+type MinimalAvatar = {
+  root: THREE.Group;
+  face: FaceSurface;
+  fromEmotion: FaceEmotion;
+  toEmotion: FaceEmotion;
+  morphStarted: number;
 };
 
-function publicAsset(path: string) {
-  const firstSegment = window.location.pathname.split('/').filter(Boolean)[0];
-  const base = firstSegment === 'cardiac-signals-lab-demo' ? `/${firstSegment}` : '';
-  return `${window.location.origin}${base}/${path}`;
-}
+const cardLabels: Record<ScenarioId, { private: string; a: string; aCompete: string; b: string; bCompete: string }> = {
+  signal: { private: 'TARGET\nSUN', a: 'SUN', aCompete: 'MOON', b: 'SUN', bCompete: 'SUN' },
+  dilemma: { private: 'PRIVATE', a: 'SHARE', aCompete: 'KEEP', b: 'SHARE', bCompete: 'SHARE' },
+  concealed: { private: 'SECRET\n4♦', a: '4♦', aCompete: '4♦', b: '4♦', bCompete: '4♦' },
+  ultimatum: { private: '10\nTOKENS', a: 'B7 / A3', aCompete: 'B3 / A7', b: 'ACCEPT', bCompete: 'REJECT' },
+};
 
 function makeCardTexture(label: string) {
   const canvas = document.createElement('canvas');
@@ -74,6 +83,65 @@ function makeCard(label: string) {
   return group;
 }
 
+function makeFaceSurface(): FaceSurface {
+  const group = new THREE.Group();
+  const layer = (color: number, renderOrder: number) => {
+    const mesh = new THREE.Mesh(
+      new THREE.BufferGeometry(),
+      new THREE.MeshBasicMaterial({
+        color,
+        depthTest: true,
+        depthWrite: false,
+        side: THREE.DoubleSide,
+        toneMapped: false,
+      }),
+    );
+    mesh.renderOrder = renderOrder;
+    group.add(mesh);
+    return mesh;
+  };
+  const eyeFills = layer(0xeffff7, 1);
+  const darkFills = layer(0x17231e, 2);
+  const strokes = layer(0x17231e, 3);
+  return { group, strokes, eyeFills, darkFills, signature: '' };
+}
+
+function updateFaceMesh(mesh: THREE.Mesh, data: TriangleMeshData) {
+  const geometry = mesh.geometry as THREE.BufferGeometry;
+  const positions = geometry.getAttribute('position') as THREE.BufferAttribute | undefined;
+  if (positions?.array.length === data.positions.length) {
+    (positions.array as Float32Array).set(data.positions);
+    positions.needsUpdate = true;
+  } else {
+    geometry.setAttribute('position', new THREE.Float32BufferAttribute(data.positions, 3));
+  }
+  const existingIndex = geometry.getIndex();
+  if (existingIndex?.array.length === data.indices.length) {
+    (existingIndex.array as Uint16Array | Uint32Array).set(data.indices);
+    existingIndex.needsUpdate = true;
+  } else {
+    geometry.setIndex(data.indices);
+  }
+  geometry.computeBoundingSphere();
+}
+
+function renderFace(surface: FaceSurface, from: FaceEmotion, to: FaceEmotion, progress: number) {
+  const eased = smoothMorphProgress(progress);
+  const signature = `${from}:${to}:${eased.toFixed(3)}`;
+  if (surface.signature === signature) return;
+  surface.signature = signature;
+  const geometry = interpolateFaceGeometry(
+    FACE_PROTOTYPES[from as BaseFaceEmotion],
+    FACE_PROTOTYPES[to as BaseFaceEmotion],
+    eased,
+    false,
+  );
+  const data = faceGeometryToSphereMeshData(geometry, 0.366, undefined, 32);
+  updateFaceMesh(surface.strokes, data.strokes);
+  updateFaceMesh(surface.eyeFills, data.eyeFills);
+  updateFaceMesh(surface.darkFills, data.darkFills);
+}
+
 function makeAvatar(color: string, z: number, yaw: number) {
   const root = new THREE.Group();
   const body = new THREE.Mesh(
@@ -83,37 +151,30 @@ function makeAvatar(color: string, z: number, yaw: number) {
   body.position.y = 0.8;
   root.add(body);
 
-  const head = new THREE.Mesh(
+  const head = new THREE.Group();
+  head.position.y = 1.55;
+  const headMesh = new THREE.Mesh(
     new THREE.SphereGeometry(0.36, 28, 20),
     new THREE.MeshStandardMaterial({ color: '#b68468', roughness: 0.88 }),
   );
-  head.position.y = 1.55;
+  head.add(headMesh);
+  const face = makeFaceSurface();
+  renderFace(face, 'neutral', 'neutral', 1);
+  head.add(face.group);
   root.add(head);
-
-  const face = new THREE.MeshStandardMaterial({
-    transparent: true,
-    depthWrite: false,
-    roughness: 0.8,
-    toneMapped: false,
-    alphaTest: 0.02,
-  });
-  const faceShell = new THREE.Mesh(new THREE.SphereGeometry(0.368, 32, 22), face);
-  faceShell.position.copy(head.position);
-  faceShell.renderOrder = 2;
-  root.add(faceShell);
   root.position.set(0, 0, z);
   root.rotation.y = yaw;
-  return { root, face, emotion: 'neutral' as FaceEmotion };
+  return { root, face, fromEmotion: 'neutral' as FaceEmotion, toEmotion: 'neutral' as FaceEmotion, morphStarted: 0 };
 }
 
-function updateAvatarFace(avatar: MinimalAvatar, emotion: FaceEmotion, textures: Map<FaceEmotion, THREE.Texture>) {
-  if (avatar.emotion === emotion && avatar.face.map) return;
-  avatar.emotion = emotion;
-  const texture = textures.get(emotion);
-  if (texture) {
-    avatar.face.map = texture;
-    avatar.face.needsUpdate = true;
+function updateAvatarFace(avatar: MinimalAvatar, emotion: FaceEmotion, elapsed: number) {
+  if (avatar.toEmotion !== emotion) {
+    avatar.fromEmotion = avatar.toEmotion;
+    avatar.toEmotion = emotion;
+    avatar.morphStarted = elapsed;
   }
+  const progress = THREE.MathUtils.clamp((elapsed - avatar.morphStarted) / 0.72, 0, 1);
+  renderFace(avatar.face, avatar.fromEmotion, avatar.toEmotion, progress);
 }
 
 function setCardGlow(card: THREE.Group, visible: boolean, beat: number) {
@@ -166,31 +227,18 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     const avatarB = makeAvatar('#805467', 2.55, 2.36);
     scene.add(avatarA.root, avatarB.root);
 
-    const textures = new Map<FaceEmotion, THREE.Texture>();
-    const loader = new THREE.TextureLoader();
-    const emotions: FaceEmotion[] = ['neutral', 'happiness', 'sadness', 'fear', 'anger', 'surprise'];
-    emotions.forEach((emotion) => {
-      loader.load(publicAsset(`assets/faces/spherical/${emotion}.svg`), (texture) => {
-        texture.colorSpace = THREE.SRGBColorSpace;
-        texture.anisotropy = 4;
-        textures.set(emotion, texture);
-        if (emotion === 'neutral') {
-          avatarA.face.map = texture;
-          avatarB.face.map = texture;
-          avatarA.face.needsUpdate = true;
-          avatarB.face.needsUpdate = true;
-        }
-      });
-    });
-
     const labels = cardLabels[scenarioId];
     const privateCard = makeCard(labels.private);
     const cardA = makeCard(labels.a);
+    const cardACompetitive = makeCard(labels.aCompete);
     const cardB = makeCard(labels.b);
-    scene.add(privateCard, cardA, cardB);
+    const cardBCompetitive = makeCard(labels.bCompete);
+    scene.add(privateCard, cardA, cardACompetitive, cardB, cardBCompetitive);
     privateCard.position.set(0.72, 0.38, -1.15);
     cardA.position.set(-0.68, 0.82, -1.72);
+    cardACompetitive.position.copy(cardA.position);
     cardB.position.set(0.68, 0.82, 1.72);
+    cardBCompetitive.position.copy(cardB.position);
 
     const probeCards = scenarioId === 'concealed'
       ? ['7♥', 'Q♠', '4♦', '9♣'].map((label, index) => {
@@ -201,7 +249,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
           return card;
         })
       : [];
-    if (probeCards.length) cardA.visible = false;
+    if (probeCards.length) {
+      cardA.visible = false;
+      cardACompetitive.visible = false;
+    }
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -231,28 +282,39 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       );
 
       cardA.position.lerp(state.phase === 0 ? aStart : aCenter, 0.09);
+      cardACompetitive.position.lerp(state.phase === 0 ? aStart : aCenter, 0.09);
       const bMovesAt = scenarioId === 'dilemma' ? 1 : 3;
       cardB.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
+      cardBCompetitive.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
       cardA.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardA.rotation.x) * 0.08;
+      cardACompetitive.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardACompetitive.rotation.x) * 0.08;
       cardB.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardB.rotation.x) * 0.08;
+      cardBCompetitive.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardBCompetitive.rotation.x) * 0.08;
       privateCard.visible = state.phase === 0;
-      cardB.visible = scenarioId !== 'concealed' || state.phase >= 3;
+      const bShouldShow = scenarioId !== 'concealed' || state.phase >= 3;
+      cardB.visible = bShouldShow && state.incentive === 'cooperate';
+      cardBCompetitive.visible = bShouldShow && state.incentive === 'compete';
 
       probeCards.forEach((card, index) => {
         card.visible = state.phase >= 1;
         card.position.y = 0.38 + (state.phase === 2 && index === 2 ? beat * 0.06 : 0);
         setCardGlow(card, cueVisible && index === 2, beat);
       });
-      if (!probeCards.length) setCardGlow(cardA, cueVisible, beat);
+      if (!probeCards.length) {
+        cardA.visible = state.incentive === 'cooperate';
+        cardACompetitive.visible = state.incentive === 'compete';
+        setCardGlow(cardA, cueVisible && state.incentive === 'cooperate', beat);
+        setCardGlow(cardACompetitive, cueVisible && state.incentive === 'compete', beat);
+      }
 
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
       if (state.phase === 4 && state.incentive === 'compete') {
-        expressionA = 'happiness';
-        expressionB = 'sadness';
+        expressionA = scenarioId === 'dilemma' ? 'happiness' : 'sadness';
+        expressionB = scenarioId === 'dilemma' ? 'sadness' : scenarioId === 'ultimatum' ? 'anger' : 'happiness';
       }
-      updateAvatarFace(avatarA, expressionA, textures);
-      updateAvatarFace(avatarB, expressionB, textures);
+      updateAvatarFace(avatarA, expressionA, elapsed);
+      updateAvatarFace(avatarB, expressionB, elapsed);
       avatarA.root.position.y = Math.sin(elapsed * 1.15) * 0.012;
       avatarB.root.position.y = Math.sin(elapsed * 1.15 + 1.2) * 0.012;
       camera.position.x = 7.4 + Math.sin(elapsed * 0.16) * 0.08;
@@ -263,14 +325,12 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     return () => {
       renderer.setAnimationLoop(null);
       observer.disconnect();
-      const faceTextures = new Set(textures.values());
-      textures.forEach((texture) => texture.dispose());
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
           const materials = Array.isArray(object.material) ? object.material : [object.material];
           materials.forEach((material) => {
-            if (material instanceof THREE.MeshStandardMaterial && material.map && !faceTextures.has(material.map)) material.map.dispose();
+            if (material instanceof THREE.MeshStandardMaterial && material.map) material.map.dispose();
             material.dispose();
           });
         }

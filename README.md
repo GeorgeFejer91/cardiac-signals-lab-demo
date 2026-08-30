@@ -10,16 +10,16 @@ It automatically switches to a touch-optimized phone layout on narrow screens. I
 
 ## Minimal 3D scenario accordion
 
-The one-page landing menu contains four collapsed game choices. Selecting one expands exactly two stacked panels: a minimalist WebGL round preview and a short summary of the game, its logic, behavioral measures, and incentive manipulation.
+The one-page landing menu contains four collapsed game choices, each with a small card widget identifying its interaction. Selecting one expands exactly two stacked panels: a minimalist WebGL round preview and a short prose summary of the game, its logic, behavioral measures, and incentive manipulation.
 
 - **Hidden Target:** an informed sender plays a Sun/Moon signal and an uninformed receiver selects the target.
 - **Share / Keep:** both players commit privately and reveal together under cooperative or mixed-motive payoffs.
 - **Concealed Card:** candidate playing cards are probed while the informed player's cardiac cue is visible.
 - **Offer / Response:** a proposer places a split card and the responder answers with Accept or Reject.
 
-The dark WebGL panel restores the across-the-table composition: a rectangular shared table, required cards, and two Social Threat Lab-style avatar busts on opposing sides. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and wrap that project's spherical SVG expressions over the 3D heads; the expression changes with the illustrated phase. A compact phase indicator identifies the current step.
+The dark WebGL panel restores the across-the-table composition: a rectangular shared table, required cards, and two Social Threat Lab-style avatar busts on opposing sides. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and its canonical cubic-Bézier facial-expression geometry. The SVG-compatible features are tessellated directly onto the orb surface and continuously morph between phase-specific emotions. Short speech bubbles perform the current interaction, while a compact phase indicator identifies the current step.
 
-The preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. The summary panel offers Collaboration and Competition modes and changes the stated payoff logic accordingly.
+The preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. A Collaboration/Competition switch sits inside the animation pane and changes the played cards, dialogue, payoff explanation, and final facial reactions.
 
 `public/og.png` is a project-bound social-preview image generated for this redesign on 2026-08-30. It is link-preview artwork and is never presented as an experimental stimulus.
 
