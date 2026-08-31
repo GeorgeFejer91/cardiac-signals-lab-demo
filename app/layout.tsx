@@ -5,16 +5,16 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://georgefejer91.github.io/cardiac-signals-lab-demo/'),
   title: 'Cardiac Signals Lab — MR Tabletop Previews',
   description:
-    'Animated participant-facing previews of six mixed-reality social decision games using visible cardiac-state cues.',
+    'Interactive participant-facing previews of two mixed-reality social decision games using visible cardiac-state cues.',
   openGraph: {
     title: 'Cardiac Signals Lab',
-    description: 'Six mixed-reality social decision games with visible cardiac-state cues, led by the Market for Lemons.',
+    description: 'Two mixed-reality social decision games with visible cardiac-state cues: Market for Lemons and the Number-Card Game.',
     images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cardiac Signals Lab',
-    description: 'Six mixed-reality social decision games with visible cardiac-state cues, led by the Market for Lemons.',
+    description: 'Two mixed-reality social decision games with visible cardiac-state cues: Market for Lemons and the Number-Card Game.',
     images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
   },
 };
