@@ -75,7 +75,7 @@ export default function ExperimentMiniatures() {
     <section className="scenario-accordion" aria-label="Choose a 3D game storyboard">
       {scenarios.map((scenario) => {
         const open = scenario.id === activeId;
-        const frame = getStoryboardFrame(scenario.id, incentive, trial, phase);
+        const frame = getStoryboardFrame(scenario.id, incentive, trial, phase, cueWindow);
         const modeText = incentive === 'cooperate' ? scenario.cooperate : scenario.compete;
         const cueActive = isCueActive(phase, cueWindow);
 
@@ -165,7 +165,7 @@ export default function ExperimentMiniatures() {
                     <div><dt>Incentives</dt><dd>{modeText}</dd></div>
                     <div><dt>Measured</dt><dd>{scenario.measures}</dd></div>
                   </dl>
-                  <small><i /> {scenario.cueNote} Thought bubbles show private states for the storyboard only; public “speech” bubbles represent standardized button presses or signal cards, not verbal communication.</small>
+                  <small><i /> {scenario.cueNote} Every bubble is a private inner monologue used only to explain the storyboard. Participants never speak; observable choices are represented exclusively by the depressed push buttons.</small>
                 </section>
 
                 <section className="scenario-publications" aria-labelledby={`publications-${scenario.id}`}>

@@ -1203,13 +1203,6 @@ output { font-variant-numeric: tabular-nums; }
 .three-table-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; outline: 0; touch-action: pan-y; }
 .webgl-badge { position: absolute; z-index: 4; top: 15px; left: 16px; padding: 6px 8px; border: 1px solid rgba(114,232,220,.22); border-radius: 99px; background: rgba(5,10,11,.72); color: #7be4da; font: 800 7px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .11em; backdrop-filter: blur(10px); }
 
-.speech-bubble { position: absolute; z-index: 5; max-width: 205px; padding: 10px 12px; border: 1px solid rgba(255,255,255,.22); border-radius: 13px; background: rgba(236,240,237,.92); color: #18201f; box-shadow: 0 12px 30px rgba(0,0,0,.24); font-size: 10px; font-weight: 720; line-height: 1.4; backdrop-filter: blur(10px); }
-.speech-bubble span { display: block; margin-bottom: 3px; color: #64706d; font: 850 7px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
-.speech-bubble::after { position: absolute; bottom: -9px; width: 15px; height: 15px; border-right: 1px solid rgba(255,255,255,.25); border-bottom: 1px solid rgba(255,255,255,.25); background: rgba(236,240,237,.92); content: ''; transform: rotate(45deg); }
-.speech-bubble.player-a { top: 16%; left: 7%; }
-.speech-bubble.player-a::after { right: 23px; }
-.speech-bubble.player-b { right: 5%; bottom: 27%; }
-.speech-bubble.player-b::after { left: 23px; }
 
 .player-activity { position: absolute; z-index: 5; bottom: 14px; display: grid; width: min(41%, 270px); min-height: 58px; align-content: center; padding: 10px 12px; border: 1px solid rgba(255,255,255,.1); border-radius: 11px; background: rgba(4,8,9,.76); backdrop-filter: blur(12px); }
 .player-activity.player-a { left: 14px; border-left: 2px solid #67dbe0; }
@@ -1251,9 +1244,6 @@ output { font-variant-numeric: tabular-nums; }
 
 @media (max-width: 720px) {
   .webgl-scene-frame { min-height: 480px; }
-  .speech-bubble { max-width: 152px; padding: 8px 9px; font-size: 8px; }
-  .speech-bubble.player-a { top: 12%; left: 3%; }
-  .speech-bubble.player-b { right: 3%; bottom: 29%; }
   .player-activity { bottom: 9px; width: calc(50% - 13px); min-height: 64px; padding: 8px; }
   .player-activity.player-a { left: 8px; }
   .player-activity.player-b { right: 8px; }
@@ -1317,13 +1307,6 @@ output { font-variant-numeric: tabular-nums; }
 .preview-mode-toggle button { min-height: 28px; padding: 0 10px; border: 0; border-radius: 99px; background: transparent; color: #6f797e; cursor: pointer; font-size: 7px; font-weight: 850; letter-spacing: .03em; }
 .preview-mode-toggle button.active { background: rgba(128,241,231,.13); color: var(--cyan); }
 .preview-mode-toggle button.active.compete { background: rgba(255,126,105,.13); color: #ff957e; }
-.sequence-speech { position: absolute; z-index: 4; max-width: 190px; padding: 9px 11px; border-radius: 11px; background: rgba(239,241,236,.93); color: #17201e; box-shadow: 0 10px 26px rgba(0,0,0,.28); font-size: 9px; font-weight: 720; line-height: 1.35; transition: opacity .2s ease, transform .2s ease; }
-.sequence-speech span { display: block; margin-bottom: 2px; color: #687370; font: 850 6px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .1em; }
-.sequence-speech::after { position: absolute; width: 12px; height: 12px; background: inherit; content: ''; transform: rotate(45deg); }
-.sequence-speech.player-a { top: 66px; right: 18px; }
-.sequence-speech.player-a::after { right: 20px; bottom: -6px; }
-.sequence-speech.player-b { left: 18px; bottom: 77px; }
-.sequence-speech.player-b::after { left: 20px; bottom: -6px; }
 .scenario-summary-box { padding: 17px 18px; border: 1px solid rgba(255,255,255,.09); border-radius: 14px; background: #0a0d12; }
 .scenario-summary-box > p { max-width: 850px; margin: 0; color: #9ea8a6; font-size: 10px; line-height: 1.58; }
 .scenario-summary-box > p strong { color: #dce2df; font-weight: 720; }
@@ -1367,9 +1350,6 @@ output { font-variant-numeric: tabular-nums; }
   .minimal-scene-pane { height: 330px; }
   .preview-mode-toggle { top: 8px; right: 8px; }
   .preview-mode-toggle button { min-height: 26px; padding: 0 8px; font-size: 6px; }
-  .sequence-speech { max-width: 135px; padding: 7px 8px; font-size: 7px; }
-  .sequence-speech.player-a { top: 53px; right: 8px; }
-  .sequence-speech.player-b { left: 8px; bottom: 70px; }
   .scenario-mode-row { grid-template-columns: 1fr; gap: 8px; }
   .scenario-summary-footer { align-items: flex-start; flex-direction: column; }
   .scenario-publications > header { align-items: flex-start; flex-direction: column; gap: 3px; }
@@ -1475,9 +1455,27 @@ output { font-variant-numeric: tabular-nums; }
   pointer-events: none;
   transition: transform .26s ease, opacity .26s ease;
 }
-.storyboard-bubble.player-a { top: 1%; right: 23%; width: min(34%, 310px); height: 146px; }
+.storyboard-bubble.player-a { top: 1%; right: 2%; width: min(34%, 310px); height: 146px; }
 .storyboard-bubble.player-b { bottom: 2%; left: 1%; width: min(34%, 310px); height: 146px; }
 .storyboard-bubble svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.thought-connector {
+  position: absolute;
+  z-index: 5;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+.thought-connector circle {
+  fill: rgba(226,240,237,.96);
+  stroke: rgba(255,255,255,.6);
+  stroke-width: 1.2;
+  vector-effect: non-scaling-stroke;
+  filter: drop-shadow(0 5px 8px rgba(0,0,0,.3));
+}
 .storyboard-bubble .bubble-silhouette {
   fill: rgba(241,243,238,.97);
   stroke: rgba(255,255,255,.55);
@@ -1485,7 +1483,6 @@ output { font-variant-numeric: tabular-nums; }
   vector-effect: non-scaling-stroke;
 }
 .storyboard-bubble.thought .bubble-silhouette { fill: rgba(226,240,237,.96); }
-.storyboard-bubble .thought-trail { fill: rgba(226,240,237,.96); stroke: rgba(255,255,255,.55); stroke-width: 1.2; }
 .storyboard-bubble .bubble-copy {
   display: flex;
   height: 100%;
@@ -1679,7 +1676,7 @@ output { font-variant-numeric: tabular-nums; }
   .storyboard-mode-toggle button,
   .cue-window-toggle button { min-height: 34px; flex: 1; padding: 0 7px; font-size: 8px; }
   .storyboard-scene { height: 400px; }
-  .storyboard-bubble.player-a { top: 0; right: 8%; width: 56%; height: 126px; }
+  .storyboard-bubble.player-a { top: 0; right: 0; width: 56%; height: 126px; }
   .storyboard-bubble.player-b { bottom: 1%; left: 0; width: 52%; height: 126px; }
   .storyboard-bubble .bubble-copy { gap: 5px; padding: 1px 3px; }
   .storyboard-bubble .bubble-copy span { font-size: 12px; }

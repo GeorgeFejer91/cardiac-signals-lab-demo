@@ -2,7 +2,7 @@ export type ScenarioId = 'lemons' | 'numbers';
 export type IncentiveMode = 'cooperate' | 'compete';
 export type CueWindow = 'signal' | 'decision' | 'both';
 export type FaceEmotion = 'neutral' | 'happiness' | 'sadness' | 'fear' | 'anger' | 'surprise';
-export type BubbleKind = 'thought' | 'speech';
+export type BubbleKind = 'thought';
 
 export type ScenarioPublication = {
   authors: string;
@@ -58,7 +58,7 @@ export const scenarios: ScenarioDefinition[] = [
     cooperate: 'Both players receive the same reward for an efficient decision: buy a reliable car or reject a lemon.',
     compete: 'The seller benefits from a sale, including the sale of a lemon; the buyer benefits only from buying a reliable car or rejecting a lemon.',
     cueNote: 'The edge of the selected recommendation button can pulse during the public recommendation, the buyer’s decision, both intervals, or neither in the hidden control condition.',
-    implementation: 'Both headsets render the same car and fixed controls. Only the seller sees the private condition. There is no tablet, conversation, or free text: the seller presses Recommend Buy/Recommend Pass and the buyer presses Buy/Pass.',
+    implementation: 'Both headsets render the same car and fixed controls. Four vehicle models rotate across repeated trials, while reliable/lemon status is privately assigned to the seller and would be counterbalanced independently of model in the experiment. There is no tablet, conversation, or free text: the seller presses Recommend Buy/Recommend Pass and the buyer presses Buy/Pass.',
     publications: [
       {
         authors: 'Belot & van de Ven',
@@ -95,12 +95,12 @@ export const scenarios: ScenarioDefinition[] = [
     roleA: 'Strong-evidence player',
     roleB: 'Weak-evidence player',
     summary: 'Both players choose which of two number cards is closer to a hidden target. One player receives an exact target; the other receives deliberately ambiguous evidence.',
-    logic: 'After a private first choice, the strong-evidence player can send only A, B, or Wait. The weak-evidence player then makes a final private choice while the signal card can carry its sender’s heartbeat.',
+    logic: 'After private initial A/B choices, the strong-evidence player makes a standardized A/B recommendation. The weak-evidence player then locks a final A/B choice while the selected recommendation button can carry its sender’s heartbeat.',
     measures: 'initial and final accuracy, information transfer, truthful signalling, withholding, direct deception, exploitation success, revision, decision latency, payoff, and cardiac coupling.',
     cooperate: 'Both players gain only by reaching the correct answer, so the strong-evidence player should transmit useful information.',
     compete: 'Deadlock incentives pay the strong-evidence player most when they choose correctly but induce the partner to choose incorrectly.',
-    cueNote: 'The red edge belongs to the public A/B/Wait signal card—not to an explicit confidence report—and follows beat timing only in the selected cue window.',
-    implementation: 'Both headsets show identical A/B number cards. The target-information layer is role-specific, and the only public communication is a standardized A, B, or Wait card.',
+    cueNote: 'The red edge belongs to the selected A/B recommendation button—not to an explicit confidence report—and follows beat timing only in the selected cue window.',
+    implementation: 'Both headsets show identical A/B number cards as shared stimuli. Each participant has exactly two push buttons, A and B, positioned on their side of the table. The target-information layer is role-specific, and the only public signal is which recommendation button the strong-evidence player presses.',
     publications: [
       {
         authors: 'Pulford, Mangiarulo & Colman',
@@ -142,13 +142,15 @@ export function getNumberTrial(trial: number) {
   return numberTrials[(Math.max(1, trial) - 1) % numberTrials.length];
 }
 
+const carTrials = [
+  { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'LEMON', evidence: '82,000 MILES', correctAction: 'PASS' },
+  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'RELIABLE', evidence: '31,000 MILES', correctAction: 'BUY' },
+  { model: 'sedan.glb', description: 'older sedan', quality: 'LEMON', evidence: '96,000 MILES', correctAction: 'PASS' },
+  { model: 'suv-luxury.glb', description: 'luxury SUV', quality: 'RELIABLE', evidence: '38,000 MILES', correctAction: 'BUY' },
+] as const;
+
 export function getCarTrial(trial: number) {
-  const lemon = trial % 2 === 1;
-  return {
-    quality: lemon ? 'LEMON' : 'RELIABLE',
-    evidence: lemon ? '82,000 MILES' : '41,000 MILES',
-    correctAction: lemon ? 'PASS' : 'BUY',
-  } as const;
+  return carTrials[(Math.max(1, trial) - 1) % carTrials.length];
 }
 
 export function getStoryboardFrame(
@@ -156,6 +158,7 @@ export function getStoryboardFrame(
   incentive: IncentiveMode,
   trial: number,
   phase: number,
+  cueWindow: CueWindow = 'signal',
 ): StoryboardFrame {
   if (scenarioId === 'lemons') {
     const car = getCarTrial(trial);
@@ -163,48 +166,63 @@ export function getStoryboardFrame(
     const sellerAction = incentive === 'cooperate' ? car.correctAction : 'BUY';
     const buyerAction = incentive === 'cooperate' ? car.correctAction : 'BUY';
     const efficient = buyerAction === car.correctAction;
+    const cueVisibleAtRecommendation = isCueActive(3, cueWindow);
+    const deceptiveSale = car.quality === 'LEMON' && incentive === 'compete';
+    const sellerPrivateThought = car.quality === 'LEMON'
+      ? 'I know this is not actually a good car.'
+      : 'I know this car is reliable.';
+    const sellerRecommendationThought = deceptiveSale
+      ? 'I know this is not a good car, but I need to make the sale.'
+      : car.quality === 'LEMON'
+        ? 'It is a bad car. I should recommend PASS.'
+        : 'It is reliable. I can recommend BUY honestly.';
+    const buyerCueThought = cueVisibleAtRecommendation
+      ? deceptiveSale
+        ? 'It may look good, but the seller’s heart is beating very fast.'
+        : 'The recommendation and steady pulse feel reassuring.'
+      : 'I see the recommendation, but no cardiac cue.';
     const frames: StoryboardFrame[] = [
       {
         title: 'A car enters the shared scene',
         timing: '2 seconds',
         explanation: 'The car scales into the center of the table. Seller and Buyer see the same exterior; no quality label, controls, or cardiac cue is visible.',
-        bubbleA: { kind: 'thought', label: 'SELLER', text: 'A new car.' },
-        bubbleB: { kind: 'thought', label: 'BUYER', text: 'I see the car.' },
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: `A new ${car.description}.` },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: 'I can inspect only its visible exterior.' },
       },
       {
         title: 'Only the seller learns the condition',
         timing: '4 seconds',
         explanation: `The seller’s private annotation identifies a ${condition.toLowerCase()}. The car remains visually unchanged in the buyer’s view, making the information asymmetry explicit.`,
-        bubbleA: { kind: 'thought', label: 'SELLER · PRIVATE', text: `It is a ${condition.toLowerCase()}.` },
-        bubbleB: { kind: 'thought', label: 'BUYER · PRIVATE', text: 'I cannot see its condition.' },
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: sellerPrivateThought },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: 'I cannot see its actual condition.' },
       },
       {
         title: 'The seller chooses a recommendation',
         timing: 'Up to 8 seconds',
-        explanation: 'Recommend Buy and Recommend Pass rise beside the seller. Both remain unpressed while the seller chooses under the current payoff rule.',
-        bubbleA: { kind: 'thought', label: 'SELLER · PRIVATE', text: 'Which recommendation benefits me?' },
-        bubbleB: { kind: 'thought', label: 'BUYER · PRIVATE', text: 'I wait for one fixed recommendation.' },
+        explanation: 'Recommend Buy and Recommend Pass rise directly in front of the seller. Both remain unpressed while the seller chooses under the current payoff rule.',
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: 'Which of my two buttons serves my payoff?' },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: 'I have to wait for the seller’s choice.' },
       },
       {
         title: 'The seller presses one recommendation',
         timing: 'Up to 8 seconds',
         explanation: `The seller presses Recommend ${sellerAction}. The selected button depresses and its red edge follows the seller’s heartbeat when the signal cue is enabled.`,
-        bubbleA: { kind: 'speech', label: 'SELLER · BUTTON', text: `Recommend ${sellerAction}.` },
-        bubbleB: { kind: 'thought', label: 'BUYER · PRIVATE', text: 'I see the recommendation and cue.' },
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: sellerRecommendationThought },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: buyerCueThought },
       },
       {
         title: 'The buyer chooses Buy or Pass',
         timing: 'Up to 10 seconds',
-        explanation: `Buy and Pass rise beside the buyer, who presses ${buyerAction}. The seller’s selected recommendation remains visible and can keep pulsing during this decision window.`,
-        bubbleA: { kind: 'thought', label: 'SELLER · PRIVATE', text: 'Waiting for the decision.' },
-        bubbleB: { kind: 'speech', label: 'BUYER · BUTTON', text: `${buyerAction}.` },
+        explanation: `Buy and Pass rise directly in front of the buyer, who presses ${buyerAction}. The seller’s selected recommendation remains visible and can keep pulsing during this decision window.`,
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: 'Now the buyer must decide.' },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: buyerAction === 'BUY' ? 'I will press BUY.' : 'I will press PASS.' },
       },
       {
         title: 'The condition and outcome are revealed',
         timing: '2 seconds',
         explanation: 'The car changes color and a GOOD CAR or BAD CAR status plate rises above it while the chosen controls remain depressed. The system records recommendation, choice, accuracy, payoff, timing, and physiology.',
-        bubbleA: { kind: 'thought', label: 'SELLER · OUTCOME', text: efficient ? 'The choice matched the car.' : 'The sale benefited me.' },
-        bubbleB: { kind: 'thought', label: 'BUYER · OUTCOME', text: efficient ? 'I made the efficient choice.' : 'My choice did not match the car.' },
+        bubbleA: { kind: 'thought', label: 'SELLER · THOUGHT', text: efficient ? 'The choice matched the actual car.' : 'I completed the sale despite its condition.' },
+        bubbleB: { kind: 'thought', label: 'BUYER · THOUGHT', text: efficient ? 'My choice matched the actual car.' : 'I should have distrusted that recommendation.' },
       },
     ];
     return frames[phase % frames.length];
@@ -212,51 +230,51 @@ export function getStoryboardFrame(
 
   const numbers = getNumberTrial(trial);
   const falseSignal = numbers.correct === 'A' ? 'B' : 'A';
-  const signal = incentive === 'cooperate' ? numbers.correct : trial % 2 === 0 ? 'WAIT' : falseSignal;
-  const weakFinal = incentive === 'cooperate' ? numbers.correct : signal === 'WAIT' ? falseSignal : signal;
+  const signal = incentive === 'cooperate' ? numbers.correct : falseSignal;
+  const weakFinal = incentive === 'cooperate' ? numbers.correct : signal;
   const exploited = weakFinal !== numbers.correct;
   const frames: StoryboardFrame[] = [
     {
       title: 'Two candidate cards appear',
       timing: '2 seconds',
       explanation: `Cards A = ${numbers.a} and B = ${numbers.b} rise into the shared center. Both players see them, but no evidence panel or response is visible yet.`,
-      bubbleA: { kind: 'thought', label: 'STRONG PLAYER', text: 'Two possible answers.' },
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: 'We see the same cards.' },
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: 'I must choose between A and B.' },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: 'We see the same two number cards.' },
     },
     {
       title: 'Evidence quality is assigned privately',
       timing: '4 seconds',
       explanation: `An EXACT ${numbers.target} panel rises beside the strong player while a RANGE ${numbers.coarse} panel rises beside the weak player. Each represents private headset content.`,
-      bubbleA: { kind: 'thought', label: 'STRONG · PRIVATE', text: `Exact target: ${numbers.target}.` },
-      bubbleB: { kind: 'thought', label: 'WEAK · PRIVATE', text: `Target range: ${numbers.coarse}.` },
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: `I know the exact target is ${numbers.target}.` },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: `I only know the range ${numbers.coarse}.` },
     },
     {
       title: 'Both make an initial private choice',
       timing: 'Up to 8 seconds',
-      explanation: 'A private-choice card slides toward each player and stays on that player’s side of the table. These unrevealed choices establish the pre-signal accuracy baseline.',
-      bubbleA: { kind: 'thought', label: 'STRONG · PRIVATE', text: `My first choice: ${numbers.correct}.` },
-      bubbleB: { kind: 'thought', label: 'WEAK · PRIVATE', text: 'My evidence is ambiguous.' },
+      explanation: 'Two A/B push buttons rise directly in front of each participant. Each player privately depresses one button, establishing the pre-signal accuracy baseline without moving or speaking.',
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: `I will privately press ${numbers.correct}.` },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: 'My evidence leaves me uncertain.' },
     },
     {
-      title: 'The strong player sends A, B or Wait',
+      title: 'The strong player recommends A or B',
       timing: 'Up to 8 seconds',
-      explanation: 'The selected A, B, or Wait signal card moves from the strong player to the shared center. Its red edge shows live, replayed, or hidden cardiac timing.',
-      bubbleA: { kind: 'speech', label: 'STRONG · SIGNAL CARD', text: `Signal: ${signal}.` },
-      bubbleB: { kind: 'thought', label: 'WEAK · PRIVATE', text: 'Should I trust this signal?' },
+      explanation: `The strong player presses the ${signal} recommendation button in front of them. Its selected state becomes visible to the weak player, and its red edge shows live, replayed, or hidden cardiac timing.`,
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: signal === numbers.correct ? `I will recommend ${signal}.` : `I know ${numbers.correct} is right, but I will recommend ${signal}.` },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: 'Should I trust that choice and cardiac cue?' },
     },
     {
       title: 'The weak player locks a final answer',
       timing: 'Up to 10 seconds',
-      explanation: 'A final A or B card slides from the weak player toward the shared center. The signal card can continue pulsing, but no confidence rating is added.',
-      bubbleA: { kind: 'thought', label: 'STRONG · PRIVATE', text: 'My final answer stays private.' },
-      bubbleB: { kind: 'speech', label: 'WEAK · FINAL CARD', text: `Final choice: ${weakFinal}.` },
+      explanation: `The weak player presses the ${weakFinal} button in front of them to lock the final answer. The strong player’s selected recommendation button can continue pulsing, but no confidence rating is added.`,
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: 'The other player must decide now.' },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: `I will lock in ${weakFinal}.` },
     },
     {
       title: 'Accuracy and strategy are recorded',
       timing: '2 seconds',
       explanation: `A cyan TARGET ${numbers.target} status plate rises behind the still-visible A and B alternatives. The system records accuracy, revision, information transfer, deception, payoff, timing, and cardiac coupling.`,
-      bubbleA: { kind: 'thought', label: 'STRONG PLAYER · OUTCOME', text: exploited ? 'I was correct alone.' : 'We reached the correct answer.' },
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER · OUTCOME', text: exploited ? 'The signal led me away from the target.' : 'My final answer was correct.' },
+      bubbleA: { kind: 'thought', label: 'STRONG · THOUGHT', text: exploited ? 'I stayed correct while the other player was misled.' : 'We both reached the correct answer.' },
+      bubbleB: { kind: 'thought', label: 'WEAK · THOUGHT', text: exploited ? 'That recommendation led me away from the target.' : 'My final answer was correct.' },
     },
   ];
   return frames[phase % frames.length];
