@@ -28,7 +28,7 @@ export default function StoryboardBubble({ player, bubble }: StoryboardBubblePro
         <title>{bubble.label}</title>
         <path className="bubble-silhouette" d={paths[bubble.kind][player]} fillRule={isThought ? 'evenodd' : undefined} />
         <foreignObject x={box.x} y={box.y} width={box.width} height={box.height}>
-          <div className="bubble-copy" xmlns="http://www.w3.org/1999/xhtml">
+          <div className="bubble-copy">
             <span>{bubble.label}</span>
             <strong>{bubble.text}</strong>
           </div>
