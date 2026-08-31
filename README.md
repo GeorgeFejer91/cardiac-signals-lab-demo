@@ -2,7 +2,7 @@
 
 A static, browser-only GitHub Pages preview of two proposed mixed-reality dyadic experiments.
 
-**Live demo:** https://georgefejer91.github.io/grants/
+**Live demo:** https://georgefejer91.github.io/cardiac-signals-lab-demo/
 
 The landing page contains two accordion choices:
 
@@ -22,11 +22,13 @@ Each accordion opens a discrete six-phase storyboard rather than a participant t
 
 The 3D scene uses a minimal table, two Social Threat Lab-style avatar busts, continuously morphing facial expressions, and only the props needed for the current experiment. The card-edge cardiac cue is a red, beat-synchronous emissive glow.
 
-Every bubble is a **thought bubble** containing the participant’s private inner monologue; the protocol contains no speech. Observable actions are shown only by one of two physical push buttons depressing in front of the relevant participant.
+Each phase shows at most one **thought bubble** containing the currently relevant participant’s private inner monologue; the protocol contains no speech. Observable actions are shown only by one of two physical push buttons depressing in front of the relevant participant. The bubble and its SVG trail sit behind the avatar’s head so they remain anchored without covering the face.
 
 The bubble silhouette is a complete SVG path with centered, length-responsive text embedded in the SVG. Each thought trail is recalculated from the cloud boundary to the projected 3D center of the corresponding avatar’s head, while reserved screen zones keep the cloud itself clear of the table actions and cardiac-status badge.
 
-The car scenario deliberately contains no tablet or free-form claim card. It cycles through four CC0 Kenney vehicle models and alternating reliable/lemon states. Its six visible actions are: shared car appearance, seller-only quality information, seller recommendation controls, a depressed and optionally pulsing recommendation button, buyer Buy/Pass controls, and a quality reveal. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
+The car scenario deliberately contains no tablet, negotiation, or free-form claim card. It cycles through four CC0 Kenney vehicle models and alternating reliable/lemon states. Every round shows a computer-set 20-token price and four colored physical controls: Recommend Buy/Recommend Pass for the seller and Buy/Pass for the buyer. During cardiac-access phases, the seller’s chest heart, selected recommendation edge, and tabletop pulse together; an explicitly illustrative physiology panel is then available to the buyer. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
+
+The priced-car game is a **fixed-price, lemons-inspired adaptation**, not a literal reproduction of Belot and van de Ven’s task. A reliable car is worth 30 tokens and a lemon 10, while the fixed 20-token price makes buying worth +10 or −10 to the buyer. Passing is worth zero. In aligned blocks the seller shares this result; in opposed blocks the seller receives a 10-token sales commission. A ten-token endowment protects participants from real losses, and only selected rounds are converted to money after the session.
 
 ## Experimental interpretation
 
@@ -40,6 +42,7 @@ Primary behavioral outcomes include truth telling, concealment, decision accurac
 - Pulford BD, Colman AM, Buabang EK, Krockow EM. [The persuasive power of knowledge: Testing the confidence heuristic](https://doi.org/10.1037/xge0000471). *Journal of Experimental Psychology: General*. 2018.
 - Bahrami B, et al. [Optimally interacting minds](https://doi.org/10.1126/science.1185718). *Science*. 2010.
 - Belot M, van de Ven J. [How private is private information? The ability to spot deception in an economic game](https://doi.org/10.1007/s10683-015-9474-8). *Experimental Economics*. 2017.
+- Eriksson K, Simpson B. [Deception and price in a market with asymmetric information](https://doi.org/10.1017/S1930297500000243). *Judgment and Decision Making*. 2007.
 - Akerlof GA. [The Market for “Lemons”: Quality Uncertainty and the Market Mechanism](https://doi.org/10.2307/1879431). *Quarterly Journal of Economics*. 1970.
 - Kenney. [Car Kit 3.1](https://kenney.nl/assets/car-kit). CC0 1.0 Universal.
 

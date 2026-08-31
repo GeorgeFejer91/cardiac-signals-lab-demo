@@ -1200,7 +1200,7 @@ output { font-variant-numeric: tabular-nums; }
 .three-stage-column, .plain-instructions { min-width: 0; border: 1px solid rgba(255,255,255,.105); border-radius: 22px; background: rgba(4,8,9,.24); }
 .three-stage-column { overflow: hidden; }
 .webgl-scene-frame { position: relative; min-height: 560px; overflow: hidden; isolation: isolate; background: radial-gradient(ellipse at center, rgba(46,75,70,.095), transparent 62%); }
-.three-table-canvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; outline: 0; touch-action: pan-y; }
+.three-table-canvas { position: absolute; z-index: 3; inset: 0; display: block; width: 100%; height: 100%; outline: 0; touch-action: pan-y; }
 .webgl-badge { position: absolute; z-index: 4; top: 15px; left: 16px; padding: 6px 8px; border: 1px solid rgba(114,232,220,.22); border-radius: 99px; background: rgba(5,10,11,.72); color: #7be4da; font: 800 7px ui-monospace, SFMono-Regular, Consolas, monospace; letter-spacing: .11em; backdrop-filter: blur(10px); }
 
 
@@ -1450,7 +1450,7 @@ output { font-variant-numeric: tabular-nums; }
 }
 .storyboard-bubble {
   position: absolute;
-  z-index: 6;
+  z-index: 2;
   filter: drop-shadow(0 12px 22px rgba(0,0,0,.34));
   pointer-events: none;
   transition: transform .26s ease, opacity .26s ease;
@@ -1460,7 +1460,7 @@ output { font-variant-numeric: tabular-nums; }
 .storyboard-bubble svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .thought-connector {
   position: absolute;
-  z-index: 5;
+  z-index: 2;
   inset: 0;
   width: 100%;
   height: 100%;

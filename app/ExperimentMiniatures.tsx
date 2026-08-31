@@ -27,7 +27,7 @@ export default function ExperimentMiniatures() {
   const [phase, setPhase] = useState(0);
   const [trial, setTrial] = useState(1);
   const [incentive, setIncentive] = useState<IncentiveMode>('cooperate');
-  const [cueWindow, setCueWindow] = useState<CueWindow>('signal');
+  const [cueWindow, setCueWindow] = useState<CueWindow>('both');
   const [autoAdvance, setAutoAdvance] = useState(false);
 
   const moveForward = () => {
@@ -60,7 +60,7 @@ export default function ExperimentMiniatures() {
     setPhase(0);
     setTrial(1);
     setIncentive('cooperate');
-    setCueWindow('signal');
+    setCueWindow('both');
     setAutoAdvance(false);
   };
 
@@ -119,11 +119,13 @@ export default function ExperimentMiniatures() {
                     <ThreeTableScene scenarioId={scenario.id} phase={phase} incentive={incentive} trial={trial} cueWindow={cueWindow} />
                     <div className="storyboard-role role-a"><i />{scenario.roleA}</div>
                     <div className="storyboard-role role-b"><i />{scenario.roleB}</div>
-                    <StoryboardBubble player="a" bubble={frame.bubbleA} />
-                    <StoryboardBubble player="b" bubble={frame.bubbleB} />
+                    {frame.bubbleA ? <StoryboardBubble player="a" bubble={frame.bubbleA} /> : null}
+                    {frame.bubbleB ? <StoryboardBubble player="b" bubble={frame.bubbleB} /> : null}
                     <div className={`cue-window-badge${cueActive ? ' active' : ''}`}>
                       <i aria-hidden="true" />
-                      {cueActive ? 'Cardiac edge visible now' : 'Cardiac edge hidden in this phase'}
+                      {cueActive
+                        ? scenario.id === 'lemons' ? 'Seller cardiac display visible now' : 'Cardiac edge visible now'
+                        : 'Cardiac display hidden in this phase'}
                     </div>
                   </div>
 
@@ -162,10 +164,11 @@ export default function ExperimentMiniatures() {
                   <p><strong>{scenario.summary}</strong> {scenario.logic}</p>
                   <dl>
                     <div><dt>VR setup</dt><dd>{scenario.implementation}</dd></div>
+                    <div><dt>Lab stakes</dt><dd>{scenario.stakes}</dd></div>
                     <div><dt>Incentives</dt><dd>{modeText}</dd></div>
                     <div><dt>Measured</dt><dd>{scenario.measures}</dd></div>
                   </dl>
-                  <small><i /> {scenario.cueNote} Every bubble is a private inner monologue used only to explain the storyboard. Participants never speak; observable choices are represented exclusively by the depressed push buttons.</small>
+                  <small><i /> {scenario.cueNote} Only the currently relevant participant’s private inner monologue is shown to explain the storyboard. Participants never speak; observable choices are represented exclusively by the depressed push buttons.</small>
                 </section>
 
                 <section className="scenario-publications" aria-labelledby={`publications-${scenario.id}`}>

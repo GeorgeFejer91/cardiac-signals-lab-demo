@@ -109,7 +109,7 @@ function makeActionButton(label: string, accent: string) {
   group.add(glow);
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(1.64, 0.12, 0.62),
-    new THREE.MeshStandardMaterial({ color: '#172025', roughness: 0.5, metalness: 0.16 }),
+    new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.16, roughness: 0.46, metalness: 0.12 }),
   );
   body.position.y = 0.005;
   group.add(body);
@@ -117,7 +117,7 @@ function makeActionButton(label: string, accent: string) {
     new THREE.PlaneGeometry(1.53, 0.51),
     new THREE.MeshStandardMaterial({
       map: makeLabelTexture(label, 540, 190, {
-        background: '#eef1ec', border: accent, foreground: '#17201f', fontSize: label.includes('\n') ? 43 : 54,
+        background: accent, border: '#f6f2e9', foreground: '#ffffff', fontSize: label.includes('\n') ? 52 : 62,
       }),
       roughness: 0.72,
     }),
@@ -128,6 +128,112 @@ function makeActionButton(label: string, accent: string) {
   group.userData.glow = glow;
   group.userData.glowMaterial = glowMaterial;
   return group;
+}
+
+function drawRoundedRect(
+  context: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  radius: number,
+) {
+  const safeRadius = Math.min(radius, width / 2, height / 2);
+  context.beginPath();
+  context.moveTo(x + safeRadius, y);
+  context.lineTo(x + width - safeRadius, y);
+  context.quadraticCurveTo(x + width, y, x + width, y + safeRadius);
+  context.lineTo(x + width, y + height - safeRadius);
+  context.quadraticCurveTo(x + width, y + height, x + width - safeRadius, y + height);
+  context.lineTo(x + safeRadius, y + height);
+  context.quadraticCurveTo(x, y + height, x, y + height - safeRadius);
+  context.lineTo(x, y + safeRadius);
+  context.quadraticCurveTo(x, y, x + safeRadius, y);
+  context.closePath();
+}
+
+function makeInfoPanel(
+  title: string,
+  rows: Array<{ label: string; value: string }>,
+  accent: string,
+  worldWidth: number,
+) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 640;
+  canvas.height = rows.length === 1 ? 220 : 390;
+  const context = canvas.getContext('2d');
+  if (context) {
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    drawRoundedRect(context, 12, 12, canvas.width - 24, canvas.height - 24, 34);
+    context.fillStyle = 'rgba(10, 16, 20, 0.94)';
+    context.fill();
+    context.strokeStyle = accent;
+    context.lineWidth = 8;
+    context.stroke();
+    context.textAlign = 'left';
+    context.textBaseline = 'middle';
+    context.fillStyle = accent;
+    context.font = '800 30px Arial';
+    context.fillText(title, 48, 54);
+    const rowHeight = (canvas.height - 98) / rows.length;
+    rows.forEach((row, index) => {
+      const rowY = 98 + index * rowHeight;
+      if (index > 0) {
+        context.strokeStyle = 'rgba(255,255,255,.13)';
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(44, rowY);
+        context.lineTo(canvas.width - 44, rowY);
+        context.stroke();
+      }
+      context.fillStyle = '#91a09f';
+      context.font = '700 25px Arial';
+      context.fillText(row.label, 48, rowY + rowHeight / 2);
+      context.textAlign = 'right';
+      context.fillStyle = '#f6f4ed';
+      context.font = '800 34px Arial';
+      context.fillText(row.value, canvas.width - 48, rowY + rowHeight / 2);
+      context.textAlign = 'left';
+    });
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.scale.set(worldWidth, worldWidth * (canvas.height / canvas.width), 1);
+  sprite.renderOrder = 5;
+  const group = new THREE.Group();
+  group.add(sprite);
+  group.userData.spriteMaterial = material;
+  return group;
+}
+
+function makeHeartSprite() {
+  const canvas = document.createElement('canvas');
+  canvas.width = 160;
+  canvas.height = 160;
+  const context = canvas.getContext('2d');
+  if (context) {
+    context.clearRect(0, 0, 160, 160);
+    context.shadowColor = '#ff304f';
+    context.shadowBlur = 24;
+    context.fillStyle = '#ff4057';
+    context.beginPath();
+    context.moveTo(80, 136);
+    context.bezierCurveTo(68, 119, 25, 92, 25, 56);
+    context.bezierCurveTo(25, 29, 58, 18, 80, 45);
+    context.bezierCurveTo(102, 18, 135, 29, 135, 56);
+    context.bezierCurveTo(135, 92, 92, 119, 80, 136);
+    context.closePath();
+    context.fill();
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const material = new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true, depthWrite: false });
+  const sprite = new THREE.Sprite(material);
+  sprite.renderOrder = 7;
+  sprite.userData.spriteMaterial = material;
+  return sprite;
 }
 
 function makeStatusPlate(label: string, accent: string) {
@@ -158,6 +264,10 @@ function makeStatusPlate(label: string, accent: string) {
   face.position.y = 0.063;
   group.add(face);
   return group;
+}
+
+function makePricePlate(label: string) {
+  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.25);
 }
 
 function makeToyCar() {
@@ -363,10 +473,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     red.position.set(-1.3, 2.4, 1.2);
     scene.add(red);
 
-    const table = new THREE.Mesh(
-      new THREE.BoxGeometry(5.5, 0.24, 3.25),
-      new THREE.MeshStandardMaterial({ color: '#37423f', roughness: 0.64, metalness: 0.12 }),
-    );
+    const tableMaterial = new THREE.MeshStandardMaterial({
+      color: '#37423f',
+      emissive: '#ff2545',
+      emissiveIntensity: 0,
+      roughness: 0.64,
+      metalness: 0.12,
+    });
+    const table = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.24, 3.25), tableMaterial);
     table.position.y = 0.22;
     scene.add(table);
 
@@ -374,6 +488,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     const avatarA = makeAvatar('#527b7d', -2.55, 0.68);
     const avatarB = makeAvatar('#805467', 2.55, 2.36);
     scene.add(avatarA.root, avatarB.root);
+
+    const sellerHeart = scenarioId === 'lemons' ? makeHeartSprite() : null;
+    if (sellerHeart) {
+      sellerHeart.position.set(0, 1.04, 0.32);
+      sellerHeart.scale.setScalar(0.001);
+      sellerHeart.visible = false;
+      avatarA.root.add(sellerHeart);
+    }
 
     const carTrial = getCarTrial(trial);
     const toyCar = scenarioId === 'lemons' ? makeToyCar() : null;
@@ -392,8 +514,27 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     const sellerPass = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nPASS', '#b55b68') : null;
     const buyerBuy = scenarioId === 'lemons' ? makeActionButton('BUY', '#4b918c') : null;
     const buyerPass = scenarioId === 'lemons' ? makeActionButton('PASS', '#b55b68') : null;
+    const buyerOutcome = carTrial.correctAction === 'BUY' ? 30 - carTrial.pricePoints : 0;
+    // The illustrated buyer makes the efficient choice, so the realized seller payoff is
+    // +10 for a reliable-car sale and 0 for a rejected lemon in either incentive mode.
+    const sellerOutcome = buyerOutcome;
+    const sellerCondition = scenarioId === 'lemons'
+      ? makeInfoPanel('SELLER ONLY', [
+          { label: 'INSPECTION', value: carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE' },
+        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 1.75)
+      : null;
     const conditionReveal = scenarioId === 'lemons'
-      ? makeStatusPlate(carTrial.quality === 'LEMON' ? 'BAD CAR' : 'GOOD CAR', carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0')
+      ? makeStatusPlate(`${carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE'}\nB ${buyerOutcome >= 0 ? '+' : ''}${buyerOutcome} · S ${sellerOutcome >= 0 ? '+' : ''}${sellerOutcome}`, carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0')
+      : null;
+    const pricePanel = scenarioId === 'lemons'
+      ? makePricePlate(carTrial.price)
+      : null;
+    const physiologyPanel = scenarioId === 'lemons'
+      ? makeInfoPanel('SELLER PHYSIOLOGY · DEMO', [
+          { label: 'HEART RATE', value: `${carTrial.hrBpm} BPM` },
+          { label: 'EXCITEMENT', value: `${carTrial.excitement} / 100` },
+          { label: 'CHANGE FROM BASELINE', value: `+${carTrial.deltaHr} BPM` },
+        ], '#ff5369', 2.12)
       : null;
     const lemonButtons = [sellerBuy, sellerPass, buyerBuy, buyerPass].filter((item): item is THREE.Group => Boolean(item));
     lemonButtons.forEach((button) => {
@@ -401,14 +542,29 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       scene.add(button);
     });
     // The oblique camera requires a slight diagonal offset so both paired controls remain visible.
-    sellerBuy?.position.set(0.5, 0.42, -1.08);
-    sellerPass?.position.set(2, 0.42, -1.08);
-    buyerBuy?.position.set(-2, 0.42, 1.08);
-    buyerPass?.position.set(-0.5, 0.42, 1.08);
+    sellerBuy?.position.set(0.5, 0.38, -1.08);
+    sellerPass?.position.set(2, 0.38, -1.08);
+    buyerBuy?.position.set(-2, 0.38, 1.08);
+    buyerPass?.position.set(-0.5, 0.38, 1.08);
+    if (sellerCondition) {
+      sellerCondition.position.set(-1.45, 1.4, -1.05);
+      sellerCondition.scale.setScalar(0.001);
+      scene.add(sellerCondition);
+    }
     if (conditionReveal) {
       conditionReveal.position.set(-0.7, 0.76, -1.25);
       conditionReveal.scale.setScalar(0.001);
       scene.add(conditionReveal);
+    }
+    if (pricePanel) {
+      pricePanel.position.set(1.15, 0.84, 0.55);
+      pricePanel.scale.setScalar(0.001);
+      scene.add(pricePanel);
+    }
+    if (physiologyPanel) {
+      physiologyPanel.position.set(-1.55, 1.45, -1.1);
+      physiologyPanel.scale.setScalar(0.001);
+      scene.add(physiologyPanel);
     }
 
     const numberTrial = getNumberTrial(trial);
@@ -473,9 +629,28 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         Math.pow(Math.max(0, Math.sin(elapsed * beatRate)), 18),
         Math.pow(Math.max(0, Math.sin(elapsed * beatRate - 0.48)), 20) * 0.66,
       );
+      const cardiacPhaseActive = scenarioId === 'lemons' && cueVisible && (state.phase === 3 || state.phase === 4);
+      const tablePulse = cardiacPhaseActive ? 0.08 + beat * 1.16 : 0;
+      tableMaterial.emissiveIntensity += (tablePulse - tableMaterial.emissiveIntensity) * 0.28;
+      red.intensity += (((cardiacPhaseActive ? 1.2 + beat * 12 : 0.8)) - red.intensity) * 0.2;
+
+      if (sellerHeart) {
+        sellerHeart.visible = cardiacPhaseActive || sellerHeart.scale.x > 0.01;
+        const heartTarget = cardiacPhaseActive ? 0.27 + beat * 0.13 : 0.001;
+        sellerHeart.scale.lerp(new THREE.Vector3(heartTarget, heartTarget, 1), 0.24);
+        if (!cardiacPhaseActive && sellerHeart.scale.x < 0.01) sellerHeart.visible = false;
+        const heartMaterial = sellerHeart.material as THREE.SpriteMaterial;
+        heartMaterial.opacity = cardiacPhaseActive ? 0.68 + beat * 0.32 : 0;
+      }
 
       if (scenarioId === 'lemons' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
         animateScale(toyCar, true, 0.83, 0.1);
+        if (pricePanel) animateScale(pricePanel, true, 1, 0.14);
+        if (sellerCondition) animateScale(sellerCondition, state.phase === 1, 1, 0.14);
+        if (physiologyPanel) {
+          const physiologyVisible = state.phase === 4 || state.phase === 5;
+          animateScale(physiologyPanel, physiologyVisible, 1, 0.14);
+        }
         toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
         const paint = toyCar.userData.paint as THREE.MeshStandardMaterial;
         const revealColor = carTrial.quality === 'LEMON' ? badPaint : goodPaint;
@@ -494,23 +669,23 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         toyCar.rotation.z += (((state.phase === 5 && carTrial.quality === 'LEMON') ? -0.045 : 0) - toyCar.rotation.z) * 0.08;
 
         const sellerChoice = state.incentive === 'cooperate' ? carTrial.correctAction : 'BUY';
-        const buyerChoice = state.incentive === 'cooperate' ? carTrial.correctAction : 'BUY';
+        const buyerChoice = carTrial.correctAction;
         const selectedSeller = sellerChoice === 'BUY' ? sellerBuy : sellerPass;
         const selectedBuyer = buyerChoice === 'BUY' ? buyerBuy : buyerPass;
         [sellerBuy, sellerPass].forEach((button) => {
-          animateScale(button, state.phase >= 2 && (state.phase < 5 || button === selectedSeller), 0.78);
+          animateScale(button, true, 0.7);
         });
         [buyerBuy, buyerPass].forEach((button) => {
-          animateScale(button, state.phase >= 4 && (state.phase < 5 || button === selectedBuyer), 0.78);
+          animateScale(button, true, 0.7);
         });
-        const sellerPressedY = state.phase >= 3 ? 0.365 : 0.42;
-        sellerBuy.position.y += ((selectedSeller === sellerBuy ? sellerPressedY : 0.42) - sellerBuy.position.y) * 0.14;
-        sellerPass.position.y += ((selectedSeller === sellerPass ? sellerPressedY : 0.42) - sellerPass.position.y) * 0.14;
-        buyerBuy.position.y += ((state.phase >= 4 && selectedBuyer === buyerBuy ? 0.365 : 0.42) - buyerBuy.position.y) * 0.14;
-        buyerPass.position.y += ((state.phase >= 4 && selectedBuyer === buyerPass ? 0.365 : 0.42) - buyerPass.position.y) * 0.14;
+        const sellerPressedY = state.phase >= 3 ? 0.35 : 0.38;
+        sellerBuy.position.y += ((selectedSeller === sellerBuy ? sellerPressedY : 0.38) - sellerBuy.position.y) * 0.14;
+        sellerPass.position.y += ((selectedSeller === sellerPass ? sellerPressedY : 0.38) - sellerPass.position.y) * 0.14;
+        buyerBuy.position.y += ((state.phase >= 4 && selectedBuyer === buyerBuy ? 0.35 : 0.38) - buyerBuy.position.y) * 0.14;
+        buyerPass.position.y += ((state.phase >= 4 && selectedBuyer === buyerPass ? 0.35 : 0.38) - buyerPass.position.y) * 0.14;
         [sellerBuy, sellerPass, buyerBuy, buyerPass].forEach((button) => setEdgeGlow(button, false, beat));
-        setEdgeGlow(selectedSeller, cueVisible && state.phase >= 3, beat);
-        if (conditionReveal) animateScale(conditionReveal, state.phase === 5, 0.68);
+        setEdgeGlow(selectedSeller, cardiacPhaseActive, beat);
+        if (conditionReveal) animateScale(conditionReveal, state.phase === 5, 0.95);
       }
 
       if (scenarioId === 'numbers' && exactPanel && rangePanel && strongA && strongB && weakA && weakB && targetReveal) {
@@ -583,6 +758,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
             if (material instanceof THREE.MeshStandardMaterial && material.map) material.map.dispose();
             material.dispose();
           });
+        }
+        if (object instanceof THREE.Sprite) {
+          if (object.material.map) object.material.map.dispose();
+          object.material.dispose();
         }
       });
       renderer.dispose();
