@@ -39,51 +39,30 @@ type MinimalAvatar = {
   morphStarted: number;
 };
 
-function getSceneLabels(scenarioId: ScenarioId, trial: number) {
-  if (scenarioId === 'lemons') {
-    const car = getCarTrial(trial);
-    return {
-      private: `INSPECTION\n${car.quality}`,
-      evidence: car.evidence.replace(' ', '\n'),
-      signal: car.quality === 'LEMON' ? 'NEEDS\nREPAIR' : 'RELIABLE',
-      signalCompete: 'RELIABLE',
-      response: car.correctAction,
-      responseCompete: 'BUY',
-      optionA: null,
-      optionB: null,
-    };
-  }
-  const numbers = getNumberTrial(trial);
-  const falseSignal = numbers.correct === 'A' ? 'B' : 'A';
-  return {
-    private: `EXACT\n${numbers.target}`,
-    evidence: `RANGE\n${numbers.coarse}`,
-    signal: `SIGNAL\n${numbers.correct}`,
-    signalCompete: trial % 2 === 0 ? 'WAIT' : `SIGNAL\n${falseSignal}`,
-    response: `FINAL\n${numbers.correct}`,
-    responseCompete: `FINAL\n${falseSignal}`,
-    optionA: `A\n${numbers.a}`,
-    optionB: `B\n${numbers.b}`,
-  };
-}
-
-function makeCardTexture(label: string) {
+function makeLabelTexture(
+  label: string,
+  width: number,
+  height: number,
+  options: { background: string; border: string; foreground: string; fontSize: number },
+) {
   const canvas = document.createElement('canvas');
-  canvas.width = 320;
-  canvas.height = 448;
+  canvas.width = width;
+  canvas.height = height;
   const context = canvas.getContext('2d');
   if (!context) return new THREE.CanvasTexture(canvas);
-  context.fillStyle = '#f1eee7';
-  context.fillRect(0, 0, canvas.width, canvas.height);
-  context.strokeStyle = '#252a31';
-  context.lineWidth = 7;
-  context.strokeRect(18, 18, 284, 412);
+  context.fillStyle = options.background;
+  context.fillRect(0, 0, width, height);
+  context.strokeStyle = options.border;
+  context.lineWidth = Math.max(5, Math.round(width * 0.015));
+  context.strokeRect(14, 14, width - 28, height - 28);
   context.textAlign = 'center';
   context.textBaseline = 'middle';
-  context.fillStyle = label.includes('♦') || label.includes('♥') ? '#a92638' : '#1d2228';
+  context.fillStyle = options.foreground;
   const lines = label.split('\n');
-  context.font = `700 ${lines.length > 1 ? 46 : label.length > 6 ? 42 : 60}px Arial`;
-  lines.forEach((line, index) => context.fillText(line, 160, 224 + (index - (lines.length - 1) / 2) * 58));
+  context.font = `800 ${options.fontSize}px Arial`;
+  lines.forEach((line, index) => {
+    context.fillText(line, width / 2, height / 2 + (index - (lines.length - 1) / 2) * options.fontSize * 1.08);
+  });
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
@@ -92,8 +71,7 @@ function makeCardTexture(label: string) {
 function makeCard(label: string) {
   const group = new THREE.Group();
   const glowMaterial = new THREE.MeshStandardMaterial({
-    color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0,
-    transparent: true, opacity: 0,
+    color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0, transparent: true, opacity: 0,
   });
   const glow = new THREE.Mesh(new THREE.BoxGeometry(1.04, 0.075, 1.44), glowMaterial);
   group.add(glow);
@@ -105,7 +83,12 @@ function makeCard(label: string) {
   group.add(body);
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(0.87, 1.27),
-    new THREE.MeshStandardMaterial({ map: makeCardTexture(label), roughness: 0.76 }),
+    new THREE.MeshStandardMaterial({
+      map: makeLabelTexture(label, 320, 448, {
+        background: '#f1eee7', border: '#252a31', foreground: '#1d2228', fontSize: 46,
+      }),
+      roughness: 0.76,
+    }),
   );
   face.rotation.x = -Math.PI / 2;
   face.position.y = 0.043;
@@ -115,26 +98,89 @@ function makeCard(label: string) {
   return group;
 }
 
+function makeActionButton(label: string, accent: string) {
+  const group = new THREE.Group();
+  const glowMaterial = new THREE.MeshStandardMaterial({
+    color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0, transparent: true, opacity: 0,
+  });
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.115, 0.72), glowMaterial);
+  group.add(glow);
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.64, 0.12, 0.62),
+    new THREE.MeshStandardMaterial({ color: '#172025', roughness: 0.5, metalness: 0.16 }),
+  );
+  body.position.y = 0.005;
+  group.add(body);
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.53, 0.51),
+    new THREE.MeshStandardMaterial({
+      map: makeLabelTexture(label, 540, 190, {
+        background: '#eef1ec', border: accent, foreground: '#17201f', fontSize: label.includes('\n') ? 43 : 54,
+      }),
+      roughness: 0.72,
+    }),
+  );
+  face.rotation.x = -Math.PI / 2;
+  face.position.y = 0.069;
+  group.add(face);
+  group.userData.glow = glow;
+  group.userData.glowMaterial = glowMaterial;
+  return group;
+}
+
+function makeStatusPlate(label: string, accent: string) {
+  const group = new THREE.Group();
+  const border = new THREE.Mesh(
+    new THREE.BoxGeometry(1.5, 0.095, 0.58),
+    new THREE.MeshStandardMaterial({
+      color: accent, emissive: accent, emissiveIntensity: 1.35, roughness: 0.5, metalness: 0.08,
+    }),
+  );
+  group.add(border);
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 0.1, 0.48),
+    new THREE.MeshStandardMaterial({ color: '#12191d', roughness: 0.64 }),
+  );
+  body.position.y = 0.008;
+  group.add(body);
+  const face = new THREE.Mesh(
+    new THREE.PlaneGeometry(1.32, 0.4),
+    new THREE.MeshStandardMaterial({
+      map: makeLabelTexture(label, 500, 170, {
+        background: '#eef1ec', border: accent, foreground: '#17201f', fontSize: 52,
+      }),
+      roughness: 0.7,
+    }),
+  );
+  face.rotation.x = -Math.PI / 2;
+  face.position.y = 0.063;
+  group.add(face);
+  return group;
+}
+
 function makeToyCar() {
   const group = new THREE.Group();
   const paint = new THREE.MeshStandardMaterial({ color: '#9ba8a4', roughness: 0.42, metalness: 0.3 });
   const glass = new THREE.MeshStandardMaterial({ color: '#26383d', roughness: 0.25, metalness: 0.18 });
   const rubber = new THREE.MeshStandardMaterial({ color: '#111519', roughness: 0.9 });
-  const body = new THREE.Mesh(new THREE.BoxGeometry(1.3, 0.28, 0.62), paint);
+  const body = new THREE.Mesh(new THREE.BoxGeometry(1.42, 0.3, 0.68), paint);
   body.position.y = 0.27;
   group.add(body);
-  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.3, 0.52), glass);
-  cabin.position.set(0.1, 0.52, 0);
+  const bonnet = new THREE.Mesh(new THREE.BoxGeometry(0.48, 0.13, 0.6), paint);
+  bonnet.position.set(-0.72, 0.34, 0);
+  group.add(bonnet);
+  const cabin = new THREE.Mesh(new THREE.BoxGeometry(0.7, 0.32, 0.56), glass);
+  cabin.position.set(0.12, 0.53, 0);
   group.add(cabin);
-  [-0.4, 0.4].forEach((x) => {
-    [-0.34, 0.34].forEach((z) => {
-      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.14, 0.09, 16), rubber);
+  [-0.43, 0.43].forEach((x) => {
+    [-0.37, 0.37].forEach((z) => {
+      const wheel = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.1, 18), rubber);
       wheel.rotation.x = Math.PI / 2;
       wheel.position.set(x, 0.15, z);
       group.add(wheel);
     });
   });
-  group.scale.setScalar(0.72);
+  group.userData.paint = paint;
   return group;
 }
 
@@ -144,11 +190,7 @@ function makeFaceSurface(): FaceSurface {
     const mesh = new THREE.Mesh(
       new THREE.BufferGeometry(),
       new THREE.MeshBasicMaterial({
-        color,
-        depthTest: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        toneMapped: false,
+        color, depthTest: true, depthWrite: false, side: THREE.DoubleSide, toneMapped: false,
       }),
     );
     mesh.renderOrder = renderOrder;
@@ -205,14 +247,12 @@ function makeAvatar(color: string, z: number, yaw: number) {
   );
   body.position.y = 0.8;
   root.add(body);
-
   const head = new THREE.Group();
   head.position.y = 1.55;
-  const headMesh = new THREE.Mesh(
+  head.add(new THREE.Mesh(
     new THREE.SphereGeometry(0.36, 28, 20),
     new THREE.MeshStandardMaterial({ color: '#b68468', roughness: 0.88 }),
-  );
-  head.add(headMesh);
+  ));
   const face = makeFaceSurface();
   renderFace(face, 'neutral', 'neutral', 1);
   head.add(face.group);
@@ -232,13 +272,21 @@ function updateAvatarFace(avatar: MinimalAvatar, emotion: FaceEmotion, elapsed: 
   renderFace(avatar.face, avatar.fromEmotion, avatar.toEmotion, progress);
 }
 
-function setCardGlow(card: THREE.Group, visible: boolean, beat: number) {
-  const glow = card.userData.glow as THREE.Mesh;
-  const material = card.userData.glowMaterial as THREE.MeshStandardMaterial;
+function setEdgeGlow(object: THREE.Group, visible: boolean, beat: number) {
+  const glow = object.userData.glow as THREE.Mesh | undefined;
+  const material = object.userData.glowMaterial as THREE.MeshStandardMaterial | undefined;
+  if (!glow || !material) return;
   glow.visible = visible;
   material.opacity = visible ? 0.34 + beat * 0.48 : 0;
   material.emissiveIntensity = visible ? 1.1 + beat * 4.2 : 0;
   glow.scale.setScalar(1 + beat * 0.07);
+}
+
+function animateScale(object: THREE.Object3D, visible: boolean, targetScale: number, speed = 0.12) {
+  object.visible = visible || object.scale.x > 0.015;
+  const target = visible ? targetScale : 0.001;
+  object.scale.lerp(new THREE.Vector3(target, target, target), speed);
+  if (!visible && object.scale.x < 0.015) object.visible = false;
 }
 
 export default function ThreeTableScene({ scenarioId, phase, incentive, trial, cueWindow }: ThreeTableSceneProps) {
@@ -278,41 +326,83 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     table.position.y = 0.22;
     scene.add(table);
 
+    // Player A is the far-side role (Seller or Strong evidence); Player B is the near-side role.
     const avatarA = makeAvatar('#527b7d', -2.55, 0.68);
     const avatarB = makeAvatar('#805467', 2.55, 2.36);
     scene.add(avatarA.root, avatarB.root);
 
-    const labels = getSceneLabels(scenarioId, trial);
-    const privateCard = makeCard(labels.private);
-    const cardA = makeCard(labels.signal);
-    const cardACompetitive = makeCard(labels.signalCompete);
-    const cardB = makeCard(labels.response);
-    const cardBCompetitive = makeCard(labels.responseCompete);
-    scene.add(privateCard, cardA, cardACompetitive, cardB, cardBCompetitive);
-    privateCard.position.set(0.78, 0.39, -1.2);
-    privateCard.scale.setScalar(0.7);
-    cardA.position.set(-0.68, 0.82, -1.72);
-    cardACompetitive.position.copy(cardA.position);
-    cardB.position.set(0.68, 0.82, 1.72);
-    cardBCompetitive.position.copy(cardB.position);
-
-    const evidenceCard = makeCard(labels.evidence);
-    evidenceCard.position.set(1.15, 0.39, 1.02);
-    evidenceCard.scale.setScalar(0.66);
-    scene.add(evidenceCard);
-
+    const carTrial = getCarTrial(trial);
     const toyCar = scenarioId === 'lemons' ? makeToyCar() : null;
     if (toyCar) {
-      toyCar.position.set(0.55, 0.43, 0.35);
+      toyCar.position.set(0.1, 0.43, 0.02);
       toyCar.rotation.y = -0.34;
+      toyCar.scale.setScalar(0.001);
       scene.add(toyCar);
     }
 
-    const optionCards = scenarioId === 'numbers' && labels.optionA && labels.optionB
-      ? [labels.optionA, labels.optionB].map((label, index) => {
+    const sellerBuy = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nBUY', '#4b918c') : null;
+    const sellerPass = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nPASS', '#b55b68') : null;
+    const buyerBuy = scenarioId === 'lemons' ? makeActionButton('BUY', '#4b918c') : null;
+    const buyerPass = scenarioId === 'lemons' ? makeActionButton('PASS', '#b55b68') : null;
+    const conditionReveal = scenarioId === 'lemons'
+      ? makeStatusPlate(carTrial.quality === 'LEMON' ? 'BAD CAR' : 'GOOD CAR', carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0')
+      : null;
+    const lemonButtons = [sellerBuy, sellerPass, buyerBuy, buyerPass].filter((item): item is THREE.Group => Boolean(item));
+    lemonButtons.forEach((button) => {
+      button.scale.setScalar(0.001);
+      scene.add(button);
+    });
+    // The oblique camera requires a slight diagonal offset so both paired controls remain visible.
+    sellerBuy?.position.set(-1.6, 0.42, -0.35);
+    sellerPass?.position.set(1.3, 0.42, -0.85);
+    buyerBuy?.position.set(-1.6, 0.42, 0.7);
+    buyerPass?.position.set(1.6, 0.42, 0.7);
+    if (conditionReveal) {
+      conditionReveal.position.set(-0.7, 0.76, -1.25);
+      conditionReveal.scale.setScalar(0.001);
+      scene.add(conditionReveal);
+    }
+
+    const numberTrial = getNumberTrial(trial);
+    const falseSignal = numberTrial.correct === 'A' ? 'B' : 'A';
+    const signalCooperate = scenarioId === 'numbers' ? makeCard(`SIGNAL\n${numberTrial.correct}`) : null;
+    const signalCompete = scenarioId === 'numbers' ? makeCard(trial % 2 === 0 ? 'WAIT' : `SIGNAL\n${falseSignal}`) : null;
+    const responseCooperate = scenarioId === 'numbers' ? makeCard(`FINAL\n${numberTrial.correct}`) : null;
+    const responseCompete = scenarioId === 'numbers' ? makeCard(`FINAL\n${falseSignal}`) : null;
+    const exactPanel = scenarioId === 'numbers' ? makeCard(`EXACT\n${numberTrial.target}`) : null;
+    const rangePanel = scenarioId === 'numbers' ? makeCard(`RANGE\n${numberTrial.coarse}`) : null;
+    const strongChoice = scenarioId === 'numbers' ? makeCard(`PRIVATE\n${numberTrial.correct}`) : null;
+    const weakInitial = trial % 2 === 0 ? 'B' : 'A';
+    const weakChoice = scenarioId === 'numbers' ? makeCard(`PRIVATE\n${weakInitial}`) : null;
+    const targetReveal = scenarioId === 'numbers' ? makeStatusPlate(`TARGET ${numberTrial.target}`, '#66dcd0') : null;
+    const numberProps = [
+      signalCooperate, signalCompete, responseCooperate, responseCompete,
+      exactPanel, rangePanel, strongChoice, weakChoice, targetReveal,
+    ].filter((item): item is THREE.Group => Boolean(item));
+    numberProps.forEach((card) => {
+      card.scale.setScalar(0.001);
+      scene.add(card);
+    });
+
+    exactPanel?.position.set(1.05, 0.42, -1.1);
+    rangePanel?.position.set(-1.05, 0.42, 1.1);
+    strongChoice?.position.set(-1.08, 0.42, -1.35);
+    weakChoice?.position.set(1.08, 0.42, 1.35);
+    targetReveal?.position.set(-0.7, 0.76, -1.25);
+    const signalStart = new THREE.Vector3(-0.72, 0.82, -1.62);
+    const signalCenter = new THREE.Vector3(-0.9, 0.48, -1.0);
+    const responseStart = new THREE.Vector3(0.72, 0.82, 1.62);
+    const responseCenter = new THREE.Vector3(0.9, 0.48, 1.0);
+    signalCooperate?.position.copy(signalStart);
+    signalCompete?.position.copy(signalStart);
+    responseCooperate?.position.copy(responseStart);
+    responseCompete?.position.copy(responseStart);
+
+    const optionCards = scenarioId === 'numbers'
+      ? [`A\n${numberTrial.a}`, `B\n${numberTrial.b}`].map((label, index) => {
           const card = makeCard(label);
-          card.position.set(index === 0 ? -0.72 : 0.72, 0.39, 0.02);
-          card.scale.setScalar(0.72);
+          card.position.set(index === 0 ? -0.78 : 0.78, 0.39, 0.02);
+          card.scale.setScalar(0.001);
           scene.add(card);
           return card;
         })
@@ -331,10 +421,9 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     resize();
 
     const clock = new THREE.Clock();
-    const aStart = new THREE.Vector3(-0.68, 0.88, -1.72);
-    const aCenter = new THREE.Vector3(-0.68, 0.39, -0.42);
-    const bStart = new THREE.Vector3(0.68, 0.88, 1.72);
-    const bCenter = new THREE.Vector3(0.68, 0.39, 0.46);
+    const neutralPaint = new THREE.Color('#9ba8a4');
+    const goodPaint = new THREE.Color('#3a8e78');
+    const badPaint = new THREE.Color('#a83e4d');
 
     renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
@@ -345,28 +434,52 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         Math.pow(Math.max(0, Math.sin(elapsed * 6.8 - 0.48)), 20) * 0.66,
       );
 
-      cardA.position.lerp(state.phase < 3 ? aStart : aCenter, 0.09);
-      cardACompetitive.position.lerp(state.phase < 3 ? aStart : aCenter, 0.09);
-      const bMovesAt = 4;
-      cardB.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
-      cardBCompetitive.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
-      cardA.rotation.x += ((state.phase < 3 ? -0.58 : 0) - cardA.rotation.x) * 0.08;
-      cardACompetitive.rotation.x += ((state.phase < 3 ? -0.58 : 0) - cardACompetitive.rotation.x) * 0.08;
-      cardB.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardB.rotation.x) * 0.08;
-      cardBCompetitive.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardBCompetitive.rotation.x) * 0.08;
-      privateCard.visible = state.phase >= 1 && state.phase <= 2;
-      evidenceCard.visible = state.phase >= 2 && state.phase <= 4;
-      if (toyCar) toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
-      const bShouldShow = state.phase >= bMovesAt;
-      cardB.visible = bShouldShow && state.incentive === 'cooperate';
-      cardBCompetitive.visible = bShouldShow && state.incentive === 'compete';
+      if (scenarioId === 'lemons' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
+        animateScale(toyCar, true, 0.83, 0.1);
+        toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
+        const paint = toyCar.userData.paint as THREE.MeshStandardMaterial;
+        const revealColor = carTrial.quality === 'LEMON' ? badPaint : goodPaint;
+        paint.color.lerp(state.phase === 5 ? revealColor : neutralPaint, 0.08);
 
-      optionCards.forEach((card) => { card.visible = true; });
-      const aShouldShow = state.phase >= 3;
-      cardA.visible = aShouldShow && state.incentive === 'cooperate';
-      cardACompetitive.visible = aShouldShow && state.incentive === 'compete';
-      setCardGlow(cardA, cueVisible && state.incentive === 'cooperate', beat);
-      setCardGlow(cardACompetitive, cueVisible && state.incentive === 'compete', beat);
+        const sellerChoice = state.incentive === 'cooperate' ? carTrial.correctAction : 'BUY';
+        const buyerChoice = state.incentive === 'cooperate' ? carTrial.correctAction : 'BUY';
+        const selectedSeller = sellerChoice === 'BUY' ? sellerBuy : sellerPass;
+        const selectedBuyer = buyerChoice === 'BUY' ? buyerBuy : buyerPass;
+        [sellerBuy, sellerPass].forEach((button) => {
+          animateScale(button, state.phase >= 2 && (state.phase < 5 || button === selectedSeller), 0.78);
+        });
+        [buyerBuy, buyerPass].forEach((button) => {
+          animateScale(button, state.phase >= 4 && (state.phase < 5 || button === selectedBuyer), 0.78);
+        });
+        const sellerPressedY = state.phase >= 3 ? 0.365 : 0.42;
+        sellerBuy.position.y += ((selectedSeller === sellerBuy ? sellerPressedY : 0.42) - sellerBuy.position.y) * 0.14;
+        sellerPass.position.y += ((selectedSeller === sellerPass ? sellerPressedY : 0.42) - sellerPass.position.y) * 0.14;
+        buyerBuy.position.y += ((state.phase >= 4 && selectedBuyer === buyerBuy ? 0.365 : 0.42) - buyerBuy.position.y) * 0.14;
+        buyerPass.position.y += ((state.phase >= 4 && selectedBuyer === buyerPass ? 0.365 : 0.42) - buyerPass.position.y) * 0.14;
+        [sellerBuy, sellerPass, buyerBuy, buyerPass].forEach((button) => setEdgeGlow(button, false, beat));
+        setEdgeGlow(selectedSeller, cueVisible && state.phase >= 3, beat);
+        if (conditionReveal) animateScale(conditionReveal, state.phase === 5, 0.68);
+      }
+
+      if (scenarioId === 'numbers' && signalCooperate && signalCompete && responseCooperate && responseCompete && exactPanel && rangePanel && strongChoice && weakChoice && targetReveal) {
+        optionCards.forEach((card) => animateScale(card, true, 0.72));
+        animateScale(exactPanel, state.phase === 1, 0.62);
+        animateScale(rangePanel, state.phase === 1, 0.62);
+        animateScale(strongChoice, state.phase === 2, 0.56);
+        animateScale(weakChoice, state.phase === 2, 0.56);
+        animateScale(targetReveal, state.phase === 5, 0.68);
+
+        signalCooperate.position.lerp(state.phase < 3 ? signalStart : signalCenter, 0.09);
+        signalCompete.position.lerp(state.phase < 3 ? signalStart : signalCenter, 0.09);
+        responseCooperate.position.lerp(state.phase < 4 ? responseStart : responseCenter, 0.09);
+        responseCompete.position.lerp(state.phase < 4 ? responseStart : responseCenter, 0.09);
+        animateScale(signalCooperate, state.phase >= 3 && state.phase <= 4 && state.incentive === 'cooperate', 0.72);
+        animateScale(signalCompete, state.phase >= 3 && state.phase <= 4 && state.incentive === 'compete', 0.72);
+        animateScale(responseCooperate, state.phase === 4 && state.incentive === 'cooperate', 0.72);
+        animateScale(responseCompete, state.phase === 4 && state.incentive === 'compete', 0.72);
+        setEdgeGlow(signalCooperate, cueVisible && state.incentive === 'cooperate', beat);
+        setEdgeGlow(signalCompete, cueVisible && state.incentive === 'compete', beat);
+      }
 
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
@@ -394,10 +507,6 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
             if (material instanceof THREE.MeshStandardMaterial && material.map) material.map.dispose();
             material.dispose();
           });
-        } else if (object instanceof THREE.Sprite) {
-          const material = object.material as THREE.SpriteMaterial;
-          material.map?.dispose();
-          material.dispose();
         }
       });
       renderer.dispose();

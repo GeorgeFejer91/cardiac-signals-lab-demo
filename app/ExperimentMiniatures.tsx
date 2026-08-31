@@ -117,6 +117,8 @@ export default function ExperimentMiniatures() {
 
                   <div className="storyboard-scene">
                     <ThreeTableScene scenarioId={scenario.id} phase={phase} incentive={incentive} trial={trial} cueWindow={cueWindow} />
+                    <div className="storyboard-role role-a"><i />{scenario.roleA}</div>
+                    <div className="storyboard-role role-b"><i />{scenario.roleB}</div>
                     <StoryboardBubble player="a" bubble={frame.bubbleA} />
                     <StoryboardBubble player="b" bubble={frame.bubbleB} />
                     <div className={`cue-window-badge${cueActive ? ' active' : ''}`}>
@@ -163,7 +165,7 @@ export default function ExperimentMiniatures() {
                     <div><dt>Incentives</dt><dd>{modeText}</dd></div>
                     <div><dt>Measured</dt><dd>{scenario.measures}</dd></div>
                   </dl>
-                  <small><i /> {scenario.cueNote} Thought bubbles show private states for the storyboard only; public “speech” bubbles represent fixed response cards, not verbal communication.</small>
+                  <small><i /> {scenario.cueNote} Thought bubbles show private states for the storyboard only; public “speech” bubbles represent standardized button presses or signal cards, not verbal communication.</small>
                 </section>
 
                 <section className="scenario-publications" aria-labelledby={`publications-${scenario.id}`}>

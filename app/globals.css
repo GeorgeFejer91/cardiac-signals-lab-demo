@@ -1475,8 +1475,8 @@ output { font-variant-numeric: tabular-nums; }
   pointer-events: none;
   transition: transform .26s ease, opacity .26s ease;
 }
-.storyboard-bubble.player-a { top: 10%; right: 17%; width: min(28%, 270px); height: 132px; }
-.storyboard-bubble.player-b { top: 31%; right: 32%; width: min(28%, 270px); height: 124px; }
+.storyboard-bubble.player-a { top: 1%; right: 23%; width: min(34%, 310px); height: 146px; }
+.storyboard-bubble.player-b { bottom: 2%; left: 1%; width: min(34%, 310px); height: 146px; }
 .storyboard-bubble svg { display: block; width: 100%; height: 100%; overflow: visible; }
 .storyboard-bubble .bubble-silhouette {
   fill: rgba(241,243,238,.97);
@@ -1485,22 +1485,50 @@ output { font-variant-numeric: tabular-nums; }
   vector-effect: non-scaling-stroke;
 }
 .storyboard-bubble.thought .bubble-silhouette { fill: rgba(226,240,237,.96); }
+.storyboard-bubble .thought-trail { fill: rgba(226,240,237,.96); stroke: rgba(255,255,255,.55); stroke-width: 1.2; }
 .storyboard-bubble .bubble-copy {
-  display: grid;
+  display: flex;
   height: 100%;
-  align-content: center;
-  gap: 5px;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 7px;
+  padding: 2px 5px;
   overflow: hidden;
   color: #16201f;
   font-family: Inter, ui-sans-serif, system-ui, sans-serif;
-  line-height: 1.22;
+  line-height: 1.16;
+  text-align: center;
 }
 .storyboard-bubble .bubble-copy span {
   color: #63716f;
-  font: 800 9px ui-monospace, SFMono-Regular, Consolas, monospace;
-  letter-spacing: .06em;
+  font: 850 13px ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .045em;
+  text-transform: uppercase;
 }
-.storyboard-bubble .bubble-copy strong { font-size: 15px; font-weight: 760; }
+.storyboard-bubble .bubble-copy strong { max-width: 100%; font-size: 21px; font-weight: 780; text-wrap: balance; }
+.storyboard-bubble .bubble-copy.medium strong { font-size: 19px; }
+.storyboard-bubble .bubble-copy.long strong { font-size: 17px; line-height: 1.1; }
+.storyboard-role {
+  position: absolute;
+  z-index: 5;
+  display: inline-flex;
+  min-height: 25px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 9px;
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: 999px;
+  background: rgba(5,8,11,.82);
+  color: #d7dfdc;
+  font: 850 8px ui-monospace, SFMono-Regular, Consolas, monospace;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  backdrop-filter: blur(8px);
+}
+.storyboard-role i { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px rgba(128,241,231,.7); }
+.storyboard-role.role-a { top: 40%; right: 8%; }
+.storyboard-role.role-b { top: 57%; left: 7%; }
 .cue-window-badge {
   position: absolute;
   z-index: 5;
@@ -1650,13 +1678,18 @@ output { font-variant-numeric: tabular-nums; }
   .cue-window-toggle > span { width: 68px; flex: 0 0 68px; }
   .storyboard-mode-toggle button,
   .cue-window-toggle button { min-height: 34px; flex: 1; padding: 0 7px; font-size: 8px; }
-  .storyboard-scene { height: 340px; }
-  .storyboard-bubble.player-a { top: 0; right: 7%; width: 47%; height: 90px; }
-  .storyboard-bubble.player-b { top: 31%; right: 20%; width: 55%; height: 90px; }
-  .storyboard-bubble .bubble-copy { gap: 3px; }
-  .storyboard-bubble .bubble-copy span { font-size: 7px; }
-  .storyboard-bubble .bubble-copy strong { font-size: 11px; }
-  .cue-window-badge { right: 8px; bottom: 8px; max-width: 48%; min-height: 26px; font-size: 7px; }
+  .storyboard-scene { height: 400px; }
+  .storyboard-bubble.player-a { top: 0; right: 8%; width: 56%; height: 126px; }
+  .storyboard-bubble.player-b { bottom: 1%; left: 0; width: 52%; height: 126px; }
+  .storyboard-bubble .bubble-copy { gap: 5px; padding: 1px 3px; }
+  .storyboard-bubble .bubble-copy span { font-size: 12px; }
+  .storyboard-bubble .bubble-copy strong { font-size: 19px; }
+  .storyboard-bubble .bubble-copy.medium strong { font-size: 17px; }
+  .storyboard-bubble .bubble-copy.long strong { font-size: 15px; }
+  .storyboard-role { min-height: 22px; padding: 0 7px; font-size: 7px; }
+  .storyboard-role.role-a { top: 36%; right: 3%; }
+  .storyboard-role.role-b { top: 55%; left: 3%; }
+  .cue-window-badge { right: 7px; bottom: 9px; max-width: 42%; min-height: 26px; font-size: 7px; }
   .storyboard-navigation { grid-template-columns: 42px minmax(0, 1fr) 42px; gap: 7px; padding: 9px; }
   .storyboard-progress { grid-template-columns: 45px 1fr 28px; gap: 5px; }
   .storyboard-progress > div { gap: 6px; }

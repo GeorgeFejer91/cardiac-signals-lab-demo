@@ -7,28 +7,40 @@ type StoryboardBubbleProps = {
 
 const paths = {
   speech: {
-    a: 'M28 8 H272 Q292 8 292 28 V94 Q292 114 272 114 H88 L42 142 L70 114 H28 Q8 114 8 94 V28 Q8 8 28 8 Z',
-    b: 'M54 8 H282 Q302 8 302 28 V112 Q302 132 282 132 H54 Q34 132 34 112 V93 L8 85 L34 67 V28 Q34 8 54 8 Z',
+    // Player A sits at the far-right side of the table, below this bubble.
+    a: 'M28 9 H280 Q300 9 300 29 V96 Q300 116 280 116 H255 L292 146 L226 116 H28 Q8 116 8 96 V29 Q8 9 28 9 Z',
+    // Player B sits above and to the right of this lower-left bubble.
+    b: 'M28 30 H226 L281 5 L260 30 H282 Q302 30 302 50 V118 Q302 138 282 138 H28 Q8 138 8 118 V50 Q8 30 28 30 Z',
   },
   thought: {
-    a: 'M53 18 C64 4 88 4 102 15 C118 1 145 4 155 18 C177 4 202 10 208 27 C233 22 250 36 247 54 C268 64 263 88 243 95 C241 112 220 122 201 113 C188 128 161 127 149 113 C131 127 104 126 93 111 C72 122 48 111 48 94 C23 91 14 71 27 55 C13 39 29 20 53 18 Z M55 114 A10 10 0 1 0 75 114 A10 10 0 1 0 55 114 Z M29 135 A6 6 0 1 0 41 135 A6 6 0 1 0 29 135 Z',
-    b: 'M53 18 C64 4 88 4 102 15 C118 1 145 4 155 18 C177 4 202 10 208 27 C233 22 250 36 247 54 C268 64 263 88 243 95 C241 112 220 122 201 113 C188 128 161 127 149 113 C131 127 104 126 93 111 C72 122 48 111 48 94 C23 91 14 71 27 55 C13 39 29 20 53 18 Z M55 114 A10 10 0 1 0 75 114 A10 10 0 1 0 55 114 Z M29 135 A6 6 0 1 0 41 135 A6 6 0 1 0 29 135 Z',
+    a: 'M48 15 C64 1 88 3 102 15 C120 0 146 3 157 18 C177 4 203 9 210 27 C234 22 254 36 251 56 C273 65 268 91 247 99 C244 118 221 126 202 116 C187 132 161 131 148 116 C129 132 104 130 91 114 C69 125 45 113 45 94 C20 90 13 69 27 54 C13 37 27 18 48 15 Z',
+    b: 'M48 32 C64 18 88 20 102 32 C120 17 146 20 157 35 C177 21 203 26 210 44 C234 39 254 53 251 73 C273 82 268 108 247 116 C244 135 221 143 202 133 C187 149 161 148 148 133 C129 149 104 147 91 131 C69 142 45 130 45 111 C20 107 13 86 27 71 C13 54 27 35 48 32 Z',
   },
 } as const;
 
 export default function StoryboardBubble({ player, bubble }: StoryboardBubbleProps) {
   const isThought = bubble.kind === 'thought';
-  const box = player === 'a'
-    ? { x: 24, y: 18, width: 250, height: 82 }
-    : { x: 45, y: 19, width: 238, height: 96 };
+  const copySize = bubble.text.length > 32 ? 'long' : bubble.text.length > 22 ? 'medium' : 'short';
+  const box = isThought
+    ? player === 'a'
+      ? { x: 39, y: 24, width: 224, height: 88 }
+      : { x: 39, y: 43, width: 224, height: 88 }
+    : player === 'a'
+      ? { x: 31, y: 23, width: 236, height: 84 }
+      : { x: 31, y: 45, width: 236, height: 84 };
 
   return (
     <div className={`storyboard-bubble player-${player} ${bubble.kind}`}>
-      <svg viewBox="0 0 310 150" role="img" aria-label={`${bubble.label}: ${bubble.text}`} preserveAspectRatio="none">
+      <svg viewBox="0 0 310 155" role="img" aria-label={`${bubble.label}: ${bubble.text}`} preserveAspectRatio="xMidYMid meet">
         <title>{bubble.label}</title>
-        <path className="bubble-silhouette" d={paths[bubble.kind][player]} fillRule={isThought ? 'evenodd' : undefined} />
+        <path className="bubble-silhouette" d={paths[bubble.kind][player]} />
+        {isThought ? player === 'a' ? (
+          <g className="thought-trail"><circle cx="260" cy="124" r="9" /><circle cx="286" cy="145" r="5" /></g>
+        ) : (
+          <g className="thought-trail"><circle cx="260" cy="23" r="9" /><circle cx="286" cy="7" r="5" /></g>
+        ) : null}
         <foreignObject x={box.x} y={box.y} width={box.width} height={box.height}>
-          <div className="bubble-copy">
+          <div className={`bubble-copy ${copySize}`}>
             <span>{bubble.label}</span>
             <strong>{bubble.text}</strong>
           </div>

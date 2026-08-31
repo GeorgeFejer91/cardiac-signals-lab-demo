@@ -6,7 +6,7 @@ A static, browser-only GitHub Pages preview of two proposed mixed-reality dyadic
 
 The landing page contains two accordion choices:
 
-1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether a virtual car is reliable or a lemon; a partially informed buyer selects Buy or Pass.
+1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether a visually identical virtual car is good or bad, presses Recommend Buy or Recommend Pass, and the uninformed buyer presses Buy or Pass.
 2. **Asymmetric-Information Number-Card Game** — two players judge which number card is closer to a target, but one receives exact evidence and the other receives an ambiguous range.
 
 ## Storyboard interaction
@@ -25,9 +25,11 @@ The 3D scene uses a minimal table, two Social Threat Lab-style avatar busts, con
 Private states and public actions are represented differently:
 
 - **Thought bubbles** annotate information available only inside one participant’s headset.
-- **Speech bubbles** annotate standardized public claim or response cards. They do not imply that participants can talk.
+- **Speech bubbles** annotate standardized public button presses or signal cards. They do not imply that participants can talk.
 
-Both bubble silhouettes are complete SVG paths with dynamic text embedded in the SVG. Their tails or thought trails are positioned toward the corresponding avatar heads.
+Both bubble silhouettes are complete SVG paths with centered, length-responsive text embedded in the SVG. Their tails or thought trails are positioned toward the corresponding avatar heads, and their reserved screen zones keep them clear of the table actions and cardiac-status badge.
+
+The car scenario deliberately contains no tablet or free-form claim card. Its six visible actions are: shared car appearance, seller-only quality information, seller recommendation controls, a depressed and optionally pulsing recommendation button, buyer Buy/Pass controls, and a color-coded quality reveal. The number-card scenario similarly replaces obsolete props at every phase so that only the alternatives, private evidence, private choices, public signal, final response, or target reveal needed at that moment remain visible.
 
 ## Experimental interpretation
 
