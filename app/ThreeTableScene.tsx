@@ -10,15 +10,26 @@ import {
   type BaseFaceEmotion,
   type TriangleMeshData,
 } from './facial-expression';
-import { FaceEmotion, getScenario, IncentiveMode, ScenarioId } from './scenarioCatalog';
+import {
+  type CueWindow,
+  type FaceEmotion,
+  type IncentiveMode,
+  type ScenarioId,
+  getCarTrial,
+  getNumberTrial,
+  getScenario,
+  isCueActive,
+} from './scenarioCatalog';
 
 type ThreeTableSceneProps = {
   scenarioId: ScenarioId;
   phase: number;
   incentive: IncentiveMode;
+  trial: number;
+  cueWindow: CueWindow;
 };
 
-type RuntimeState = { phase: number; incentive: IncentiveMode };
+type RuntimeState = { phase: number; incentive: IncentiveMode; cueWindow: CueWindow };
 type FaceSurface = { group: THREE.Group; strokes: THREE.Mesh; eyeFills: THREE.Mesh; darkFills: THREE.Mesh; signature: string };
 type MinimalAvatar = {
   root: THREE.Group;
@@ -28,14 +39,33 @@ type MinimalAvatar = {
   morphStarted: number;
 };
 
-const cardLabels: Record<ScenarioId, { private: string; a: string; aCompete: string; b: string; bCompete: string }> = {
-  lemons: { private: 'INSPECTION\nLEMON', a: 'NEEDS\nREPAIR', aCompete: 'RELIABLE\nCAR', b: 'PASS', bCompete: 'BUY' },
-  truthlie: { private: 'PRIVATE\n4', a: 'MESSAGE\n4', aCompete: 'MESSAGE\n2', b: 'TRUE', bCompete: 'LIE' },
-  signal: { private: 'TARGET\nA', a: 'A', aCompete: 'B', b: 'A', bCompete: 'A' },
-  dilemma: { private: 'PRIVATE', a: 'COOP', aCompete: 'DEFECT', b: 'COOP', bCompete: 'COOP' },
-  concealed: { private: 'SECRET\n4♦', a: '4♦', aCompete: '4♦', b: '4♦', bCompete: '4♦' },
-  ultimatum: { private: '10\nTOKENS', a: 'B7 / A3', aCompete: 'B3 / A7', b: 'ACCEPT', bCompete: 'REJECT' },
-};
+function getSceneLabels(scenarioId: ScenarioId, trial: number) {
+  if (scenarioId === 'lemons') {
+    const car = getCarTrial(trial);
+    return {
+      private: `INSPECTION\n${car.quality}`,
+      evidence: car.evidence.replace(' ', '\n'),
+      signal: car.quality === 'LEMON' ? 'NEEDS\nREPAIR' : 'RELIABLE',
+      signalCompete: 'RELIABLE',
+      response: car.correctAction,
+      responseCompete: 'BUY',
+      optionA: null,
+      optionB: null,
+    };
+  }
+  const numbers = getNumberTrial(trial);
+  const falseSignal = numbers.correct === 'A' ? 'B' : 'A';
+  return {
+    private: `EXACT\n${numbers.target}`,
+    evidence: `RANGE\n${numbers.coarse}`,
+    signal: `SIGNAL\n${numbers.correct}`,
+    signalCompete: trial % 2 === 0 ? 'WAIT' : `SIGNAL\n${falseSignal}`,
+    response: `FINAL\n${numbers.correct}`,
+    responseCompete: `FINAL\n${falseSignal}`,
+    optionA: `A\n${numbers.a}`,
+    optionB: `B\n${numbers.b}`,
+  };
+}
 
 function makeCardTexture(label: string) {
   const canvas = document.createElement('canvas');
@@ -105,49 +135,6 @@ function makeToyCar() {
     });
   });
   group.scale.setScalar(0.72);
-  return group;
-}
-
-function makeTextSprite(label: string) {
-  const canvas = document.createElement('canvas');
-  canvas.width = 256;
-  canvas.height = 96;
-  const context = canvas.getContext('2d');
-  if (context) {
-    context.fillStyle = 'rgba(7, 11, 14, 0.82)';
-    context.roundRect(8, 8, 240, 80, 22);
-    context.fill();
-    context.fillStyle = '#dce6e2';
-    context.textAlign = 'center';
-    context.textBaseline = 'middle';
-    context.font = '700 34px Arial';
-    context.fillText(label, 128, 50);
-  }
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  const sprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: texture, transparent: true, depthTest: true }));
-  sprite.scale.set(0.85, 0.32, 1);
-  return sprite;
-}
-
-function makeDiscriminationStimuli() {
-  const group = new THREE.Group();
-  const definitions = [
-    { x: -1.25, radius: 0.43, color: '#d7dfdb', label: 'A' },
-    { x: 0, radius: 0.57, color: '#8fd8cf', label: 'TARGET' },
-    { x: 1.25, radius: 0.7, color: '#d7dfdb', label: 'B' },
-  ];
-  definitions.forEach(({ x, radius, color, label }) => {
-    const disc = new THREE.Mesh(
-      new THREE.CylinderGeometry(radius, radius, 0.05, 48),
-      new THREE.MeshStandardMaterial({ color, roughness: 0.72, metalness: 0.04 }),
-    );
-    disc.position.set(x, 0.39, 0);
-    group.add(disc);
-    const sprite = makeTextSprite(label);
-    sprite.position.set(x, 0.48, 0);
-    group.add(sprite);
-  });
   return group;
 }
 
@@ -254,11 +241,11 @@ function setCardGlow(card: THREE.Group, visible: boolean, beat: number) {
   glow.scale.setScalar(1 + beat * 0.07);
 }
 
-export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeTableSceneProps) {
+export default function ThreeTableScene({ scenarioId, phase, incentive, trial, cueWindow }: ThreeTableSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<RuntimeState>({ phase, incentive });
+  const stateRef = useRef<RuntimeState>({ phase, incentive, cueWindow });
 
-  useEffect(() => { stateRef.current = { phase, incentive }; }, [phase, incentive]);
+  useEffect(() => { stateRef.current = { phase, incentive, cueWindow }; }, [phase, incentive, cueWindow]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -295,25 +282,24 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     const avatarB = makeAvatar('#805467', 2.55, 2.36);
     scene.add(avatarA.root, avatarB.root);
 
-    const labels = cardLabels[scenarioId];
+    const labels = getSceneLabels(scenarioId, trial);
     const privateCard = makeCard(labels.private);
-    const cardA = makeCard(labels.a);
-    const cardACompetitive = makeCard(labels.aCompete);
-    const cardB = makeCard(labels.b);
-    const cardBCompetitive = makeCard(labels.bCompete);
+    const cardA = makeCard(labels.signal);
+    const cardACompetitive = makeCard(labels.signalCompete);
+    const cardB = makeCard(labels.response);
+    const cardBCompetitive = makeCard(labels.responseCompete);
     scene.add(privateCard, cardA, cardACompetitive, cardB, cardBCompetitive);
-    privateCard.position.set(0.72, 0.38, -1.15);
+    privateCard.position.set(0.78, 0.39, -1.2);
+    privateCard.scale.setScalar(0.7);
     cardA.position.set(-0.68, 0.82, -1.72);
     cardACompetitive.position.copy(cardA.position);
     cardB.position.set(0.68, 0.82, 1.72);
     cardBCompetitive.position.copy(cardB.position);
 
-    const evidenceCard = scenarioId === 'lemons' ? makeCard('82K\nMILES') : null;
-    if (evidenceCard) {
-      evidenceCard.position.set(1.12, 0.39, -0.48);
-      evidenceCard.scale.setScalar(0.66);
-      scene.add(evidenceCard);
-    }
+    const evidenceCard = makeCard(labels.evidence);
+    evidenceCard.position.set(1.15, 0.39, 1.02);
+    evidenceCard.scale.setScalar(0.66);
+    scene.add(evidenceCard);
 
     const toyCar = scenarioId === 'lemons' ? makeToyCar() : null;
     if (toyCar) {
@@ -322,25 +308,15 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       scene.add(toyCar);
     }
 
-    const discriminationStimuli = scenarioId === 'signal' ? makeDiscriminationStimuli() : null;
-    if (discriminationStimuli) {
-      discriminationStimuli.position.z = -0.1;
-      scene.add(discriminationStimuli);
-    }
-
-    const probeCards = scenarioId === 'concealed'
-      ? ['7♥', 'Q♠', '4♦', '9♣'].map((label, index) => {
+    const optionCards = scenarioId === 'numbers' && labels.optionA && labels.optionB
+      ? [labels.optionA, labels.optionB].map((label, index) => {
           const card = makeCard(label);
-          card.position.set((index - 1.5) * 1.02, 0.39, 0.02);
-          card.scale.setScalar(0.76);
+          card.position.set(index === 0 ? -0.72 : 0.72, 0.39, 0.02);
+          card.scale.setScalar(0.72);
           scene.add(card);
           return card;
         })
       : [];
-    if (probeCards.length) {
-      cardA.visible = false;
-      cardACompetitive.visible = false;
-    }
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
@@ -363,50 +339,40 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
     renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
       const state = stateRef.current;
-      const cueVisible = state.phase === 2 || state.phase === 3;
+      const cueVisible = isCueActive(state.phase, state.cueWindow);
       const beat = Math.max(
         Math.pow(Math.max(0, Math.sin(elapsed * 6.8)), 18),
         Math.pow(Math.max(0, Math.sin(elapsed * 6.8 - 0.48)), 20) * 0.66,
       );
 
-      cardA.position.lerp(state.phase === 0 ? aStart : aCenter, 0.09);
-      cardACompetitive.position.lerp(state.phase === 0 ? aStart : aCenter, 0.09);
-      const bMovesAt = scenarioId === 'dilemma' ? 1 : 3;
+      cardA.position.lerp(state.phase < 3 ? aStart : aCenter, 0.09);
+      cardACompetitive.position.lerp(state.phase < 3 ? aStart : aCenter, 0.09);
+      const bMovesAt = 4;
       cardB.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
       cardBCompetitive.position.lerp(state.phase >= bMovesAt ? bCenter : bStart, 0.09);
-      cardA.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardA.rotation.x) * 0.08;
-      cardACompetitive.rotation.x += ((state.phase === 0 ? -0.58 : 0) - cardACompetitive.rotation.x) * 0.08;
+      cardA.rotation.x += ((state.phase < 3 ? -0.58 : 0) - cardA.rotation.x) * 0.08;
+      cardACompetitive.rotation.x += ((state.phase < 3 ? -0.58 : 0) - cardACompetitive.rotation.x) * 0.08;
       cardB.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardB.rotation.x) * 0.08;
       cardBCompetitive.rotation.x += ((state.phase < bMovesAt ? 0.58 : 0) - cardBCompetitive.rotation.x) * 0.08;
-      privateCard.visible = state.phase === 0 && scenarioId !== 'signal';
-      if (evidenceCard) evidenceCard.visible = state.phase >= 1;
+      privateCard.visible = state.phase >= 1 && state.phase <= 2;
+      evidenceCard.visible = state.phase >= 2 && state.phase <= 4;
       if (toyCar) toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
       const bShouldShow = state.phase >= bMovesAt;
       cardB.visible = bShouldShow && state.incentive === 'cooperate';
       cardBCompetitive.visible = bShouldShow && state.incentive === 'compete';
 
-      probeCards.forEach((card, index) => {
-        card.visible = state.phase >= 1;
-        card.position.y = 0.38 + (state.phase === 2 && index === 2 ? beat * 0.06 : 0);
-        setCardGlow(card, cueVisible && index === 2, beat);
-      });
-      if (!probeCards.length) {
-        const aShouldShow = scenarioId === 'dilemma' || state.phase >= 1;
-        cardA.visible = aShouldShow && state.incentive === 'cooperate';
-        cardACompetitive.visible = aShouldShow && state.incentive === 'compete';
-        setCardGlow(cardA, cueVisible && state.incentive === 'cooperate', beat);
-        setCardGlow(cardACompetitive, cueVisible && state.incentive === 'compete', beat);
-      }
+      optionCards.forEach((card) => { card.visible = true; });
+      const aShouldShow = state.phase >= 3;
+      cardA.visible = aShouldShow && state.incentive === 'cooperate';
+      cardACompetitive.visible = aShouldShow && state.incentive === 'compete';
+      setCardGlow(cardA, cueVisible && state.incentive === 'cooperate', beat);
+      setCardGlow(cardACompetitive, cueVisible && state.incentive === 'compete', beat);
 
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
-      if (state.phase === 4 && state.incentive === 'compete') {
-        expressionA = scenarioId === 'dilemma' || scenarioId === 'lemons' ? 'happiness' : 'sadness';
-        expressionB = scenarioId === 'dilemma' || scenarioId === 'lemons'
-          ? 'sadness'
-          : scenarioId === 'ultimatum'
-            ? 'anger'
-            : 'happiness';
+      if (state.phase === 5 && state.incentive === 'compete') {
+        expressionA = 'happiness';
+        expressionB = 'sadness';
       }
       updateAvatarFace(avatarA, expressionA, elapsed);
       updateAvatarFace(avatarB, expressionB, elapsed);
@@ -436,7 +402,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive }: ThreeT
       });
       renderer.dispose();
     };
-  }, [scenarioId]);
+  }, [scenarioId, trial]);
 
   return <canvas ref={canvasRef} className="three-table-canvas" aria-hidden="true" />;
 }

@@ -1,69 +1,47 @@
 # Cardiac Signals Lab demo
 
-This is a static, browser-only demonstration of proposed mixed-reality social card tasks. It is designed to make the grant's behavioral outcomes concrete: two seated participants facing one another, virtual cards anchored to their shared table, the order of private and public decisions, and the way a partner's cardiac activity can become a diegetic card cue.
+A static, browser-only GitHub Pages preview of two proposed mixed-reality dyadic experiments.
 
-**Live demo:** https://georgefejer91.github.io/cardiac-signals-lab-demo/
+**Live demo:** https://georgefejer91.github.io/grants/
 
-The report-facing GitHub Pages menu uses a dark, high-contrast background. The 3D scene itself remains deliberately sparse so its cards and avatars can later be transferred to a passthrough mixed-reality implementation without requiring a synthetic room.
+The landing page contains two accordion choices:
 
-It automatically switches to a touch-optimized phone layout on narrow screens. It uses device-safe viewport sizing, notch and home-indicator safe areas, stacked task panels, and touch targets of at least 44 pixels. Both complete game sequences are tested at a 390 × 844 smartphone viewport as well as on desktop.
+1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether a virtual car is reliable or a lemon; a partially informed buyer selects Buy or Pass.
+2. **Asymmetric-Information Number-Card Game** — two players judge which number card is closer to a target, but one receives exact evidence and the other receives an ambiguous range.
 
-## Minimal 3D scenario accordion
+## Storyboard interaction
 
-The one-page landing menu contains six collapsed game choices, ordered by their fit to the grant’s asymmetric-information mechanism. Each has a small task widget. Selecting one expands three stacked panels: a minimalist WebGL round preview, a short prose summary of the game, and a compact evidence panel with three directly linked publications.
+Each accordion opens a discrete six-phase storyboard rather than a participant task. The viewer can:
 
-- **Market for Lemons: Used-Car Seller–Buyer Game:** a seller privately sees the vehicle inspection, publishes a claim, and a partially informed buyer chooses Buy or Pass.
-- **Two-Player Number-Card Truth/Lie Game:** a sender transmits a number card and an observer judges whether it matches the private number.
-- **Concealed Information Test: Hide-or-Seek Card Task:** candidate playing cards are probed while the informed player’s cardiac cue is visible.
-- **Iterated Prisoner’s Dilemma:** both players commit to Cooperate or Defect and reveal together over repeated rounds.
-- **Ultimatum Game:** a proposer places a split card and the responder answers with Accept or Reject.
-- **Joint Discrimination Task:** both players view size stimuli and combine unequal perceptual evidence; the public stimulus is not presented as a card game.
+- step backward and forward through every phase;
+- click any phase dot directly;
+- enable a deliberately slow 6.5-second auto-advance;
+- continue into repeated trials with changing hidden states;
+- switch between collaborative and competitive incentives; and
+- move the cardiac display between the public-signal interval, decision interval, or both.
 
-The dark WebGL panel restores the across-the-table composition: a rectangular shared table, only the props required by that task, and two Social Threat Lab-style avatar busts on opposing sides. There are no chairs or avatar limbs. The busts reuse the Social Threat Lab procedural body/head proportions and its canonical cubic-Bézier facial-expression geometry. The SVG-compatible features are tessellated directly onto the orb surface and continuously morph between phase-specific emotions. Short demonstration callouts are anchored beside the avatar who acts, while a compact phase indicator identifies the current step.
+The 3D scene uses a minimal table, two Social Threat Lab-style avatar busts, continuously morphing facial expressions, and only the props needed for the current experiment. The card-edge cardiac cue is a red, beat-synchronous emissive glow.
 
-The preview uses one consistent diegetic cardiac cue: a red emissive glow around the relevant card edge, pulsing at simulated heartbeat times. A Collaboration/Competition switch sits inside the animation pane and changes the played cards, dialogue, payoff explanation, and final facial reactions.
+Private states and public actions are represented differently:
 
-`public/og.png` is a project-bound social-preview image generated for this redesign on 2026-08-30. It is link-preview artwork and is never presented as an experimental stimulus.
+- **Thought bubbles** annotate information available only inside one participant’s headset.
+- **Speech bubbles** annotate standardized public claim or response cards. They do not imply that participants can talk.
 
-## Cardiac-state display
+Both bubble silhouettes are complete SVG paths with dynamic text embedded in the SVG. Their tails or thought trails are positioned toward the corresponding avatar heads.
 
-The participant never sees raw ECG, BPM, beat interval, or variability values. The same underlying synthetic cardiac timing is translated into one of two switchable public cues:
+## Experimental interpretation
 
-- **Heart cue:** a stylized heart whose rhythm and animation intensity carry the social signal.
-- **Card glow:** the relevant selected or probed card receives a beat-timed edge glow.
+The cardiac display is framed as a **cardiac-state cue**, not as a confidence indicator, emotion decoder, or lie detector. A full study can compare live, yoked-replay, and hidden conditions even though the storyboard illustrates the timing manipulation most directly.
 
-In every task this is framed as a public **cardiac-state cue**, not a confidence indicator or lie detector. The included profiles are generated by `scripts/generate_neurokit_profiles.py` with NeuroKit2 0.2.13 and fixed random seeds, but only the abstract visualization reaches the participant. This mapping is an experimental manipulation, not evidence that heart rate literally measures confidence, excitement, deception, or concealed information.
-
-## Paradigm previews
-
-Each accordion animates a single five-step round and changes the actions, public message, outcome, and facial reactions when the incentive switch moves between collaboration and competition.
-
-- **Market for Lemons** is the primary paradigm: a seller sees the complete inspection, a buyer sees partial evidence, and the seller’s cardiac cue accompanies a public claim.
-- **Number-Card Truth/Lie** is the closest existing two-player implementation model: a sender selects a number message and an observer judges truth or deception.
-- **Concealed Information** is the mechanism task: the observer searches for an event-specific cardiac change while candidate cards are presented.
-- **Prisoner’s Dilemma** generalizes the manipulation to cooperation, reciprocity, and physiological coupling without a hidden factual state.
-- **Ultimatum Game** generalizes it to bargaining, acceptance, and costly punishment.
-- **Joint Discrimination** is deliberately last and uses shared 3D size stimuli rather than playing cards; it tests evidence integration rather than concealed information.
-
-These are implementation previews, not claims that the proposed cardiac display appeared in each source paradigm. The grant’s experimental contribution is precisely to add controlled live, yoked, and hidden cardiac visibility to those established behavioral structures.
-
-## Experimental factors
-
-- **Incentives:** aligned/common-interest versus opposed, mixed-motive, or competitive payoff structures.
-- **Cardiac access:** trial-contingent live signal, plausible noncontingent replay, or hidden display.
-- **Primary behavioral logic:** deception, detection, choice accuracy, cue weighting, response timing, learning, and payoff.
-- **Interpretation boundary:** the display is an experimental social cue, not an emotion decoder, lie detector, or direct readout of a card.
-
-All partner behavior and physiology are simulated. The demo records, stores, and transmits no participant data.
+Primary behavioral outcomes include truth telling, concealment, decision accuracy, information transfer, choice revision, cue weighting, response latency, payoff, exploitation success, learning, and dyadic cardiac coupling.
 
 ## Sources
 
 - Pulford BD, Mangiarulo M, Colman AM. [Confidence signalling aids deception in strategic interactions](https://doi.org/10.1038/s41598-025-00279-w). *Scientific Reports*. 2025.
 - Pulford BD, Colman AM, Buabang EK, Krockow EM. [The persuasive power of knowledge: Testing the confidence heuristic](https://doi.org/10.1037/xge0000471). *Journal of Experimental Psychology: General*. 2018.
 - Bahrami B, et al. [Optimally interacting minds](https://doi.org/10.1126/science.1185718). *Science*. 2010.
-- Klein Selle N, Verschuere B, Kindt M, Meijer EH, Ben-Shakhar G. [Hide or Seek? Physiological Responses Reflect Both the Decision and the Attempt to Conceal Information](https://doi.org/10.1177/0956797619864598). *Psychological Science*. 2019.
-- Meijer EH, Klein Selle N, Elber L, Ben-Shakhar G. [Memory detection with the Concealed Information Test: A meta-analysis of skin conductance, respiration, heart rate, and P300 data](https://doi.org/10.1111/psyp.12239). *Psychophysiology*. 2014.
-- [Affect Tracker Web](https://github.com/GeorgeFejer91/affect-tracker-web) informed the use of large spatial controls, explicit input/source state, a stylized beating-heart display, keyboard access, reduced-motion support, and the no-decoder boundary. No Affect Tracker source code is copied into this demo.
+- Belot M, van de Ven J. [How private is private information? The ability to spot deception in an economic game](https://doi.org/10.1007/s10683-015-9474-8). *Experimental Economics*. 2017.
+- Akerlof GA. [The Market for “Lemons”: Quality Uncertainty and the Market Mechanism](https://doi.org/10.2307/1879431). *Quarterly Journal of Economics*. 1970.
 
 ## Local development
 
@@ -72,14 +50,10 @@ Requirements: Node.js 22.13 or newer.
     npm install
     npm run dev
 
-The local site opens at `http://localhost:3000/`.
-
 Validation and static GitHub Pages export:
 
     npm run lint
     npm run build
     npm run build:pages
 
-`npm run build` validates the Vinext application. `npm run build:pages` writes the static deployment to `out/`.
-
-GitHub Pages is the sole publication target. The former ChatGPT Sites binding was removed at the user's request.
+`npm run build:pages` writes the static deployment to `out/`. GitHub Pages is the sole publication target.
