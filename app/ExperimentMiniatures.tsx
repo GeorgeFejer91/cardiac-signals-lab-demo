@@ -25,7 +25,7 @@ function GameWidget({ id }: { id: ScenarioId }) {
   if (id === 'lemons') {
     return <span className="game-choice-widget car" aria-hidden="true"><i /><b>?</b></span>;
   }
-  return <span className="game-choice-widget numbers" aria-hidden="true"><i>A<br />44</i><i>B<br />56</i></span>;
+  return <span className="game-choice-widget numbers" aria-hidden="true"><i>A<br />31</i><i>B<br />47</i></span>;
 }
 
 export default function ExperimentMiniatures() {
@@ -138,8 +138,6 @@ export default function ExperimentMiniatures() {
                   <div className="storyboard-scene">
                     <ThreeTableScene scenarioId={scenario.id} phase={phase} incentive={incentive} trial={trial} cueWindow={cueWindow} cueSource={cueSource} />
                     <div className="scene-status" aria-live="polite">{frame.sceneLabel}</div>
-                    <div className="storyboard-role role-a">{scenario.roleA}</div>
-                    <div className="storyboard-role role-b">{scenario.roleB}</div>
                     {frame.bubbleA ? <StoryboardBubble player="a" bubble={frame.bubbleA} /> : null}
                     {frame.bubbleB ? <StoryboardBubble player="b" bubble={frame.bubbleB} /> : null}
                     <div className="storyboard-viewer-note">Thoughts are explanatory; participants do not see them.</div>

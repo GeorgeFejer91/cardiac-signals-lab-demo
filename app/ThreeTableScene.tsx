@@ -251,7 +251,7 @@ function makeHeartSprite() {
 }
 
 function makePricePlate(label: string) {
-  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.65);
+  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.45);
 }
 
 function makeToyCar() {
@@ -472,14 +472,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       roughness: 0.64,
       metalness: 0.12,
     });
-    const table = new THREE.Mesh(new THREE.BoxGeometry(5.5, 0.24, 3.25), tableMaterial);
+    const table = new THREE.Mesh(new THREE.BoxGeometry(6.1, 0.24, 3.65), tableMaterial);
     table.position.y = 0.22;
     scene.add(table);
 
     // Player A is the far-side role (Seller or Strong evidence); Player B is the near-side role.
     const avatarYaw = 0.72;
-    const avatarA = makeAvatar('#527b7d', -2.55, avatarYaw);
-    const avatarB = makeAvatar('#805467', 2.55, Math.PI - avatarYaw);
+    const avatarA = makeAvatar('#527b7d', -3.05, avatarYaw);
+    const avatarB = makeAvatar('#805467', 3.05, Math.PI - avatarYaw);
     scene.add(avatarA.root, avatarB.root);
 
     const sellerHeart = scenarioId === 'lemons' ? makeHeartSprite() : null;
@@ -538,31 +538,31 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       button.scale.setScalar(0.001);
       scene.add(button);
     });
-    const controlX = 0.78;
-    const farControlZ = -1.12;
-    const nearControlZ = 1.12;
+    const controlX = 1.7;
+    const farControlZ = -1.3;
+    const nearControlZ = 1.3;
     sellerBuy?.position.set(-controlX, 0.4, farControlZ);
     sellerPass?.position.set(controlX, 0.4, farControlZ);
     buyerBuy?.position.set(controlX, 0.4, nearControlZ);
     buyerPass?.position.set(-controlX, 0.4, nearControlZ);
     [sellerBuy, sellerPass].forEach((button) => { if (button) button.rotation.y = Math.PI; });
     if (sellerCondition) {
-      sellerCondition.position.set(2.0, 1.3, -0.94);
+      sellerCondition.position.set(2.35, 1.65, -0.98);
       sellerCondition.scale.setScalar(0.001);
       scene.add(sellerCondition);
     }
     if (conditionReveal) {
-      conditionReveal.position.set(1.42, 1.42, -1.02);
+      conditionReveal.position.set(1.9, 1.72, -1.02);
       conditionReveal.scale.setScalar(0.001);
       scene.add(conditionReveal);
     }
     if (pricePanel) {
-      pricePanel.position.set(1.5, 1.0, 0.52);
+      pricePanel.position.set(0, 2.05, 0.08);
       pricePanel.scale.setScalar(0.001);
       scene.add(pricePanel);
     }
     if (physiologyPanel) {
-      physiologyPanel.position.set(2.0, 1.3, -0.94);
+      physiologyPanel.position.set(2.15, 1.7, -0.98);
       physiologyPanel.scale.setScalar(0.001);
       scene.add(physiologyPanel);
     }
@@ -615,7 +615,8 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       const narrowness = Math.max(0, 1.12 - camera.aspect);
-      const distanceScale = 1 + narrowness * 0.52;
+      const wideZoom = camera.aspect > 1.85 ? 0.84 : camera.aspect > 1.25 ? 0.92 : 1;
+      const distanceScale = (1 + narrowness * 0.52) * wideZoom;
       cameraBaseX = 7.4 * distanceScale;
       camera.position.set(cameraBaseX, 5.8 * distanceScale, 8.3 * distanceScale);
       camera.fov = camera.aspect < 1 ? 39 : 35;
@@ -658,7 +659,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       }
 
       if (scenarioId === 'lemons' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
-        animateScale(toyCar, true, 0.83, 0.1);
+        animateScale(toyCar, true, 0.91, 0.1);
         if (pricePanel) animateScale(pricePanel, true, 1, 0.14);
         if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, 1, 0.14);
         if (physiologyPanel) {
@@ -688,10 +689,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         const selectedSeller = sellerChoice === 'BUY' ? sellerBuy : sellerPass;
         const selectedBuyer = buyerChoice === 'BUY' ? buyerBuy : buyerPass;
         [sellerBuy, sellerPass].forEach((button) => {
-          animateScale(button, true, 0.82);
+          animateScale(button, true, 0.88);
         });
         [buyerBuy, buyerPass].forEach((button) => {
-          animateScale(button, true, 0.82);
+          animateScale(button, true, 0.88);
         });
         const sellerPressedY = state.phase >= 3 ? 0.32 : 0.4;
         sellerBuy.position.y += ((state.phase >= 3 && selectedSeller === sellerBuy ? sellerPressedY : 0.4) - sellerBuy.position.y) * 0.14;
@@ -706,7 +707,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       }
 
       if (scenarioId === 'numbers' && exactPanel && rangePanel && strongA && strongB && weakA && weakB && targetReveal) {
-        optionCards.forEach((card) => animateScale(card, true, 0.72));
+        optionCards.forEach((card) => animateScale(card, true, 0.78));
         animateScale(exactPanel, state.phase === 1 || state.phase === 2, 0.82);
         animateScale(rangePanel, state.phase === 1 || state.phase === 2, 0.82);
         animateScale(targetReveal, state.phase === 5, 0.82);
@@ -718,7 +719,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         const selectedWeak = numberRound.weakFinal === 'A' ? weakA : weakB;
 
         [strongA, strongB, weakA, weakB].forEach((button) => {
-          animateScale(button, state.phase >= 2, 0.82);
+          animateScale(button, state.phase >= 2, 0.88);
           setEdgeGlow(button, false, beat);
           setSelected(button, false);
         });
@@ -780,10 +781,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       camera.updateMatrixWorld(true);
       const sceneElement = canvas.parentElement;
       if (sceneElement) {
+        const canvasRect = canvas.getBoundingClientRect();
+        const sceneRect = sceneElement.getBoundingClientRect();
+        const canvasOffsetX = canvasRect.left - sceneRect.left;
+        const canvasOffsetY = canvasRect.top - sceneRect.top;
         const writeHeadPosition = (player: 'a' | 'b', avatar: MinimalAvatar) => {
           const point = avatar.head.getWorldPosition(new THREE.Vector3()).project(camera);
-          sceneElement.style.setProperty(`--head-${player}-x`, `${((point.x + 1) / 2) * canvas.clientWidth}px`);
-          sceneElement.style.setProperty(`--head-${player}-y`, `${((-point.y + 1) / 2) * canvas.clientHeight}px`);
+          sceneElement.style.setProperty(`--head-${player}-x`, `${canvasOffsetX + ((point.x + 1) / 2) * canvas.clientWidth}px`);
+          sceneElement.style.setProperty(`--head-${player}-y`, `${canvasOffsetY + ((-point.y + 1) / 2) * canvas.clientHeight}px`);
         };
         writeHeadPosition('a', avatarA);
         writeHeadPosition('b', avatarB);

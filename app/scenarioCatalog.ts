@@ -141,8 +141,8 @@ type NumberChoice = 'A' | 'B';
 type CarAction = 'BUY' | 'PASS';
 
 const numberTrials = [
-  { a: 44, b: 56, target: 54, coarse: '48–56', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 104, replayBpm: 76 },
   { a: 31, b: 47, target: 34, coarse: '31–47', correct: 'A' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 78, replayBpm: 108 },
+  { a: 44, b: 56, target: 54, coarse: '48–56', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 104, replayBpm: 76 },
   { a: 62, b: 78, target: 74, coarse: '66–78', correct: 'B' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 92, replayBpm: 70 },
   { a: 18, b: 32, target: 29, coarse: '21–32', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'A' as NumberChoice, hrBpm: 74, replayBpm: 102 },
 ];
@@ -152,8 +152,8 @@ export function getNumberTrial(trial: number) {
 }
 
 const carTrials = [
-  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'RELIABLE', evidence: '31,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 104, activation: 76, deltaHr: 18, replayBpm: 78, replayActivation: 34, replayDeltaHr: 3 },
   { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'LEMON', evidence: '82,000 MILES · MAJOR FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 78, activation: 37, deltaHr: 3, replayBpm: 112, replayActivation: 84, replayDeltaHr: 24 },
+  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'RELIABLE', evidence: '31,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 104, activation: 76, deltaHr: 18, replayBpm: 78, replayActivation: 34, replayDeltaHr: 3 },
   { model: 'sedan.glb', description: 'older sedan', quality: 'LEMON', evidence: '96,000 MILES · ENGINE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'PASS' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 110, activation: 82, deltaHr: 22, replayBpm: 82, replayActivation: 41, replayDeltaHr: 6 },
   { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'LEMON', evidence: '88,000 MILES · BRAKE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 92, activation: 58, deltaHr: 11, replayBpm: 76, replayActivation: 31, replayDeltaHr: 2 },
   { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'RELIABLE', evidence: '42,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 88, activation: 52, deltaHr: 9, replayBpm: 72, replayActivation: 25, replayDeltaHr: -1 },
@@ -212,29 +212,31 @@ export function getStoryboardFrame(
     const condition = car.quality === 'LEMON' ? 'BAD CAR' : 'GOOD CAR';
     const cueVisibleAtRecommendation = isCueActive(3, cueWindow, cueSource);
     const cueVisibleAtDecision = isCueActive(4, cueWindow, cueSource);
-    const sellerPrivateThought = `The inspection shows: ${car.evidence.toLowerCase()}.`;
+    const sellerPrivateThought = car.quality === 'LEMON'
+      ? 'The inspection found a serious fault.'
+      : 'This car passed inspection.';
     const sellerRecommendationThought = round.deceptiveRecommendation
-      ? `It is faulty, but a sale earns me 10 tokens. I will recommend ${sellerAction}.`
+      ? `It is faulty, but a sale pays me. I’ll recommend ${sellerAction}.`
       : round.strategicHonesty
-        ? 'I could push for a sale, but honesty may preserve my credibility.'
+        ? 'A sale would pay me, but I’ll recommend PASS.'
       : car.quality === 'LEMON'
         ? 'It is a bad car. I should recommend PASS.'
         : 'It is reliable. I can recommend BUY honestly.';
     const displayedBpm = cueSource === 'replay' ? car.replayBpm : car.hrBpm;
     const cardiacInterpretation = displayedBpm >= 100
-      ? 'The pulse is fast, but that could reflect strain or excitement.'
+      ? 'Fast pulse—but it could mean strain or excitement.'
       : displayedBpm <= 80
-        ? 'The pulse is calm, but calm does not guarantee honesty.'
-        : 'The pulse changed, but it has no single meaning.';
+        ? 'A calm pulse does not guarantee honesty.'
+        : 'The pulse changed, but its meaning is unclear.';
     const buyerCueThought = cueVisibleAtRecommendation
       ? cardiacInterpretation
       : cueSource === 'hidden'
-        ? 'I see only the recommendation, not the seller’s physiology.'
+        ? 'I see the recommendation, but no cardiac cue.'
         : 'I see the recommendation. The cardiac cue comes later.';
     const buyerDecisionThought = cueVisibleAtDecision || cueVisibleAtRecommendation
       ? buyerAction === 'BUY'
-        ? `I will trust Recommend ${sellerAction} and press BUY.`
-        : `I will not follow Recommend ${sellerAction}; I will press PASS.`
+        ? 'I’ll trust the recommendation and press BUY.'
+        : 'I won’t follow it; I’ll press PASS.'
       : buyerAction === 'BUY'
         ? 'Without a cardiac cue, I will press BUY.'
         : 'Without a cardiac cue, I will press PASS.';
@@ -243,7 +245,7 @@ export function getStoryboardFrame(
       : round.deceptionDetected
         ? 'LEMON · BLUFF REJECTED'
         : round.strategicHonesty
-          ? 'LEMON · STRATEGIC HONESTY'
+          ? 'LEMON · HONEST RECOMMENDATION'
           : `${car.quality} · ACCURATE CHOICE`;
     const frames: StoryboardFrame[] = [
       {
@@ -261,9 +263,9 @@ export function getStoryboardFrame(
         bubbleA: { kind: 'thought', label: 'SELLER', text: sellerPrivateThought },
       },
       {
-        title: round.deceptiveRecommendation ? 'The seller prepares a deceptive recommendation' : round.strategicHonesty ? 'The seller uses strategic honesty' : 'The seller prepares an honest recommendation',
+        title: round.deceptiveRecommendation ? 'The seller prepares a deceptive recommendation' : round.strategicHonesty ? 'The seller resists the incentive to sell' : 'The seller prepares an honest recommendation',
         timing: 'Up to 8 seconds',
-        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : round.strategicHonesty ? 'PRESERVE CREDIBILITY' : 'DISCLOSE'}`,
+        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : 'DISCLOSE'}`,
         explanation: `The seller can press only Recommend Buy or Recommend Pass. With ${incentive === 'cooperate' ? 'aligned payoffs, an accurate recommendation benefits both players' : 'conflicting payoffs, any sale earns the seller 10 tokens regardless of condition'}.`,
         bubbleA: { kind: 'thought', label: 'SELLER', text: sellerRecommendationThought },
       },
@@ -282,7 +284,7 @@ export function getStoryboardFrame(
         bubbleB: { kind: 'thought', label: 'BUYER', text: buyerDecisionThought },
       },
       {
-        title: round.deceptionSucceeded ? 'The bluff succeeds' : round.deceptionDetected ? 'The buyer rejects the bluff' : round.strategicHonesty ? 'Strategic honesty preserves credibility' : 'The recommendation leads to an accurate choice',
+        title: round.deceptionSucceeded ? 'The bluff succeeds' : round.deceptionDetected ? 'The buyer rejects the bluff' : round.strategicHonesty ? 'The seller gives an honest warning' : 'The recommendation leads to an accurate choice',
         timing: '2 seconds',
         sceneLabel: resultLabel,
         explanation: `The hidden condition is revealed. This round pays Buyer ${buyerScore >= 0 ? '+' : ''}${buyerScore} and Seller ${sellerScore >= 0 ? '+' : ''}${sellerScore} tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.`,
@@ -296,16 +298,16 @@ export function getStoryboardFrame(
   const { numbers, signal, weakFinal } = round;
   const displayedBpm = cueSource === 'replay' ? numbers.replayBpm : numbers.hrBpm;
   const numberCueThought = cueSource === 'hidden'
-    ? 'I see the recommendation, but no cardiac cue.'
+    ? 'No cardiac cue.'
     : displayedBpm >= 100
-      ? 'The edge pulses quickly, but that does not prove deception.'
-      : 'The edge pulse is calm, but that does not prove honesty.';
+      ? 'The fast pulse is ambiguous.'
+      : 'The calm pulse is ambiguous.';
   const resultLabel = round.deceptionSucceeded
     ? `CORRECT ${numbers.correct} · MISLEADING SIGNAL SUCCEEDED`
     : round.deceptionResisted
       ? `CORRECT ${numbers.correct} · MISLEADING SIGNAL RESISTED`
       : round.strategicTruth
-        ? `CORRECT ${numbers.correct} · STRATEGIC TRUTH`
+        ? `CORRECT ${numbers.correct} · TRUTHFUL SIGNAL`
         : `CORRECT ${numbers.correct} · BOTH ACCURATE`;
   const frames: StoryboardFrame[] = [
     {
@@ -330,21 +332,21 @@ export function getStoryboardFrame(
       bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: `My range is ambiguous. I will start with ${numbers.weakInitial}.` },
     },
     {
-      title: round.deceptiveSignal ? `Deception attempt: recommend ${signal}` : round.strategicTruth ? `Credibility tactic: truthfully recommend ${signal}` : `Public recommendation: ${signal}`,
+      title: round.deceptiveSignal ? `Deception attempt: recommend ${signal}` : round.strategicTruth ? `Truthful recommendation: ${signal}` : `Public recommendation: ${signal}`,
       timing: 'Up to 8 seconds',
       sceneLabel: `PUBLIC: STRONG PLAYER RECOMMENDS ${signal}`,
       explanation: `The strong player presses ${signal}. Its mechanical selected state becomes public; when enabled, a separate red edge follows ${cueSource === 'replay' ? 'matched replay' : 'live'} cardiac timing.`,
-      bubbleA: { kind: 'thought', label: 'STRONG PLAYER', text: round.deceptiveSignal ? `${numbers.correct} is correct. I will recommend ${signal} to mislead them.` : round.strategicTruth ? `I will recommend ${signal} truthfully to remain credible.` : `I will recommend the correct answer, ${signal}.` },
+      bubbleA: { kind: 'thought', label: 'STRONG PLAYER', text: round.deceptiveSignal ? `${numbers.correct} is correct; I’ll recommend ${signal} to mislead them.` : `I’ll truthfully recommend ${signal}.` },
     },
     {
       title: 'The weak player locks a final answer',
       timing: 'Up to 10 seconds',
       sceneLabel: `WEAK PLAYER: INITIAL ${numbers.weakInitial} → FINAL ${weakFinal}`,
       explanation: `The weak player presses ${weakFinal} to lock the final answer. The selected recommendation can continue pulsing during this window, but no confidence rating or verbal message is added.`,
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: round.deceptionSucceeded ? `${numberCueThought} I will follow ${signal}.` : round.deceptionResisted ? `${numberCueThought} I will keep ${weakFinal}.` : `I will lock in ${weakFinal}.` },
+      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: round.deceptionSucceeded ? `${numberCueThought} I’ll follow ${signal}.` : round.deceptionResisted ? `${numberCueThought} I’ll keep ${weakFinal}.` : `I’ll lock in ${weakFinal}.` },
     },
     {
-      title: round.deceptionSucceeded ? 'The misleading signal succeeds' : round.deceptionResisted ? 'The weak player resists the misleading signal' : round.strategicTruth ? 'Strategic truth maintains credibility' : 'Shared information supports the correct answer',
+      title: round.deceptionSucceeded ? 'The misleading signal succeeds' : round.deceptionResisted ? 'The weak player resists the misleading signal' : round.strategicTruth ? 'The truthful signal leads to the correct answer' : 'Shared information supports the correct answer',
       timing: '2 seconds',
       sceneLabel: resultLabel,
       explanation: `The target ${numbers.target} and correct answer ${numbers.correct} are revealed. The system records initial and final accuracy, revision, information transfer, deceptive-signal success, payoff, timing, and cardiac coupling.`,

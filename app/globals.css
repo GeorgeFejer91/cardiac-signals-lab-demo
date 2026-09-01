@@ -1506,26 +1506,6 @@ output { font-variant-numeric: tabular-nums; }
 .storyboard-bubble .bubble-copy strong { max-width: 100%; font-size: 21px; font-weight: 780; text-wrap: balance; }
 .storyboard-bubble .bubble-copy.medium strong { font-size: 19px; }
 .storyboard-bubble .bubble-copy.long strong { font-size: 17px; line-height: 1.1; }
-.storyboard-role {
-  position: absolute;
-  z-index: 5;
-  display: inline-flex;
-  min-height: 25px;
-  align-items: center;
-  gap: 6px;
-  padding: 0 9px;
-  border: 1px solid rgba(255,255,255,.12);
-  border-radius: 999px;
-  background: rgba(5,8,11,.82);
-  color: #d7dfdc;
-  font: 850 8px ui-monospace, SFMono-Regular, Consolas, monospace;
-  letter-spacing: .08em;
-  text-transform: uppercase;
-  backdrop-filter: blur(8px);
-}
-.storyboard-role i { width: 6px; height: 6px; border-radius: 50%; background: var(--cyan); box-shadow: 0 0 8px rgba(128,241,231,.7); }
-.storyboard-role.role-a { top: 40%; right: 8%; }
-.storyboard-role.role-b { top: 57%; left: 7%; }
 .cue-window-badge {
   position: absolute;
   z-index: 5;
@@ -1683,9 +1663,6 @@ output { font-variant-numeric: tabular-nums; }
   .storyboard-bubble .bubble-copy strong { font-size: 19px; }
   .storyboard-bubble .bubble-copy.medium strong { font-size: 17px; }
   .storyboard-bubble .bubble-copy.long strong { font-size: 15px; }
-  .storyboard-role { min-height: 22px; padding: 0 7px; font-size: 7px; }
-  .storyboard-role.role-a { top: 36%; right: 3%; }
-  .storyboard-role.role-b { top: 55%; left: 3%; }
   .cue-window-badge { right: 7px; bottom: 9px; max-width: 42%; min-height: 26px; font-size: 7px; }
   .storyboard-navigation { grid-template-columns: 42px minmax(0, 1fr) 42px; gap: 7px; padding: 9px; }
   .storyboard-progress { grid-template-columns: 45px 1fr 28px; gap: 5px; }
@@ -1931,8 +1908,14 @@ body {
 }
 
 .storyboard-scene {
-  height: 470px;
+  height: 580px;
   background: #05070a;
+}
+
+.storyboard-scene .three-table-canvas {
+  top: 132px;
+  bottom: 0;
+  height: calc(100% - 132px);
 }
 
 .scene-loading {
@@ -1950,7 +1933,7 @@ body {
   z-index: 7;
   top: 10px;
   left: 50%;
-  max-width: 66%;
+  max-width: 42%;
   padding: 7px 10px;
   transform: translateX(-50%);
   border: 1px solid rgba(255, 255, 255, .16);
@@ -1969,19 +1952,39 @@ body {
 }
 
 .storyboard-bubble.player-a {
-  top: 42px;
-  right: auto;
-  left: 1%;
-  width: min(37%, 340px);
-  height: 158px;
+  top: 38px;
+  right: 1%;
+  left: auto;
+  width: min(36%, 330px);
+  height: 148px;
 }
 
 .storyboard-bubble.player-b {
-  top: 42px;
+  top: 38px;
   bottom: auto;
   left: 1%;
-  width: min(37%, 340px);
-  height: 158px;
+  width: min(36%, 330px);
+  height: 148px;
+}
+
+.storyboard-bubble.player-a .bubble-silhouette {
+  fill: #dcecea;
+  stroke: #5f9e98;
+}
+
+.storyboard-bubble.player-b .bubble-silhouette {
+  fill: #f0e0e7;
+  stroke: #ad7890;
+}
+
+.thought-connector.player-a circle {
+  fill: #dcecea;
+  stroke: #5f9e98;
+}
+
+.thought-connector.player-b circle {
+  fill: #f0e0e7;
+  stroke: #ad7890;
 }
 
 .storyboard-bubble .bubble-copy {
@@ -1993,10 +1996,13 @@ body {
 
 .storyboard-bubble .bubble-copy span {
   color: #5b6967;
-  font: 750 10px Aptos, "Trebuchet MS", sans-serif;
+  font: 750 12px Aptos, "Trebuchet MS", sans-serif;
   letter-spacing: .025em;
   text-transform: none;
 }
+
+.storyboard-bubble.player-a .bubble-copy span { color: #376762; }
+.storyboard-bubble.player-b .bubble-copy span { color: #764e62; }
 
 .storyboard-bubble .bubble-copy strong {
   font-size: 20px;
@@ -2006,36 +2012,6 @@ body {
 .storyboard-bubble .bubble-copy.medium strong { font-size: 18px; }
 .storyboard-bubble .bubble-copy.long strong { font-size: 16px; line-height: 1.08; }
 .storyboard-bubble .bubble-copy.xlong strong { font-size: 14px; line-height: 1.06; }
-
-.storyboard-role {
-  min-height: 24px;
-  padding: 3px 7px;
-  transform: translate(25px, -50%);
-  border: 0;
-  border-left: 3px solid #78b9b8;
-  border-radius: 0;
-  background: rgba(5, 8, 11, .82);
-  color: #e4e8e5;
-  font: 750 10px Aptos, "Trebuchet MS", sans-serif;
-  letter-spacing: .025em;
-  text-transform: none;
-  backdrop-filter: none;
-}
-
-.storyboard-role.role-a {
-  top: var(--head-a-y, 40%);
-  right: auto;
-  left: var(--head-a-x, 72%);
-}
-
-.storyboard-role.role-b {
-  top: var(--head-b-y, 58%);
-  right: auto;
-  left: var(--head-b-x, 28%);
-  transform: translate(25px, -50%);
-  border-right: 0;
-  border-left: 3px solid #b88099;
-}
 
 .storyboard-viewer-note,
 .cue-window-badge {
@@ -2332,34 +2308,35 @@ body {
     min-width: 0;
   }
 
-  .storyboard-scene { height: 440px; }
+  .storyboard-scene { height: 565px; }
+
+  .storyboard-scene .three-table-canvas {
+    top: 126px;
+    height: calc(100% - 126px);
+  }
 
   .scene-status {
     top: 7px;
-    max-width: 92%;
+    max-width: 84%;
     width: max-content;
     font-size: 10px;
   }
 
   .storyboard-bubble.player-a,
   .storyboard-bubble.player-b {
-    top: 42px;
-    width: 64%;
-    height: 146px;
+    top: 38px;
+    width: min(59%, 290px);
+    height: 138px;
   }
 
-  .storyboard-bubble.player-a { right: auto; left: 0; }
-  .storyboard-bubble.player-b { left: 0; }
+  .storyboard-bubble.player-a { right: 4px; left: auto; }
+  .storyboard-bubble.player-b { right: auto; left: 4px; }
 
-  .storyboard-bubble .bubble-copy span { font-size: 9px; }
+  .storyboard-bubble .bubble-copy span { font-size: 11px; }
   .storyboard-bubble .bubble-copy strong { font-size: 18px; }
   .storyboard-bubble .bubble-copy.medium strong { font-size: 16px; }
   .storyboard-bubble .bubble-copy.long strong { font-size: 14px; }
   .storyboard-bubble .bubble-copy.xlong strong { font-size: 13px; }
-
-  .storyboard-role { font-size: 9px; }
-  .storyboard-role.role-a { transform: translate(15px, -50%); }
-  .storyboard-role.role-b { transform: translate(15px, -50%); }
 
   .storyboard-viewer-note,
   .cue-window-badge {
