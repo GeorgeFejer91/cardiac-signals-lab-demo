@@ -642,7 +642,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       pricePanel?.position.set(narrow ? -1.7 : -2, narrow ? 2.2 : 1.95, 0.42);
       physiologyPanel?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
       conditionReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
-      exactPanel?.position.set(narrow ? -1.3 : 2.42, narrow ? 3 : 2.08, narrow ? -0.96 : -0.62);
+      exactPanel?.position.set(narrow ? -1.3 : 3.75, narrow ? 3 : 2.08, narrow ? -0.96 : -0.62);
       rangePanel?.position.set(narrow ? -1.72 : -2.42, narrow ? 1.78 : 2.08, narrow ? 0.96 : 0.62);
       targetReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
       renderer.setSize(width, height, false);
