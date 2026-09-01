@@ -1,7 +1,7 @@
 import ExperimentMiniatures from './ExperimentMiniatures';
 
 function LabMark() {
-  return <span className="brand-mark" aria-hidden="true"><i /><i /></span>;
+  return <span className="brand-mark" aria-hidden="true">♥</span>;
 }
 
 export default function Home() {

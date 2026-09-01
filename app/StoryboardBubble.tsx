@@ -11,7 +11,7 @@ const cloudPath = 'M48 15 C64 1 88 3 102 15 C120 0 146 3 157 18 C177 4 203 9 210
 export default function StoryboardBubble({ player, bubble }: StoryboardBubbleProps) {
   const bubbleRef = useRef<HTMLDivElement>(null);
   const connectorRef = useRef<SVGSVGElement>(null);
-  const copySize = bubble.text.length > 32 ? 'long' : bubble.text.length > 22 ? 'medium' : 'short';
+  const copySize = bubble.text.length > 68 ? 'xlong' : bubble.text.length > 46 ? 'long' : bubble.text.length > 30 ? 'medium' : 'short';
 
   useEffect(() => {
     let animationFrame = 0;
@@ -77,7 +77,7 @@ export default function StoryboardBubble({ player, bubble }: StoryboardBubblePro
         <svg viewBox="0 0 280 135" role="img" aria-label={`${bubble.label}: ${bubble.text}`} preserveAspectRatio="xMidYMid meet">
           <title>{bubble.label}</title>
           <path className="bubble-silhouette" d={cloudPath} />
-          <foreignObject x="39" y="24" width="224" height="88">
+          <foreignObject x="36" y="19" width="228" height="97">
             <div className={`bubble-copy ${copySize}`}>
               <span>{bubble.label}</span>
               <strong>{bubble.text}</strong>

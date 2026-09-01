@@ -6,7 +6,7 @@ A static, browser-only GitHub Pages preview of two proposed mixed-reality dyadic
 
 The landing page contains two accordion choices:
 
-1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether a visually identical virtual car is good or bad, presses Recommend Buy or Recommend Pass, and the uninformed buyer presses Buy or Pass.
+1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether the car shown to both players is reliable or faulty, presses Recommend Buy or Recommend Pass, and the uninformed buyer presses Buy or Pass.
 2. **Asymmetric-Information Number-Card Game** — two players judge which number card is closer to a target, but one receives exact evidence and the other receives an ambiguous range.
 
 ## Storyboard interaction
@@ -14,11 +14,12 @@ The landing page contains two accordion choices:
 Each accordion opens a discrete six-phase storyboard rather than a participant task. The viewer can:
 
 - step backward and forward through every phase;
-- click any phase dot directly;
+- click any numbered phase control directly;
 - enable a deliberately slow 6.5-second auto-advance;
 - continue into repeated trials with changing hidden states;
-- switch between collaborative and competitive incentives; and
-- move the cardiac display between the public-signal interval, decision interval, or both.
+- switch between aligned and conflicting payoffs;
+- compare live, matched-replay, and hidden cardiac conditions; and
+- move the cardiac display between the public-recommendation interval, receiver-decision interval, or both.
 
 The 3D scene uses a minimal table, two Social Threat Lab-style avatar busts, continuously morphing facial expressions, and only the props needed for the current experiment. The card-edge cardiac cue is a red, beat-synchronous emissive glow.
 
@@ -26,15 +27,15 @@ Each phase shows at most one **thought bubble** containing the currently relevan
 
 The bubble silhouette is a complete SVG path with centered, length-responsive text embedded in the SVG. Each thought trail is recalculated from the cloud boundary to the projected 3D center of the corresponding avatar’s head, while reserved screen zones keep the cloud itself clear of the table actions and cardiac-status badge.
 
-The car scenario deliberately contains no tablet, negotiation, or free-form claim card. It cycles through four CC0 Kenney vehicle models and alternating reliable/lemon states. Every round shows a computer-set 20-token price and four colored physical controls: Recommend Buy/Recommend Pass for the seller and Buy/Pass for the buyer. During cardiac-access phases, the seller’s chest heart, selected recommendation edge, and tabletop pulse together; an explicitly illustrative physiology panel is then available to the buyer. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
+The car scenario deliberately contains no tablet, negotiation, or free-form claim card. It cycles through CC0 Kenney vehicle models while visual model, reliable/faulty state, and cardiac profile vary independently. Every round shows a computer-set 20-token price and four colored physical controls: Recommend Buy/Recommend Pass for the seller and Buy/Pass for the buyer. During cardiac-access phases, the seller’s chest heart, selected recommendation edge, and tabletop pulse together; an explicitly illustrative physiology panel appears only in the selected window. The conflicting-payoff sequence includes credibility-building truth, a successful bluff, strategic honesty, and a rejected bluff. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
 
-The priced-car game is a **fixed-price, lemons-inspired adaptation**, not a literal reproduction of Belot and van de Ven’s task. A reliable car is worth 30 tokens and a lemon 10, while the fixed 20-token price makes buying worth +10 or −10 to the buyer. Passing is worth zero. In aligned blocks the seller shares this result; in opposed blocks the seller receives a 10-token sales commission. A ten-token endowment protects participants from real losses, and only selected rounds are converted to money after the session.
+The priced-car game is a **fixed-price, lemons-inspired adaptation**, not a literal reproduction of Belot and van de Ven’s task. A reliable car is worth 30 tokens and a lemon 10, while the fixed 20-token price makes buying worth +10 or −10 to the buyer. Passing is worth zero. With aligned payoffs the seller shares this result; with conflicting payoffs the seller receives a 10-token sales commission. A ten-token endowment protects participants from real losses, and only selected rounds are converted to money after the session.
 
 ## Experimental interpretation
 
-The cardiac display is framed as a **cardiac-state cue**, not as a confidence indicator, emotion decoder, or lie detector. A full study can compare live, yoked-replay, and hidden conditions even though the storyboard illustrates the timing manipulation most directly.
+The cardiac display is framed as a **cardiac-state cue**, not as a confidence indicator, emotion decoder, or lie detector. The storyboard separately exposes live, matched-replay, and hidden source conditions and recommendation, decision, or combined timing windows.
 
-Primary behavioral outcomes include truth telling, concealment, decision accuracy, information transfer, choice revision, cue weighting, response latency, payoff, exploitation success, learning, and dyadic cardiac coupling.
+Primary behavioral outcomes include truthful and misleading recommendations, decision accuracy, information transfer, choice revision, cue weighting, response latency, payoff, exploitation success, resistance to misleading advice, learning, and dyadic cardiac coupling.
 
 ## Sources
 

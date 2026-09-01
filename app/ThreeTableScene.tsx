@@ -12,11 +12,14 @@ import {
   type TriangleMeshData,
 } from './facial-expression';
 import {
+  type CueSource,
   type CueWindow,
   type FaceEmotion,
   type IncentiveMode,
   type ScenarioId,
+  getCarRoundState,
   getCarTrial,
+  getNumberRoundState,
   getNumberTrial,
   getScenario,
   isCueActive,
@@ -28,9 +31,10 @@ type ThreeTableSceneProps = {
   incentive: IncentiveMode;
   trial: number;
   cueWindow: CueWindow;
+  cueSource: CueSource;
 };
 
-type RuntimeState = { phase: number; incentive: IncentiveMode; cueWindow: CueWindow };
+type RuntimeState = { phase: number; incentive: IncentiveMode; cueWindow: CueWindow; cueSource: CueSource };
 type FaceSurface = { group: THREE.Group; strokes: THREE.Mesh; eyeFills: THREE.Mesh; darkFills: THREE.Mesh; signature: string };
 type MinimalAvatar = {
   root: THREE.Group;
@@ -61,7 +65,7 @@ function makeLabelTexture(
   context.textBaseline = 'middle';
   context.fillStyle = options.foreground;
   const lines = label.split('\n');
-  context.font = `800 ${options.fontSize}px Arial`;
+  context.font = `800 ${options.fontSize}px Aptos, sans-serif`;
   lines.forEach((line, index) => {
     context.fillText(line, width / 2, height / 2 + (index - (lines.length - 1) / 2) * options.fontSize * 1.08);
   });
@@ -105,11 +109,12 @@ function makeActionButton(label: string, accent: string) {
   const glowMaterial = new THREE.MeshStandardMaterial({
     color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0, transparent: true, opacity: 0,
   });
-  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.74, 0.115, 0.72), glowMaterial);
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.145, 0.84), glowMaterial);
   group.add(glow);
+  const bodyMaterial = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.12, roughness: 0.46, metalness: 0.12 });
   const body = new THREE.Mesh(
     new THREE.BoxGeometry(1.64, 0.12, 0.62),
-    new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.16, roughness: 0.46, metalness: 0.12 }),
+    bodyMaterial,
   );
   body.position.y = 0.005;
   group.add(body);
@@ -125,8 +130,17 @@ function makeActionButton(label: string, accent: string) {
   face.rotation.x = -Math.PI / 2;
   face.position.y = 0.069;
   group.add(face);
+  const selectionMarker = new THREE.Mesh(
+    new THREE.BoxGeometry(0.55, 0.035, 0.045),
+    new THREE.MeshBasicMaterial({ color: '#f8f4e9', toneMapped: false }),
+  );
+  selectionMarker.position.set(0, 0.091, 0.22);
+  selectionMarker.visible = false;
+  group.add(selectionMarker);
   group.userData.glow = glow;
   group.userData.glowMaterial = glowMaterial;
+  group.userData.selectionMarker = selectionMarker;
+  group.userData.buttonMaterial = bodyMaterial;
   return group;
 }
 
@@ -164,7 +178,7 @@ function makeInfoPanel(
   const context = canvas.getContext('2d');
   if (context) {
     context.clearRect(0, 0, canvas.width, canvas.height);
-    drawRoundedRect(context, 12, 12, canvas.width - 24, canvas.height - 24, 34);
+    drawRoundedRect(context, 12, 12, canvas.width - 24, canvas.height - 24, 18);
     context.fillStyle = 'rgba(10, 16, 20, 0.94)';
     context.fill();
     context.strokeStyle = accent;
@@ -173,7 +187,7 @@ function makeInfoPanel(
     context.textAlign = 'left';
     context.textBaseline = 'middle';
     context.fillStyle = accent;
-    context.font = '800 30px Arial';
+    context.font = '800 32px Aptos, sans-serif';
     context.fillText(title, 48, 54);
     const rowHeight = (canvas.height - 98) / rows.length;
     rows.forEach((row, index) => {
@@ -187,11 +201,11 @@ function makeInfoPanel(
         context.stroke();
       }
       context.fillStyle = '#91a09f';
-      context.font = '700 25px Arial';
+      context.font = '700 26px Aptos, sans-serif';
       context.fillText(row.label, 48, rowY + rowHeight / 2);
       context.textAlign = 'right';
       context.fillStyle = '#f6f4ed';
-      context.font = '800 34px Arial';
+      context.font = '800 38px Aptos, sans-serif';
       context.fillText(row.value, canvas.width - 48, rowY + rowHeight / 2);
       context.textAlign = 'left';
     });
@@ -236,38 +250,8 @@ function makeHeartSprite() {
   return sprite;
 }
 
-function makeStatusPlate(label: string, accent: string) {
-  const group = new THREE.Group();
-  const border = new THREE.Mesh(
-    new THREE.BoxGeometry(1.5, 0.095, 0.58),
-    new THREE.MeshStandardMaterial({
-      color: accent, emissive: accent, emissiveIntensity: 1.35, roughness: 0.5, metalness: 0.08,
-    }),
-  );
-  group.add(border);
-  const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.4, 0.1, 0.48),
-    new THREE.MeshStandardMaterial({ color: '#12191d', roughness: 0.64 }),
-  );
-  body.position.y = 0.008;
-  group.add(body);
-  const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.32, 0.4),
-    new THREE.MeshStandardMaterial({
-      map: makeLabelTexture(label, 500, 170, {
-        background: '#eef1ec', border: accent, foreground: '#17201f', fontSize: 52,
-      }),
-      roughness: 0.7,
-    }),
-  );
-  face.rotation.x = -Math.PI / 2;
-  face.position.y = 0.063;
-  group.add(face);
-  return group;
-}
-
 function makePricePlate(label: string) {
-  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.25);
+  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.65);
 }
 
 function makeToyCar() {
@@ -430,9 +414,16 @@ function setEdgeGlow(object: THREE.Group, visible: boolean, beat: number) {
   const material = object.userData.glowMaterial as THREE.MeshStandardMaterial | undefined;
   if (!glow || !material) return;
   glow.visible = visible;
-  material.opacity = visible ? 0.34 + beat * 0.48 : 0;
-  material.emissiveIntensity = visible ? 1.1 + beat * 4.2 : 0;
+  material.opacity = visible ? 0.54 + beat * 0.38 : 0;
+  material.emissiveIntensity = visible ? 1.8 + beat * 5.2 : 0;
   glow.scale.setScalar(1 + beat * 0.07);
+}
+
+function setSelected(object: THREE.Group, selected: boolean) {
+  const marker = object.userData.selectionMarker as THREE.Mesh | undefined;
+  const material = object.userData.buttonMaterial as THREE.MeshStandardMaterial | undefined;
+  if (marker) marker.visible = selected;
+  if (material) material.emissiveIntensity += ((selected ? 0.42 : 0.12) - material.emissiveIntensity) * 0.2;
 }
 
 function animateScale(object: THREE.Object3D, visible: boolean, targetScale: number, speed = 0.12) {
@@ -442,11 +433,11 @@ function animateScale(object: THREE.Object3D, visible: boolean, targetScale: num
   if (!visible && object.scale.x < 0.015) object.visible = false;
 }
 
-export default function ThreeTableScene({ scenarioId, phase, incentive, trial, cueWindow }: ThreeTableSceneProps) {
+export default function ThreeTableScene({ scenarioId, phase, incentive, trial, cueWindow, cueSource }: ThreeTableSceneProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const stateRef = useRef<RuntimeState>({ phase, incentive, cueWindow });
+  const stateRef = useRef<RuntimeState>({ phase, incentive, cueWindow, cueSource });
 
-  useEffect(() => { stateRef.current = { phase, incentive, cueWindow }; }, [phase, incentive, cueWindow]);
+  useEffect(() => { stateRef.current = { phase, incentive, cueWindow, cueSource }; }, [phase, incentive, cueWindow, cueSource]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -456,6 +447,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
     camera.position.set(7.4, 5.8, 8.3);
+    let cameraBaseX = 7.4;
     camera.lookAt(0, 0.72, 0);
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -469,7 +461,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     const key = new THREE.DirectionalLight('#fff1df', 4.4);
     key.position.set(2.8, 6, 4.5);
     scene.add(key);
-    const red = new THREE.PointLight('#ff3853', 8, 8, 2);
+    const red = new THREE.PointLight('#ff3853', 0, 8, 2);
     red.position.set(-1.3, 2.4, 1.2);
     scene.add(red);
 
@@ -485,8 +477,9 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     scene.add(table);
 
     // Player A is the far-side role (Seller or Strong evidence); Player B is the near-side role.
-    const avatarA = makeAvatar('#527b7d', -2.55, 0.68);
-    const avatarB = makeAvatar('#805467', 2.55, 2.36);
+    const avatarYaw = 0.72;
+    const avatarA = makeAvatar('#527b7d', -2.55, avatarYaw);
+    const avatarB = makeAvatar('#805467', 2.55, Math.PI - avatarYaw);
     scene.add(avatarA.root, avatarB.root);
 
     const sellerHeart = scenarioId === 'lemons' ? makeHeartSprite() : null;
@@ -510,73 +503,84 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       });
     }
 
+    const initialCarRound = getCarRoundState(trial, incentive);
     const sellerBuy = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nBUY', '#4b918c') : null;
-    const sellerPass = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nPASS', '#b55b68') : null;
+    const sellerPass = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nPASS', '#8d7444') : null;
     const buyerBuy = scenarioId === 'lemons' ? makeActionButton('BUY', '#4b918c') : null;
-    const buyerPass = scenarioId === 'lemons' ? makeActionButton('PASS', '#b55b68') : null;
-    const buyerOutcome = carTrial.correctAction === 'BUY' ? 30 - carTrial.pricePoints : 0;
-    // The illustrated buyer makes the efficient choice, so the realized seller payoff is
-    // +10 for a reliable-car sale and 0 for a rejected lemon in either incentive mode.
-    const sellerOutcome = buyerOutcome;
+    const buyerPass = scenarioId === 'lemons' ? makeActionButton('PASS', '#8d7444') : null;
     const sellerCondition = scenarioId === 'lemons'
-      ? makeInfoPanel('SELLER ONLY', [
-          { label: 'INSPECTION', value: carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE' },
-        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 1.75)
+      ? makeInfoPanel('PRIVATE · SELLER ONLY', [
+           { label: 'INSPECTION', value: carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE' },
+        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 2.02)
       : null;
     const conditionReveal = scenarioId === 'lemons'
-      ? makeStatusPlate(`${carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE'}\nB ${buyerOutcome >= 0 ? '+' : ''}${buyerOutcome} · S ${sellerOutcome >= 0 ? '+' : ''}${sellerOutcome}`, carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0')
+      ? makeInfoPanel('ROUND RESULT', [
+          { label: 'CONDITION', value: carTrial.quality },
+          { label: 'BUYER', value: `${initialCarRound.buyerScore >= 0 ? '+' : ''}${initialCarRound.buyerScore}` },
+          { label: 'SELLER', value: `${initialCarRound.sellerScore >= 0 ? '+' : ''}${initialCarRound.sellerScore}` },
+        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 2.28)
       : null;
     const pricePanel = scenarioId === 'lemons'
       ? makePricePlate(carTrial.price)
       : null;
-    const physiologyPanel = scenarioId === 'lemons'
-      ? makeInfoPanel('SELLER PHYSIOLOGY · DEMO', [
-          { label: 'HEART RATE', value: `${carTrial.hrBpm} BPM` },
-          { label: 'EXCITEMENT', value: `${carTrial.excitement} / 100` },
-          { label: 'CHANGE FROM BASELINE', value: `+${carTrial.deltaHr} BPM` },
-        ], '#ff5369', 2.12)
+    const displayedCarBpm = cueSource === 'replay' ? carTrial.replayBpm : carTrial.hrBpm;
+    const displayedActivation = cueSource === 'replay' ? carTrial.replayActivation : carTrial.activation;
+    const displayedDeltaHr = cueSource === 'replay' ? carTrial.replayDeltaHr : carTrial.deltaHr;
+    const physiologyPanel = scenarioId === 'lemons' && cueSource !== 'hidden'
+      ? makeInfoPanel(cueSource === 'replay' ? 'MATCHED REPLAY · CONTROL' : 'LIVE SELLER CARDIAC', [
+          { label: 'HEART RATE', value: `${displayedCarBpm} BPM` },
+          { label: 'ACTIVATION INDEX', value: `${displayedActivation} / 100` },
+          { label: 'CHANGE FROM BASELINE', value: `${displayedDeltaHr >= 0 ? '+' : ''}${displayedDeltaHr} BPM` },
+        ], '#ff5369', 2.28)
       : null;
     const lemonButtons = [sellerBuy, sellerPass, buyerBuy, buyerPass].filter((item): item is THREE.Group => Boolean(item));
     lemonButtons.forEach((button) => {
       button.scale.setScalar(0.001);
       scene.add(button);
     });
-    // The oblique camera requires a slight diagonal offset so both paired controls remain visible.
-    sellerBuy?.position.set(0.5, 0.38, -1.08);
-    sellerPass?.position.set(2, 0.38, -1.08);
-    buyerBuy?.position.set(-2, 0.38, 1.08);
-    buyerPass?.position.set(-0.5, 0.38, 1.08);
+    const controlX = 0.78;
+    const farControlZ = -1.12;
+    const nearControlZ = 1.12;
+    sellerBuy?.position.set(-controlX, 0.4, farControlZ);
+    sellerPass?.position.set(controlX, 0.4, farControlZ);
+    buyerBuy?.position.set(controlX, 0.4, nearControlZ);
+    buyerPass?.position.set(-controlX, 0.4, nearControlZ);
+    [sellerBuy, sellerPass].forEach((button) => { if (button) button.rotation.y = Math.PI; });
     if (sellerCondition) {
-      sellerCondition.position.set(-1.45, 1.4, -1.05);
+      sellerCondition.position.set(2.0, 1.3, -0.94);
       sellerCondition.scale.setScalar(0.001);
       scene.add(sellerCondition);
     }
     if (conditionReveal) {
-      conditionReveal.position.set(-0.7, 0.76, -1.25);
+      conditionReveal.position.set(1.42, 1.42, -1.02);
       conditionReveal.scale.setScalar(0.001);
       scene.add(conditionReveal);
     }
     if (pricePanel) {
-      pricePanel.position.set(1.15, 0.84, 0.55);
+      pricePanel.position.set(1.5, 1.0, 0.52);
       pricePanel.scale.setScalar(0.001);
       scene.add(pricePanel);
     }
     if (physiologyPanel) {
-      physiologyPanel.position.set(-1.55, 1.45, -1.1);
+      physiologyPanel.position.set(2.0, 1.3, -0.94);
       physiologyPanel.scale.setScalar(0.001);
       scene.add(physiologyPanel);
     }
 
     const numberTrial = getNumberTrial(trial);
-    const falseSignal = numberTrial.correct === 'A' ? 'B' : 'A';
-    const exactPanel = scenarioId === 'numbers' ? makeCard(`EXACT\n${numberTrial.target}`) : null;
-    const rangePanel = scenarioId === 'numbers' ? makeCard(`RANGE\n${numberTrial.coarse}`) : null;
-    const weakInitial = trial % 2 === 0 ? 'B' : 'A';
+    const initialNumberRound = getNumberRoundState(trial, incentive);
+    const exactPanel = scenarioId === 'numbers' ? makeInfoPanel('PRIVATE · STRONG ONLY', [{ label: 'EXACT TARGET', value: `${numberTrial.target}` }], '#66dcd0', 1.75) : null;
+    const rangePanel = scenarioId === 'numbers' ? makeInfoPanel('PRIVATE · WEAK ONLY', [{ label: 'TARGET RANGE', value: numberTrial.coarse }], '#d6bb78', 1.75) : null;
     const strongA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
-    const strongB = scenarioId === 'numbers' ? makeActionButton('B', '#b55b68') : null;
+    const strongB = scenarioId === 'numbers' ? makeActionButton('B', '#8d7444') : null;
     const weakA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
-    const weakB = scenarioId === 'numbers' ? makeActionButton('B', '#b55b68') : null;
-    const targetReveal = scenarioId === 'numbers' ? makeStatusPlate(`TARGET ${numberTrial.target}`, '#66dcd0') : null;
+    const weakB = scenarioId === 'numbers' ? makeActionButton('B', '#8d7444') : null;
+    const numberOutcome = initialNumberRound.deceptionSucceeded ? 'BLUFF SUCCEEDED' : initialNumberRound.deceptionResisted ? 'BLUFF RESISTED' : initialNumberRound.strategicTruth ? 'STRATEGIC TRUTH' : 'BOTH ACCURATE';
+    const targetReveal = scenarioId === 'numbers' ? makeInfoPanel('ROUND RESULT', [
+      { label: 'TARGET', value: `${numberTrial.target}` },
+      { label: 'CORRECT', value: numberTrial.correct },
+      { label: 'OUTCOME', value: numberOutcome },
+    ], '#66dcd0', 2.32) : null;
     const numberProps = [
       exactPanel, rangePanel, strongA, strongB, weakA, weakB, targetReveal,
     ].filter((item): item is THREE.Group => Boolean(item));
@@ -585,13 +589,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       scene.add(card);
     });
 
-    exactPanel?.position.set(1.05, 0.42, -1.1);
-    rangePanel?.position.set(-1.05, 0.42, 1.1);
-    strongA?.position.set(0.5, 0.42, -1.08);
-    strongB?.position.set(2, 0.42, -1.08);
-    weakA?.position.set(-2, 0.42, 1.08);
-    weakB?.position.set(-0.5, 0.42, 1.08);
-    targetReveal?.position.set(-0.7, 0.76, -1.25);
+    exactPanel?.position.set(1.42, 1.42, -1.02);
+    rangePanel?.position.set(-1.42, 1.42, 1.02);
+    strongA?.position.set(-controlX, 0.42, farControlZ);
+    strongB?.position.set(controlX, 0.42, farControlZ);
+    weakA?.position.set(controlX, 0.42, nearControlZ);
+    weakB?.position.set(-controlX, 0.42, nearControlZ);
+    [strongA, strongB].forEach((button) => { if (button) button.rotation.y = Math.PI; });
+    targetReveal?.position.set(1.42, 1.42, -1.02);
 
     const optionCards = scenarioId === 'numbers'
       ? [`A\n${numberTrial.a}`, `B\n${numberTrial.b}`].map((label, index) => {
@@ -609,6 +614,11 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       const height = Math.max(1, Math.round(rect.height));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
+      const narrowness = Math.max(0, 1.12 - camera.aspect);
+      const distanceScale = 1 + narrowness * 0.52;
+      cameraBaseX = 7.4 * distanceScale;
+      camera.position.set(cameraBaseX, 5.8 * distanceScale, 8.3 * distanceScale);
+      camera.fov = camera.aspect < 1 ? 39 : 35;
       camera.updateProjectionMatrix();
     };
     const observer = new ResizeObserver(resize);
@@ -616,6 +626,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     resize();
 
     const clock = new THREE.Clock();
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const neutralPaint = new THREE.Color('#9ba8a4');
     const goodPaint = new THREE.Color('#3a8e78');
     const badPaint = new THREE.Color('#a83e4d');
@@ -623,16 +634,19 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     renderer.setAnimationLoop(() => {
       const elapsed = clock.getElapsedTime();
       const state = stateRef.current;
-      const cueVisible = isCueActive(state.phase, state.cueWindow);
-      const beatRate = scenarioId === 'lemons' && carTrial.quality === 'LEMON' && state.incentive === 'compete' ? 11.8 : 6.8;
+      const cueVisible = isCueActive(state.phase, state.cueWindow, state.cueSource);
+      const cueBpm = scenarioId === 'lemons'
+        ? (state.cueSource === 'replay' ? carTrial.replayBpm : carTrial.hrBpm)
+        : (state.cueSource === 'replay' ? numberTrial.replayBpm : numberTrial.hrBpm);
+      const beatRate = (cueBpm / 60) * Math.PI * 2;
       const beat = Math.max(
-        Math.pow(Math.max(0, Math.sin(elapsed * beatRate)), 18),
-        Math.pow(Math.max(0, Math.sin(elapsed * beatRate - 0.48)), 20) * 0.66,
+        Math.pow(Math.max(0, Math.sin(elapsed * beatRate)), reducedMotion ? 1 : 18),
+        Math.pow(Math.max(0, Math.sin(elapsed * beatRate - 0.48)), reducedMotion ? 1 : 20) * 0.66,
       );
       const cardiacPhaseActive = scenarioId === 'lemons' && cueVisible && (state.phase === 3 || state.phase === 4);
       const tablePulse = cardiacPhaseActive ? 0.08 + beat * 1.16 : 0;
       tableMaterial.emissiveIntensity += (tablePulse - tableMaterial.emissiveIntensity) * 0.28;
-      red.intensity += (((cardiacPhaseActive ? 1.2 + beat * 12 : 0.8)) - red.intensity) * 0.2;
+      red.intensity += (((cardiacPhaseActive ? 1.2 + beat * 12 : 0)) - red.intensity) * 0.2;
 
       if (sellerHeart) {
         sellerHeart.visible = cardiacPhaseActive || sellerHeart.scale.x > 0.01;
@@ -646,12 +660,12 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       if (scenarioId === 'lemons' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
         animateScale(toyCar, true, 0.83, 0.1);
         if (pricePanel) animateScale(pricePanel, true, 1, 0.14);
-        if (sellerCondition) animateScale(sellerCondition, state.phase === 1, 1, 0.14);
+        if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, 1, 0.14);
         if (physiologyPanel) {
-          const physiologyVisible = state.phase === 4 || state.phase === 5;
+          const physiologyVisible = cueVisible && (state.phase === 3 || state.phase === 4);
           animateScale(physiologyPanel, physiologyVisible, 1, 0.14);
         }
-        toyCar.rotation.y = -0.34 + Math.sin(elapsed * 0.35) * 0.025;
+        toyCar.rotation.y = -0.34 + (reducedMotion ? 0 : Math.sin(elapsed * 0.35) * 0.025);
         const paint = toyCar.userData.paint as THREE.MeshStandardMaterial;
         const revealColor = carTrial.quality === 'LEMON' ? badPaint : goodPaint;
         paint.color.lerp(state.phase === 5 ? revealColor : neutralPaint, 0.08);
@@ -668,68 +682,99 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         });
         toyCar.rotation.z += (((state.phase === 5 && carTrial.quality === 'LEMON') ? -0.045 : 0) - toyCar.rotation.z) * 0.08;
 
-        const sellerChoice = state.incentive === 'cooperate' ? carTrial.correctAction : 'BUY';
-        const buyerChoice = carTrial.correctAction;
+        const carRound = getCarRoundState(trial, state.incentive);
+        const sellerChoice = carRound.sellerAction;
+        const buyerChoice = carRound.buyerAction;
         const selectedSeller = sellerChoice === 'BUY' ? sellerBuy : sellerPass;
         const selectedBuyer = buyerChoice === 'BUY' ? buyerBuy : buyerPass;
         [sellerBuy, sellerPass].forEach((button) => {
-          animateScale(button, true, 0.7);
+          animateScale(button, true, 0.82);
         });
         [buyerBuy, buyerPass].forEach((button) => {
-          animateScale(button, true, 0.7);
+          animateScale(button, true, 0.82);
         });
-        const sellerPressedY = state.phase >= 3 ? 0.35 : 0.38;
-        sellerBuy.position.y += ((selectedSeller === sellerBuy ? sellerPressedY : 0.38) - sellerBuy.position.y) * 0.14;
-        sellerPass.position.y += ((selectedSeller === sellerPass ? sellerPressedY : 0.38) - sellerPass.position.y) * 0.14;
-        buyerBuy.position.y += ((state.phase >= 4 && selectedBuyer === buyerBuy ? 0.35 : 0.38) - buyerBuy.position.y) * 0.14;
-        buyerPass.position.y += ((state.phase >= 4 && selectedBuyer === buyerPass ? 0.35 : 0.38) - buyerPass.position.y) * 0.14;
+        const sellerPressedY = state.phase >= 3 ? 0.32 : 0.4;
+        sellerBuy.position.y += ((state.phase >= 3 && selectedSeller === sellerBuy ? sellerPressedY : 0.4) - sellerBuy.position.y) * 0.14;
+        sellerPass.position.y += ((state.phase >= 3 && selectedSeller === sellerPass ? sellerPressedY : 0.4) - sellerPass.position.y) * 0.14;
+        buyerBuy.position.y += ((state.phase >= 4 && selectedBuyer === buyerBuy ? 0.32 : 0.4) - buyerBuy.position.y) * 0.14;
+        buyerPass.position.y += ((state.phase >= 4 && selectedBuyer === buyerPass ? 0.32 : 0.4) - buyerPass.position.y) * 0.14;
         [sellerBuy, sellerPass, buyerBuy, buyerPass].forEach((button) => setEdgeGlow(button, false, beat));
+        [sellerBuy, sellerPass].forEach((button) => setSelected(button, state.phase >= 3 && button === selectedSeller));
+        [buyerBuy, buyerPass].forEach((button) => setSelected(button, state.phase >= 4 && button === selectedBuyer));
         setEdgeGlow(selectedSeller, cardiacPhaseActive, beat);
         if (conditionReveal) animateScale(conditionReveal, state.phase === 5, 0.95);
       }
 
       if (scenarioId === 'numbers' && exactPanel && rangePanel && strongA && strongB && weakA && weakB && targetReveal) {
         optionCards.forEach((card) => animateScale(card, true, 0.72));
-        animateScale(exactPanel, state.phase === 1, 0.62);
-        animateScale(rangePanel, state.phase === 1, 0.62);
-        animateScale(targetReveal, state.phase === 5, 0.68);
+        animateScale(exactPanel, state.phase === 1 || state.phase === 2, 0.82);
+        animateScale(rangePanel, state.phase === 1 || state.phase === 2, 0.82);
+        animateScale(targetReveal, state.phase === 5, 0.82);
         const initialStrong = numberTrial.correct === 'A' ? strongA : strongB;
-        const initialWeak = weakInitial === 'A' ? weakA : weakB;
-        const recommendedValue = state.incentive === 'cooperate' ? numberTrial.correct : falseSignal;
+        const initialWeak = numberTrial.weakInitial === 'A' ? weakA : weakB;
+        const numberRound = getNumberRoundState(trial, state.incentive);
+        const recommendedValue = numberRound.signal;
         const selectedStrong = recommendedValue === 'A' ? strongA : strongB;
-        const selectedWeak = state.incentive === 'cooperate'
-          ? (numberTrial.correct === 'A' ? weakA : weakB)
-          : (falseSignal === 'A' ? weakA : weakB);
+        const selectedWeak = numberRound.weakFinal === 'A' ? weakA : weakB;
 
         [strongA, strongB, weakA, weakB].forEach((button) => {
-          animateScale(button, state.phase >= 2, 0.68);
+          animateScale(button, state.phase >= 2, 0.82);
           setEdgeGlow(button, false, beat);
+          setSelected(button, false);
         });
         const strongPressed = state.phase === 2 ? initialStrong : selectedStrong;
         const weakPressed = state.phase === 2 ? initialWeak : selectedWeak;
         [strongA, strongB].forEach((button) => {
-          button.position.y += ((state.phase >= 2 && button === strongPressed ? 0.365 : 0.42) - button.position.y) * 0.14;
+          button.position.y += ((state.phase >= 2 && button === strongPressed ? 0.34 : 0.42) - button.position.y) * 0.14;
         });
         [weakA, weakB].forEach((button) => {
-          button.position.y += ((state.phase >= 2 && state.phase >= 4 && button === weakPressed ? 0.365 : 0.42) - button.position.y) * 0.14;
+          button.position.y += ((state.phase >= 4 && button === weakPressed ? 0.34 : 0.42) - button.position.y) * 0.14;
         });
         if (state.phase === 2) {
-          weakPressed.position.y += (0.365 - weakPressed.position.y) * 0.14;
+          weakPressed.position.y += (0.34 - weakPressed.position.y) * 0.14;
         }
+        [strongA, strongB].forEach((button) => setSelected(button, state.phase >= 2 && button === strongPressed));
+        [weakA, weakB].forEach((button) => setSelected(button, (state.phase === 2 || state.phase >= 4) && button === weakPressed));
         setEdgeGlow(selectedStrong, cueVisible && state.phase >= 3 && state.phase <= 4, beat);
       }
 
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
-      if (state.phase === 5 && state.incentive === 'compete') {
-        expressionA = 'happiness';
-        expressionB = 'sadness';
+      if (state.phase === 5) {
+        if (scenarioId === 'lemons') {
+          const result = getCarRoundState(trial, state.incentive);
+          if (result.deceptionSucceeded) {
+            expressionA = 'happiness';
+            expressionB = 'sadness';
+          } else if (result.deceptionDetected) {
+            expressionA = 'sadness';
+            expressionB = 'happiness';
+          } else if (result.car.quality === 'RELIABLE' && result.buyerAction === 'BUY') {
+            expressionA = 'happiness';
+            expressionB = 'happiness';
+          } else {
+            expressionA = 'neutral';
+            expressionB = 'happiness';
+          }
+        } else {
+          const result = getNumberRoundState(trial, state.incentive);
+          if (result.deceptionSucceeded) {
+            expressionA = 'happiness';
+            expressionB = 'sadness';
+          } else if (result.deceptionResisted) {
+            expressionA = 'sadness';
+            expressionB = 'happiness';
+          } else {
+            expressionA = state.incentive === 'cooperate' ? 'happiness' : 'neutral';
+            expressionB = 'happiness';
+          }
+        }
       }
-      updateAvatarFace(avatarA, expressionA, elapsed);
-      updateAvatarFace(avatarB, expressionB, elapsed);
-      avatarA.root.position.y = Math.sin(elapsed * 1.15) * 0.012;
-      avatarB.root.position.y = Math.sin(elapsed * 1.15 + 1.2) * 0.012;
-      camera.position.x = 7.4 + Math.sin(elapsed * 0.16) * 0.08;
+      updateAvatarFace(avatarA, expressionA, reducedMotion ? elapsed + 2 : elapsed);
+      updateAvatarFace(avatarB, expressionB, reducedMotion ? elapsed + 2 : elapsed);
+      avatarA.root.position.y = reducedMotion ? 0 : Math.sin(elapsed * 1.15) * 0.012;
+      avatarB.root.position.y = reducedMotion ? 0 : Math.sin(elapsed * 1.15 + 1.2) * 0.012;
+      camera.position.x = cameraBaseX + (reducedMotion ? 0 : Math.sin(elapsed * 0.16) * 0.08);
       camera.lookAt(0, 0.72, 0);
       scene.updateMatrixWorld(true);
       camera.updateMatrixWorld(true);
@@ -766,7 +811,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       });
       renderer.dispose();
     };
-  }, [scenarioId, trial]);
+  }, [scenarioId, trial, incentive, cueSource]);
 
   return <canvas ref={canvasRef} className="three-table-canvas" aria-hidden="true" />;
 }
