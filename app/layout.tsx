@@ -8,13 +8,13 @@ export const metadata: Metadata = {
     'Interactive participant-facing previews of two mixed-reality social decision games using visible cardiac-state cues.',
   openGraph: {
     title: 'Cardiac Signals Lab',
-    description: 'Two mixed-reality social decision games with visible cardiac-state cues: Market for Lemons and the Number-Card Game.',
+    description: 'Two mixed-reality social decision games with visible cardiac-state cues: the Used Car Salesman Game and the Number-Card Game.',
     images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Cardiac Signals Lab',
-    description: 'Two mixed-reality social decision games with visible cardiac-state cues: Market for Lemons and the Number-Card Game.',
+    description: 'Two mixed-reality social decision games with visible cardiac-state cues: the Used Car Salesman Game and the Number-Card Game.',
     images: ['https://georgefejer91.github.io/cardiac-signals-lab-demo/og.png'],
   },
 };

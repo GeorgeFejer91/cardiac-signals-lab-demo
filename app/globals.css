@@ -1281,8 +1281,6 @@ output { font-variant-numeric: tabular-nums; }
 .game-choice-widget i:first-child { left: 8px; top: 7px; transform: rotate(-8deg); }
 .game-choice-widget i:last-child { right: 8px; top: 7px; transform: rotate(8deg); }
 .game-choice-widget.signal i:first-child { border-color: #ff6478; box-shadow: 0 0 8px rgba(255,63,88,.45); color: #aa2437; font-size: 12px; }
-.game-choice-widget.lemons i:first-child { border-color: #9ed8cf; color: #315f59; font-size: 6px; }
-.game-choice-widget.lemons i:last-child { border-color: #ff6478; color: #aa2437; font-size: 12px; box-shadow: 0 0 8px rgba(255,63,88,.32); }
 .game-choice-widget.truthlie i:first-child { color: #263f59; font-size: 13px; }
 .game-choice-widget.truthlie i:last-child { border-color: #ff6478; color: #aa2437; font-size: 12px; }
 .game-choice-widget.concealed i { width: 17px; height: 27px; top: 9px; font-size: 6px; }
@@ -1856,20 +1854,20 @@ body {
   display: block;
   margin: 0 5px 0 0;
   color: #a4adaf;
-  font: 650 12px Aptos, "Trebuchet MS", sans-serif;
+  font: 650 14px Aptos, "Trebuchet MS", sans-serif;
   letter-spacing: 0;
   text-transform: none;
 }
 
 .storyboard-mode-toggle button {
-  min-height: 44px;
+  min-height: 46px;
   padding: 0 14px;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 6px;
   background: transparent;
   color: #a7b0b2;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 650;
 }
 
@@ -1893,13 +1891,13 @@ body {
 
 .storyboard-select select {
   min-width: 158px;
-  min-height: 44px;
+  min-height: 46px;
   padding: 0 34px 0 11px;
   border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 6px;
   background: #11151b;
   color: #d8dedc;
-  font: 650 12px Aptos, "Trebuchet MS", sans-serif;
+  font: 650 14px Aptos, "Trebuchet MS", sans-serif;
 }
 
 .storyboard-select select:disabled {
@@ -1908,14 +1906,14 @@ body {
 }
 
 .storyboard-scene {
-  height: 580px;
+  height: 650px;
   background: #05070a;
 }
 
 .storyboard-scene .three-table-canvas {
-  top: 132px;
+  top: 124px;
   bottom: 0;
-  height: calc(100% - 132px);
+  height: calc(100% - 124px);
 }
 
 .scene-loading {
@@ -1940,7 +1938,7 @@ body {
   border-radius: 5px;
   background: rgba(9, 12, 17, .9);
   color: #eef1ed;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 750;
   letter-spacing: .025em;
   line-height: 1.25;
@@ -1996,7 +1994,7 @@ body {
 
 .storyboard-bubble .bubble-copy span {
   color: #5b6967;
-  font: 750 12px Aptos, "Trebuchet MS", sans-serif;
+  font: 750 13px Aptos, "Trebuchet MS", sans-serif;
   letter-spacing: .025em;
   text-transform: none;
 }
@@ -2005,13 +2003,13 @@ body {
 .storyboard-bubble.player-b .bubble-copy span { color: #764e62; }
 
 .storyboard-bubble .bubble-copy strong {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 750;
 }
 
-.storyboard-bubble .bubble-copy.medium strong { font-size: 18px; }
-.storyboard-bubble .bubble-copy.long strong { font-size: 16px; line-height: 1.08; }
-.storyboard-bubble .bubble-copy.xlong strong { font-size: 14px; line-height: 1.06; }
+.storyboard-bubble .bubble-copy.medium strong { font-size: 20px; }
+.storyboard-bubble .bubble-copy.long strong { font-size: 18px; line-height: 1.08; }
+.storyboard-bubble .bubble-copy.xlong strong { font-size: 16px; line-height: 1.06; }
 
 .storyboard-viewer-note,
 .cue-window-badge {
@@ -2019,13 +2017,13 @@ body {
   z-index: 7;
   bottom: 11px;
   max-width: 46%;
-  min-height: 30px;
-  padding: 7px 9px;
+  min-height: 34px;
+  padding: 8px 10px;
   border: 1px solid rgba(255, 255, 255, .14);
   border-radius: 5px;
   background: rgba(6, 9, 13, .88);
   color: #9ea8aa;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   line-height: 1.3;
   backdrop-filter: none;
@@ -2061,7 +2059,7 @@ body {
 
 .storyboard-caption span {
   color: #91cfc9;
-  font: 650 11px Aptos, "Trebuchet MS", sans-serif;
+  font: 650 12px Aptos, "Trebuchet MS", sans-serif;
   letter-spacing: 0;
   text-transform: none;
 }
@@ -2069,20 +2067,20 @@ body {
 .storyboard-caption h2 {
   color: #edf1ee;
   font-family: Aptos, "Trebuchet MS", sans-serif;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
 }
 
 .storyboard-caption p {
   color: #b1b9b8;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.55;
 }
 
 .storyboard-caption time {
   padding: 6px 8px;
   border-radius: 5px;
-  font: 650 10px Aptos, "Trebuchet MS", sans-serif;
+  font: 650 11px Aptos, "Trebuchet MS", sans-serif;
 }
 
 .storyboard-navigation {
@@ -2159,7 +2157,7 @@ body {
 
 .scenario-summary-box,
 .scenario-publications {
-  padding: 20px;
+  padding: 24px;
 }
 
 .scenario-summary-box > header,
@@ -2171,13 +2169,13 @@ body {
 .scenario-publications h2 {
   color: #e1e6e3;
   font-family: Aptos, "Trebuchet MS", sans-serif;
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 700;
 }
 
 .scenario-summary-box > p {
   color: #b6bdbb;
-  font-size: 14px;
+  font-size: 16px;
   line-height: 1.58;
 }
 
@@ -2196,20 +2194,20 @@ body {
 
 .scenario-summary-box dt {
   color: #98a2a4;
-  font: 700 11px Aptos, "Trebuchet MS", sans-serif;
+  font: 700 13px Aptos, "Trebuchet MS", sans-serif;
   letter-spacing: 0;
   text-transform: none;
 }
 
 .scenario-summary-box dd {
   color: #adb6b4;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
 .scenario-summary-box > small {
   color: #8e989a;
-  font-size: 11px;
+  font-size: 13px;
 }
 
 .scenario-publications > div {
@@ -2246,20 +2244,20 @@ body {
 
 .scenario-publications a > span {
   color: #93a09f;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
 }
 
 .scenario-publications a > strong {
   color: #d4dad7;
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.4;
 }
 
 .scenario-publications a > small {
   color: #9ca6a4;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -2280,7 +2278,7 @@ body {
     gap: 9px;
   }
 
-  .scenario-accordion-trigger > span strong { font-size: 17px; }
+  .scenario-accordion-trigger > span strong { font-size: 19px; }
 
   .storyboard-toolbar {
     grid-template-columns: 1fr;
@@ -2319,7 +2317,7 @@ body {
     top: 7px;
     max-width: 84%;
     width: max-content;
-    font-size: 10px;
+    font-size: 13px;
   }
 
   .storyboard-bubble.player-a,
@@ -2332,19 +2330,19 @@ body {
   .storyboard-bubble.player-a { right: 4px; left: auto; }
   .storyboard-bubble.player-b { right: auto; left: 4px; }
 
-  .storyboard-bubble .bubble-copy span { font-size: 11px; }
-  .storyboard-bubble .bubble-copy strong { font-size: 18px; }
-  .storyboard-bubble .bubble-copy.medium strong { font-size: 16px; }
-  .storyboard-bubble .bubble-copy.long strong { font-size: 14px; }
-  .storyboard-bubble .bubble-copy.xlong strong { font-size: 13px; }
+  .storyboard-bubble .bubble-copy span { font-size: 13px; }
+  .storyboard-bubble .bubble-copy strong { font-size: 20px; }
+  .storyboard-bubble .bubble-copy.medium strong { font-size: 18px; }
+  .storyboard-bubble .bubble-copy.long strong { font-size: 16px; }
+  .storyboard-bubble .bubble-copy.xlong strong { font-size: 16px; }
 
   .storyboard-viewer-note,
   .cue-window-badge {
     bottom: 7px;
     max-width: 47%;
-    min-height: 26px;
-    padding: 5px 7px;
-    font-size: 8px;
+    min-height: 36px;
+    padding: 7px 9px;
+    font-size: 12px;
   }
 
   .storyboard-viewer-note { left: 7px; }
@@ -2359,7 +2357,7 @@ body {
   .storyboard-caption p {
     grid-column: 1 / -1;
     grid-row: 2;
-    font-size: 12px;
+    font-size: 15px;
   }
 
   .storyboard-caption time {

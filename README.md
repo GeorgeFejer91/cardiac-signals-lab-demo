@@ -6,7 +6,7 @@ A static, browser-only GitHub Pages preview of two proposed mixed-reality dyadic
 
 The landing page contains two accordion choices:
 
-1. **Market for Lemons: Seller–Buyer Game** — a seller privately sees whether the car shown to both players is reliable or faulty, presses Recommend Buy or Recommend Pass, and the uninformed buyer presses Buy or Pass.
+1. **Used Car Salesman Game** — a seller privately sees whether the car shown to both players is good or bad, presses Recommend Buy or Recommend Pass, and the uninformed buyer presses Buy or Pass.
 2. **Asymmetric-Information Number-Card Game** — two players judge which number card is closer to a target, but one receives exact evidence and the other receives an ambiguous range.
 
 ## Storyboard interaction
@@ -27,9 +27,9 @@ Each phase shows at most one **thought bubble** containing the currently relevan
 
 The bubble silhouette is a complete SVG path with centered, length-responsive text embedded in the SVG. Each thought trail is recalculated from the cloud boundary to the projected 3D center of the corresponding avatar’s head, while reserved screen zones keep the cloud itself clear of the table actions and cardiac-status badge.
 
-The car scenario deliberately contains no tablet, negotiation, or free-form claim card. It cycles through CC0 Kenney vehicle models while visual model, reliable/faulty state, and cardiac profile vary independently. Every round shows a computer-set 20-token price and four colored physical controls: Recommend Buy/Recommend Pass for the seller and Buy/Pass for the buyer. During cardiac-access phases, the seller’s chest heart, selected recommendation edge, and tabletop pulse together; an explicitly illustrative physiology panel appears only in the selected window. The conflicting-payoff sequence includes credibility-building truth, a successful bluff, strategic honesty, and a rejected bluff. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
+The car scenario deliberately contains no tablet, negotiation, or free-form claim card. It cycles through CC0 Kenney vehicle models while visual model, good/bad condition, and cardiac profile vary independently. Every round shows a computer-set 20-token price and four colored physical controls: Recommend Buy/Recommend Pass for the seller and Buy/Pass for the buyer. During cardiac-access phases, the seller’s chest heart, selected recommendation edge, and tabletop pulse together; an explicitly illustrative physiology panel appears only in the selected window. The conflicting-payoff sequence includes credibility-building truth, a successful bluff, strategic honesty, and a rejected bluff. The number-card scenario retains its two numbered stimulus cards but represents both participants’ A/B choices with two push buttons directly in front of each avatar.
 
-The priced-car game is a **fixed-price, lemons-inspired adaptation**, not a literal reproduction of Belot and van de Ven’s task. A reliable car is worth 30 tokens and a lemon 10, while the fixed 20-token price makes buying worth +10 or −10 to the buyer. Passing is worth zero. With aligned payoffs the seller shares this result; with conflicting payoffs the seller receives a 10-token sales commission. A ten-token endowment protects participants from real losses, and only selected rounds are converted to money after the session.
+The used-car game is a **fixed-price asymmetric-information adaptation**, not a literal reproduction of Belot and van de Ven’s task. A good car is worth 30 tokens and a bad car 10, while the fixed 20-token price makes buying worth +10 or −10 to the buyer. Passing is worth zero. With aligned payoffs the seller shares this result; with conflicting payoffs the seller receives a 10-token sales commission. A ten-token endowment protects participants from real losses, and only selected rounds are converted to money after the session.
 
 ## Experimental interpretation
 
@@ -44,7 +44,6 @@ Primary behavioral outcomes include truthful and misleading recommendations, dec
 - Bahrami B, et al. [Optimally interacting minds](https://doi.org/10.1126/science.1185718). *Science*. 2010.
 - Belot M, van de Ven J. [How private is private information? The ability to spot deception in an economic game](https://doi.org/10.1007/s10683-015-9474-8). *Experimental Economics*. 2017.
 - Eriksson K, Simpson B. [Deception and price in a market with asymmetric information](https://doi.org/10.1017/S1930297500000243). *Judgment and Decision Making*. 2007.
-- Akerlof GA. [The Market for “Lemons”: Quality Uncertainty and the Market Mechanism](https://doi.org/10.2307/1879431). *Quarterly Journal of Economics*. 1970.
 - Kenney. [Car Kit 3.1](https://kenney.nl/assets/car-kit). CC0 1.0 Universal.
 
 ## Local development

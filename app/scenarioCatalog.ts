@@ -1,4 +1,4 @@
-export type ScenarioId = 'lemons' | 'numbers';
+export type ScenarioId = 'cars' | 'numbers';
 export type IncentiveMode = 'cooperate' | 'compete';
 export type CueWindow = 'signal' | 'decision' | 'both';
 export type CueSource = 'live' | 'replay' | 'hidden';
@@ -50,19 +50,19 @@ export type ScenarioDefinition = {
 
 export const scenarios: ScenarioDefinition[] = [
   {
-    id: 'lemons',
-    title: 'Market for Lemons: Seller–Buyer Game',
-    shortTitle: 'Seller–Buyer Game',
+    id: 'cars',
+    title: 'Used Car Salesman Game',
+    shortTitle: 'Used Car Salesman Game',
     roleA: 'Seller',
     roleB: 'Buyer',
-    summary: 'A seller privately learns whether a virtual car is reliable or a lemon. The buyer sees the same car and its computer-set price, but not its condition, and must choose Buy or Pass.',
+    summary: 'A used-car seller privately learns whether a virtual car is good or bad. The buyer sees the same car and its computer-set price, but not its condition, and must choose Buy or Pass.',
     logic: 'The seller presses Recommend Buy or Recommend Pass. The buyer combines that standardized recommendation with the seller’s cardiac cue when it is visible.',
     measures: 'truthful and misleading recommendations, purchase accuracy, cue weighting, decision latency, payoff, learning across trials, and dyadic cardiac coupling.',
-    cooperate: 'Both players share the buyer’s market outcome: gain from buying a reliable car, lose from buying a lemon, and receive zero from passing.',
-    compete: 'The seller benefits from a sale, including the sale of a lemon; the buyer benefits only from buying a reliable car or rejecting a lemon.',
+    cooperate: 'Both players share the buyer’s market outcome: gain from buying a good car, lose from buying a bad car, and receive zero from passing.',
+    compete: 'The seller benefits from any sale, including the sale of a bad car; the buyer benefits only from buying a good car or rejecting a bad car.',
     cueNote: 'During the selected cue window, a heart pinned to the seller and the tabletop pulse with either the live beat or a matched replay; a hidden control shows neither. A compact panel can show heart rate, change from baseline, and an illustrative cardiac-activation index. None is labelled as truth, confidence, or deception.',
-    implementation: 'Both headsets render the same priced car and the same four fixed controls. The price stays fixed at 20 tokens, while vehicle model, reliable/lemon status, and cardiac profile vary independently across trials. There is no tablet, bargaining, conversation, or free text: the seller presses Recommend Buy/Recommend Pass and the buyer presses Buy/Pass.',
-    stakes: 'The computer fixes the price at 20 tokens; neither player negotiates it. A reliable car is worth 30 and a lemon 10, so buying yields the buyer +10 or −10 and passing yields 0. With aligned payoffs the seller shares that outcome; with conflicting payoffs the seller instead earns a 10-token commission for any sale. A 10-token trial endowment prevents real losses, and selected trials are converted to money after the session.',
+    implementation: 'Both headsets render the same priced car and the same four fixed controls. The price stays fixed at 20 tokens, while vehicle model, good/bad condition, and cardiac profile vary independently across trials. There is no tablet, bargaining, conversation, or free text: the seller presses Recommend Buy/Recommend Pass and the buyer presses Buy/Pass.',
+    stakes: 'The computer fixes the price at 20 tokens; neither player negotiates it. A good car is worth 30 and a bad car 10, so buying yields the buyer +10 or −10 and passing yields 0. With aligned payoffs the seller shares that outcome; with conflicting payoffs the seller instead earns a 10-token commission for any sale. A 10-token trial endowment prevents real losses, and selected trials are converted to money after the session.',
     publications: [
       {
         authors: 'Belot & van de Ven',
@@ -71,14 +71,6 @@ export const scenarios: ScenarioDefinition[] = [
         venue: 'Experimental Economics',
         href: 'https://doi.org/10.1007/s10683-015-9474-8',
         relevance: 'Experimental seller–buyer deception game with a privately observed state and conflicting incentives.',
-      },
-      {
-        authors: 'Akerlof',
-        year: 1970,
-        title: 'The Market for “Lemons”: Quality Uncertainty and the Market Mechanism',
-        venue: 'Quarterly Journal of Economics',
-        href: 'https://doi.org/10.2307/1879431',
-        relevance: 'Foundational model of quality uncertainty between used-car sellers and buyers.',
       },
       {
         authors: 'Eriksson & Simpson',
@@ -152,12 +144,12 @@ export function getNumberTrial(trial: number) {
 }
 
 const carTrials = [
-  { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'LEMON', evidence: '82,000 MILES · MAJOR FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 78, activation: 37, deltaHr: 3, replayBpm: 112, replayActivation: 84, replayDeltaHr: 24 },
-  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'RELIABLE', evidence: '31,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 104, activation: 76, deltaHr: 18, replayBpm: 78, replayActivation: 34, replayDeltaHr: 3 },
-  { model: 'sedan.glb', description: 'older sedan', quality: 'LEMON', evidence: '96,000 MILES · ENGINE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'PASS' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 110, activation: 82, deltaHr: 22, replayBpm: 82, replayActivation: 41, replayDeltaHr: 6 },
-  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'LEMON', evidence: '88,000 MILES · BRAKE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 92, activation: 58, deltaHr: 11, replayBpm: 76, replayActivation: 31, replayDeltaHr: 2 },
-  { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'RELIABLE', evidence: '42,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 88, activation: 52, deltaHr: 9, replayBpm: 72, replayActivation: 25, replayDeltaHr: -1 },
-  { model: 'suv-luxury.glb', description: 'luxury SUV', quality: 'RELIABLE', evidence: '38,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 74, activation: 29, deltaHr: 1, replayBpm: 103, replayActivation: 71, replayDeltaHr: 17 },
+  { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'BAD', evidence: '82,000 MILES · MAJOR FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 78, activation: 37, deltaHr: 3, replayBpm: 112, replayActivation: 84, replayDeltaHr: 24 },
+  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'GOOD', evidence: '31,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 104, activation: 76, deltaHr: 18, replayBpm: 78, replayActivation: 34, replayDeltaHr: 3 },
+  { model: 'sedan.glb', description: 'older sedan', quality: 'BAD', evidence: '96,000 MILES · ENGINE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'PASS' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 110, activation: 82, deltaHr: 22, replayBpm: 82, replayActivation: 41, replayDeltaHr: 6 },
+  { model: 'sedan-sports.glb', description: 'sport sedan', quality: 'BAD', evidence: '88,000 MILES · BRAKE FAULT', correctAction: 'PASS' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'PASS' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 92, activation: 58, deltaHr: 11, replayBpm: 76, replayActivation: 31, replayDeltaHr: 2 },
+  { model: 'hatchback-sports.glb', description: 'used hatchback', quality: 'GOOD', evidence: '42,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 88, activation: 52, deltaHr: 9, replayBpm: 72, replayActivation: 25, replayDeltaHr: -1 },
+  { model: 'suv-luxury.glb', description: 'luxury SUV', quality: 'GOOD', evidence: '38,000 MILES · INSPECTED', correctAction: 'BUY' as CarAction, conflictingRecommendation: 'BUY' as CarAction, conflictingBuyerAction: 'BUY' as CarAction, price: '20 TOKENS', pricePoints: 20, hrBpm: 74, activation: 29, deltaHr: 1, replayBpm: 103, replayActivation: 71, replayDeltaHr: 17 },
 ] as const;
 
 export function getCarTrial(trial: number) {
@@ -169,10 +161,10 @@ export function getCarRoundState(trial: number, incentive: IncentiveMode) {
   const sellerAction = incentive === 'cooperate' ? car.correctAction : car.conflictingRecommendation;
   const buyerAction = incentive === 'cooperate' ? car.correctAction : car.conflictingBuyerAction;
   const deceptiveRecommendation = sellerAction !== car.correctAction;
-  const deceptionSucceeded = deceptiveRecommendation && buyerAction === 'BUY' && car.quality === 'LEMON';
+  const deceptionSucceeded = deceptiveRecommendation && buyerAction === 'BUY' && car.quality === 'BAD';
   const deceptionDetected = deceptiveRecommendation && buyerAction === 'PASS';
-  const strategicHonesty = incentive === 'compete' && car.quality === 'LEMON' && sellerAction === 'PASS';
-  const buyerScore = buyerAction === 'BUY' ? (car.quality === 'RELIABLE' ? 30 : 10) - car.pricePoints : 0;
+  const strategicHonesty = incentive === 'compete' && car.quality === 'BAD' && sellerAction === 'PASS';
+  const buyerScore = buyerAction === 'BUY' ? (car.quality === 'GOOD' ? 30 : 10) - car.pricePoints : 0;
   const sellerScore = incentive === 'cooperate' ? buyerScore : buyerAction === 'BUY' ? 10 : 0;
   return {
     car,
@@ -206,20 +198,20 @@ export function getStoryboardFrame(
   cueWindow: CueWindow = 'both',
   cueSource: CueSource = 'live',
 ): StoryboardFrame {
-  if (scenarioId === 'lemons') {
+  if (scenarioId === 'cars') {
     const round = getCarRoundState(trial, incentive);
     const { car, sellerAction, buyerAction, buyerScore, sellerScore } = round;
-    const condition = car.quality === 'LEMON' ? 'BAD CAR' : 'GOOD CAR';
+    const condition = car.quality === 'BAD' ? 'BAD CAR' : 'GOOD CAR';
     const cueVisibleAtRecommendation = isCueActive(3, cueWindow, cueSource);
     const cueVisibleAtDecision = isCueActive(4, cueWindow, cueSource);
-    const sellerPrivateThought = car.quality === 'LEMON'
+    const sellerPrivateThought = car.quality === 'BAD'
       ? 'The inspection found a serious fault.'
       : 'This car passed inspection.';
     const sellerRecommendationThought = round.deceptiveRecommendation
       ? `It is faulty, but a sale pays me. I’ll recommend ${sellerAction}.`
       : round.strategicHonesty
         ? 'A sale would pay me, but I’ll recommend PASS.'
-      : car.quality === 'LEMON'
+      : car.quality === 'BAD'
         ? 'It is a bad car. I should recommend PASS.'
         : 'It is reliable. I can recommend BUY honestly.';
     const displayedBpm = cueSource === 'replay' ? car.replayBpm : car.hrBpm;
@@ -241,12 +233,12 @@ export function getStoryboardFrame(
         ? 'Without a cardiac cue, I will press BUY.'
         : 'Without a cardiac cue, I will press PASS.';
     const resultLabel = round.deceptionSucceeded
-      ? 'LEMON · BLUFF SUCCEEDED'
+      ? 'BAD CAR · BLUFF SUCCEEDED'
       : round.deceptionDetected
-        ? 'LEMON · BLUFF REJECTED'
+        ? 'BAD CAR · BLUFF REJECTED'
         : round.strategicHonesty
-          ? 'LEMON · HONEST RECOMMENDATION'
-          : `${car.quality} · ACCURATE CHOICE`;
+          ? 'BAD CAR · HONEST RECOMMENDATION'
+          : `${condition} · ACCURATE CHOICE`;
     const frames: StoryboardFrame[] = [
       {
         title: 'A priced car enters the shared scene',
@@ -258,37 +250,37 @@ export function getStoryboardFrame(
       {
         title: 'Only the seller learns the condition',
         timing: '4 seconds',
-        sceneLabel: `PRIVATE TO SELLER: ${condition}`,
+        sceneLabel: `PRIVATE TO SELLER: ${condition} · PRICE ${car.price}`,
         explanation: `The seller’s private headset layer identifies a ${condition.toLowerCase()}. The buyer still sees only the car and ${car.price.toLowerCase()}, so the hidden quality state is known to the seller alone.`,
         bubbleA: { kind: 'thought', label: 'SELLER', text: sellerPrivateThought },
       },
       {
         title: round.deceptiveRecommendation ? 'The seller prepares a deceptive recommendation' : round.strategicHonesty ? 'The seller resists the incentive to sell' : 'The seller prepares an honest recommendation',
         timing: 'Up to 8 seconds',
-        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : 'DISCLOSE'}`,
+        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : 'DISCLOSE'} · PRICE ${car.price}`,
         explanation: `The seller can press only Recommend Buy or Recommend Pass. With ${incentive === 'cooperate' ? 'aligned payoffs, an accurate recommendation benefits both players' : 'conflicting payoffs, any sale earns the seller 10 tokens regardless of condition'}.`,
         bubbleA: { kind: 'thought', label: 'SELLER', text: sellerRecommendationThought },
       },
       {
         title: round.deceptiveRecommendation ? `Deception attempt: Recommend ${sellerAction}` : `Public recommendation: ${sellerAction}`,
         timing: 'Up to 8 seconds',
-        sceneLabel: `PUBLIC: SELLER RECOMMENDS ${sellerAction}`,
+        sceneLabel: `PUBLIC: SELLER RECOMMENDS ${sellerAction} · PRICE ${car.price}`,
         explanation: `The seller presses Recommend ${sellerAction}. When the cardiac condition is active here, the selected edge, seller’s chest heart, and tabletop flash to the same ${cueSource === 'replay' ? 'matched replay' : 'live'} beat; no verbal message is available.`,
         bubbleB: { kind: 'thought', label: 'BUYER', text: buyerCueThought },
       },
       {
         title: 'The buyer chooses Buy or Pass',
         timing: 'Up to 10 seconds',
-        sceneLabel: `BUYER CHOOSES ${buyerAction}`,
+        sceneLabel: `BUYER CHOOSES ${buyerAction} · PRICE ${car.price}`,
         explanation: `The buyer sees the ${car.price.toLowerCase()}, Recommend ${sellerAction}${cueVisibleAtDecision ? `, and the ${cueSource === 'replay' ? 'replayed control' : 'live'} cardiac display` : ''}. The buyer presses ${buyerAction}; this scripted preview illustrates one possible response, while the experiment measures how often choices change across cue conditions.`,
         bubbleB: { kind: 'thought', label: 'BUYER', text: buyerDecisionThought },
       },
       {
         title: round.deceptionSucceeded ? 'The bluff succeeds' : round.deceptionDetected ? 'The buyer rejects the bluff' : round.strategicHonesty ? 'The seller gives an honest warning' : 'The recommendation leads to an accurate choice',
         timing: '2 seconds',
-        sceneLabel: resultLabel,
+        sceneLabel: `${resultLabel} · PRICE ${car.price}`,
         explanation: `The hidden condition is revealed. This round pays Buyer ${buyerScore >= 0 ? '+' : ''}${buyerScore} and Seller ${sellerScore >= 0 ? '+' : ''}${sellerScore} tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.`,
-        bubbleB: { kind: 'thought', label: 'BUYER', text: round.deceptionSucceeded ? 'I bought a faulty car. The bluff worked.' : round.deceptionDetected ? 'I rejected the faulty car.' : car.quality === 'LEMON' ? 'The seller disclosed the fault.' : 'The reliable car produced a gain.' },
+        bubbleB: { kind: 'thought', label: 'BUYER', text: round.deceptionSucceeded ? 'I bought a bad car. The bluff worked.' : round.deceptionDetected ? 'I rejected the bad car.' : car.quality === 'BAD' ? 'The seller disclosed the fault.' : 'The good car produced a gain.' },
       },
     ];
     return frames[phase % frames.length];

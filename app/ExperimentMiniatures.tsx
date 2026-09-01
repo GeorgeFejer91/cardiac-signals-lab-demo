@@ -22,7 +22,7 @@ const PHASE_COUNT = 6;
 const AUTO_ADVANCE_MS = 6500;
 
 function GameWidget({ id }: { id: ScenarioId }) {
-  if (id === 'lemons') {
+  if (id === 'cars') {
     return <span className="game-choice-widget car" aria-hidden="true"><i /><b>?</b></span>;
   }
   return <span className="game-choice-widget numbers" aria-hidden="true"><i>A<br />31</i><i>B<br />47</i></span>;

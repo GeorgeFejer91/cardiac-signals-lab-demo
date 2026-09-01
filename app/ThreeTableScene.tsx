@@ -89,11 +89,11 @@ function makeCard(label: string) {
   group.add(body);
   const face = new THREE.Mesh(
     new THREE.PlaneGeometry(0.87, 1.27),
-    new THREE.MeshStandardMaterial({
+    new THREE.MeshBasicMaterial({
       map: makeLabelTexture(label, 320, 448, {
-        background: '#f1eee7', border: '#252a31', foreground: '#1d2228', fontSize: 46,
+        background: '#f1eee7', border: '#252a31', foreground: '#1d2228', fontSize: 96,
       }),
-      roughness: 0.76,
+      toneMapped: false,
     }),
   );
   face.rotation.x = -Math.PI / 2;
@@ -109,26 +109,38 @@ function makeActionButton(label: string, accent: string) {
   const glowMaterial = new THREE.MeshStandardMaterial({
     color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0, transparent: true, opacity: 0,
   });
-  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.86, 0.145, 0.84), glowMaterial);
+  const glow = new THREE.Group();
+  const horizontalEdge = new THREE.BoxGeometry(1.98, 0.035, 0.065);
+  const verticalEdge = new THREE.BoxGeometry(0.065, 0.035, 0.82);
+  [-0.42, 0.42].forEach((z) => {
+    const edge = new THREE.Mesh(horizontalEdge, glowMaterial);
+    edge.position.set(0, 0.086, z);
+    glow.add(edge);
+  });
+  [-0.96, 0.96].forEach((x) => {
+    const edge = new THREE.Mesh(verticalEdge, glowMaterial);
+    edge.position.set(x, 0.086, 0);
+    glow.add(edge);
+  });
   group.add(glow);
   const bodyMaterial = new THREE.MeshStandardMaterial({ color: accent, emissive: accent, emissiveIntensity: 0.12, roughness: 0.46, metalness: 0.12 });
   const body = new THREE.Mesh(
-    new THREE.BoxGeometry(1.64, 0.12, 0.62),
+    new THREE.BoxGeometry(1.78, 0.13, 0.68),
     bodyMaterial,
   );
   body.position.y = 0.005;
   group.add(body);
   const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(1.53, 0.51),
-    new THREE.MeshStandardMaterial({
-      map: makeLabelTexture(label, 540, 190, {
-        background: accent, border: '#f6f2e9', foreground: '#ffffff', fontSize: label.includes('\n') ? 52 : 62,
+    new THREE.PlaneGeometry(1.68, 0.57),
+    new THREE.MeshBasicMaterial({
+      map: makeLabelTexture(label, 640, 220, {
+        background: accent, border: '#f6f2e9', foreground: '#ffffff', fontSize: label.includes('\n') ? 90 : 104,
       }),
-      roughness: 0.72,
+      toneMapped: false,
     }),
   );
   face.rotation.x = -Math.PI / 2;
-  face.position.y = 0.069;
+  face.position.y = 0.076;
   group.add(face);
   const selectionMarker = new THREE.Mesh(
     new THREE.BoxGeometry(0.55, 0.035, 0.045),
@@ -174,9 +186,10 @@ function makeInfoPanel(
 ) {
   const canvas = document.createElement('canvas');
   canvas.width = 640;
-  canvas.height = rows.length === 1 ? 220 : 390;
+  canvas.height = rows.length === 1 ? 220 : 330;
   const context = canvas.getContext('2d');
   if (context) {
+    const singleRow = rows.length === 1;
     context.clearRect(0, 0, canvas.width, canvas.height);
     drawRoundedRect(context, 12, 12, canvas.width - 24, canvas.height - 24, 18);
     context.fillStyle = 'rgba(10, 16, 20, 0.94)';
@@ -187,7 +200,7 @@ function makeInfoPanel(
     context.textAlign = 'left';
     context.textBaseline = 'middle';
     context.fillStyle = accent;
-    context.font = '800 32px Aptos, sans-serif';
+    context.font = `800 ${singleRow ? 46 : 40}px Aptos, sans-serif`;
     context.fillText(title, 48, 54);
     const rowHeight = (canvas.height - 98) / rows.length;
     rows.forEach((row, index) => {
@@ -201,12 +214,12 @@ function makeInfoPanel(
         context.stroke();
       }
       context.fillStyle = '#91a09f';
-      context.font = '700 26px Aptos, sans-serif';
-      context.fillText(row.label, 48, rowY + rowHeight / 2);
+      context.font = `700 ${singleRow ? 44 : 34}px Aptos, sans-serif`;
+      context.fillText(row.label, 48, rowY + rowHeight * (singleRow ? 0.32 : 0.5));
       context.textAlign = 'right';
       context.fillStyle = '#f6f4ed';
-      context.font = '800 38px Aptos, sans-serif';
-      context.fillText(row.value, canvas.width - 48, rowY + rowHeight / 2);
+      context.font = `800 ${singleRow ? 66 : 46}px Aptos, sans-serif`;
+      context.fillText(row.value, canvas.width - 48, rowY + rowHeight * (singleRow ? 0.7 : 0.5));
       context.textAlign = 'left';
     });
   }
@@ -251,7 +264,7 @@ function makeHeartSprite() {
 }
 
 function makePricePlate(label: string) {
-  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED', value: label }], '#e3b66b', 1.45);
+  return makeInfoPanel('CAR PRICE', [{ label: 'FIXED PRICE', value: label }], '#e3b66b', 3);
 }
 
 function makeToyCar() {
@@ -410,7 +423,7 @@ function updateAvatarFace(avatar: MinimalAvatar, emotion: FaceEmotion, elapsed: 
 }
 
 function setEdgeGlow(object: THREE.Group, visible: boolean, beat: number) {
-  const glow = object.userData.glow as THREE.Mesh | undefined;
+  const glow = object.userData.glow as THREE.Object3D | undefined;
   const material = object.userData.glowMaterial as THREE.MeshStandardMaterial | undefined;
   if (!glow || !material) return;
   glow.visible = visible;
@@ -448,6 +461,8 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
     camera.position.set(7.4, 5.8, 8.3);
     let cameraBaseX = 7.4;
+    let informationScale = 1;
+    let controlScale = 1;
     camera.lookAt(0, 0.72, 0);
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -478,11 +493,11 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
 
     // Player A is the far-side role (Seller or Strong evidence); Player B is the near-side role.
     const avatarYaw = 0.72;
-    const avatarA = makeAvatar('#527b7d', -3.05, avatarYaw);
-    const avatarB = makeAvatar('#805467', 3.05, Math.PI - avatarYaw);
+    const avatarA = makeAvatar('#527b7d', -3.45, avatarYaw);
+    const avatarB = makeAvatar('#805467', 3.45, Math.PI - avatarYaw);
     scene.add(avatarA.root, avatarB.root);
 
-    const sellerHeart = scenarioId === 'lemons' ? makeHeartSprite() : null;
+    const sellerHeart = scenarioId === 'cars' ? makeHeartSprite() : null;
     if (sellerHeart) {
       sellerHeart.position.set(0, 1.04, 0.32);
       sellerHeart.scale.setScalar(0.001);
@@ -491,9 +506,9 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     }
 
     const carTrial = getCarTrial(trial);
-    const toyCar = scenarioId === 'lemons' ? makeToyCar() : null;
+    const toyCar = scenarioId === 'cars' ? makeToyCar() : null;
     if (toyCar) {
-      toyCar.position.set(0.1, 0.43, 0.02);
+      toyCar.position.set(0.85, 0.43, 0.34);
       toyCar.rotation.y = -0.34;
       toyCar.scale.setScalar(0.001);
       scene.add(toyCar);
@@ -504,83 +519,82 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     }
 
     const initialCarRound = getCarRoundState(trial, incentive);
-    const sellerBuy = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nBUY', '#4b918c') : null;
-    const sellerPass = scenarioId === 'lemons' ? makeActionButton('RECOMMEND\nPASS', '#8d7444') : null;
-    const buyerBuy = scenarioId === 'lemons' ? makeActionButton('BUY', '#4b918c') : null;
-    const buyerPass = scenarioId === 'lemons' ? makeActionButton('PASS', '#8d7444') : null;
-    const sellerCondition = scenarioId === 'lemons'
-      ? makeInfoPanel('PRIVATE · SELLER ONLY', [
-           { label: 'INSPECTION', value: carTrial.quality === 'LEMON' ? 'LEMON' : 'RELIABLE' },
-        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 2.02)
+    const sellerBuy = scenarioId === 'cars' ? makeActionButton('RECOMMEND\nBUY', '#4b918c') : null;
+    const sellerPass = scenarioId === 'cars' ? makeActionButton('RECOMMEND\nPASS', '#8d7444') : null;
+    const buyerBuy = scenarioId === 'cars' ? makeActionButton('BUY', '#4b918c') : null;
+    const buyerPass = scenarioId === 'cars' ? makeActionButton('PASS', '#8d7444') : null;
+    const sellerCondition = scenarioId === 'cars'
+      ? makeInfoPanel('SELLER ONLY', [
+           { label: 'INSPECTION', value: carTrial.quality === 'BAD' ? 'BAD CAR' : 'GOOD CAR' },
+        ], carTrial.quality === 'BAD' ? '#ff5369' : '#66dbc0', 3)
       : null;
-    const conditionReveal = scenarioId === 'lemons'
+    const conditionReveal = scenarioId === 'cars'
       ? makeInfoPanel('ROUND RESULT', [
-          { label: 'CONDITION', value: carTrial.quality },
+          { label: 'CONDITION', value: carTrial.quality === 'BAD' ? 'BAD CAR' : 'GOOD CAR' },
           { label: 'BUYER', value: `${initialCarRound.buyerScore >= 0 ? '+' : ''}${initialCarRound.buyerScore}` },
           { label: 'SELLER', value: `${initialCarRound.sellerScore >= 0 ? '+' : ''}${initialCarRound.sellerScore}` },
-        ], carTrial.quality === 'LEMON' ? '#ff5369' : '#66dbc0', 2.28)
+        ], carTrial.quality === 'BAD' ? '#ff5369' : '#66dbc0', 3.4)
       : null;
-    const pricePanel = scenarioId === 'lemons'
+    const pricePanel = scenarioId === 'cars'
       ? makePricePlate(carTrial.price)
       : null;
     const displayedCarBpm = cueSource === 'replay' ? carTrial.replayBpm : carTrial.hrBpm;
     const displayedActivation = cueSource === 'replay' ? carTrial.replayActivation : carTrial.activation;
     const displayedDeltaHr = cueSource === 'replay' ? carTrial.replayDeltaHr : carTrial.deltaHr;
-    const physiologyPanel = scenarioId === 'lemons' && cueSource !== 'hidden'
-      ? makeInfoPanel(cueSource === 'replay' ? 'MATCHED REPLAY · CONTROL' : 'LIVE SELLER CARDIAC', [
+    const physiologyPanel = scenarioId === 'cars' && cueSource !== 'hidden'
+      ? makeInfoPanel(cueSource === 'replay' ? 'MATCHED REPLAY' : 'LIVE CARDIAC SIGNAL', [
           { label: 'HEART RATE', value: `${displayedCarBpm} BPM` },
           { label: 'ACTIVATION INDEX', value: `${displayedActivation} / 100` },
-          { label: 'CHANGE FROM BASELINE', value: `${displayedDeltaHr >= 0 ? '+' : ''}${displayedDeltaHr} BPM` },
-        ], '#ff5369', 2.28)
+          { label: 'HR CHANGE', value: `${displayedDeltaHr >= 0 ? '+' : ''}${displayedDeltaHr} BPM` },
+        ], '#ff5369', 3.5)
       : null;
-    const lemonButtons = [sellerBuy, sellerPass, buyerBuy, buyerPass].filter((item): item is THREE.Group => Boolean(item));
-    lemonButtons.forEach((button) => {
+    const carButtons = [sellerBuy, sellerPass, buyerBuy, buyerPass].filter((item): item is THREE.Group => Boolean(item));
+    carButtons.forEach((button) => {
       button.scale.setScalar(0.001);
       scene.add(button);
     });
-    const controlX = 1.7;
+    const controlX = 2.05;
     const farControlZ = -1.3;
     const nearControlZ = 1.3;
     sellerBuy?.position.set(-controlX, 0.4, farControlZ);
     sellerPass?.position.set(controlX, 0.4, farControlZ);
     buyerBuy?.position.set(controlX, 0.4, nearControlZ);
     buyerPass?.position.set(-controlX, 0.4, nearControlZ);
-    [sellerBuy, sellerPass].forEach((button) => { if (button) button.rotation.y = Math.PI; });
     if (sellerCondition) {
-      sellerCondition.position.set(2.35, 1.65, -0.98);
+      sellerCondition.position.set(-1, 3.55, -0.72);
       sellerCondition.scale.setScalar(0.001);
       scene.add(sellerCondition);
     }
     if (conditionReveal) {
-      conditionReveal.position.set(1.9, 1.72, -1.02);
+      conditionReveal.position.set(1.45, 3.95, -0.72);
       conditionReveal.scale.setScalar(0.001);
       scene.add(conditionReveal);
     }
     if (pricePanel) {
-      pricePanel.position.set(0, 2.05, 0.08);
+      pricePanel.position.set(-1.7, 2.2, 0.42);
       pricePanel.scale.setScalar(0.001);
       scene.add(pricePanel);
     }
     if (physiologyPanel) {
-      physiologyPanel.position.set(2.15, 1.7, -0.98);
+      physiologyPanel.position.set(1.45, 3.95, -0.72);
       physiologyPanel.scale.setScalar(0.001);
       scene.add(physiologyPanel);
     }
 
     const numberTrial = getNumberTrial(trial);
     const initialNumberRound = getNumberRoundState(trial, incentive);
-    const exactPanel = scenarioId === 'numbers' ? makeInfoPanel('PRIVATE · STRONG ONLY', [{ label: 'EXACT TARGET', value: `${numberTrial.target}` }], '#66dcd0', 1.75) : null;
-    const rangePanel = scenarioId === 'numbers' ? makeInfoPanel('PRIVATE · WEAK ONLY', [{ label: 'TARGET RANGE', value: numberTrial.coarse }], '#d6bb78', 1.75) : null;
+    const exactPanel = scenarioId === 'numbers' ? makeInfoPanel('STRONG PLAYER ONLY', [{ label: 'EXACT TARGET', value: `${numberTrial.target}` }], '#66dcd0', 3) : null;
+    const rangePanel = scenarioId === 'numbers' ? makeInfoPanel('WEAK PLAYER ONLY', [{ label: 'TARGET RANGE', value: numberTrial.coarse }], '#d6bb78', 3) : null;
     const strongA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
     const strongB = scenarioId === 'numbers' ? makeActionButton('B', '#8d7444') : null;
     const weakA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
     const weakB = scenarioId === 'numbers' ? makeActionButton('B', '#8d7444') : null;
-    const numberOutcome = initialNumberRound.deceptionSucceeded ? 'BLUFF SUCCEEDED' : initialNumberRound.deceptionResisted ? 'BLUFF RESISTED' : initialNumberRound.strategicTruth ? 'STRATEGIC TRUTH' : 'BOTH ACCURATE';
+    const numberOutcome = initialNumberRound.deceptionSucceeded ? 'SUCCEEDED' : initialNumberRound.deceptionResisted ? 'RESISTED' : initialNumberRound.strategicTruth ? 'TRUTHFUL' : 'ACCURATE';
     const targetReveal = scenarioId === 'numbers' ? makeInfoPanel('ROUND RESULT', [
       { label: 'TARGET', value: `${numberTrial.target}` },
       { label: 'CORRECT', value: numberTrial.correct },
       { label: 'OUTCOME', value: numberOutcome },
-    ], '#66dcd0', 2.32) : null;
+    ], '#66dcd0', 3.4) : null;
     const numberProps = [
       exactPanel, rangePanel, strongA, strongB, weakA, weakB, targetReveal,
     ].filter((item): item is THREE.Group => Boolean(item));
@@ -589,14 +603,13 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       scene.add(card);
     });
 
-    exactPanel?.position.set(1.42, 1.42, -1.02);
-    rangePanel?.position.set(-1.42, 1.42, 1.02);
+    exactPanel?.position.set(1.72, 1.78, -0.96);
+    rangePanel?.position.set(-1.72, 1.78, 0.96);
     strongA?.position.set(-controlX, 0.42, farControlZ);
     strongB?.position.set(controlX, 0.42, farControlZ);
     weakA?.position.set(controlX, 0.42, nearControlZ);
     weakB?.position.set(-controlX, 0.42, nearControlZ);
-    [strongA, strongB].forEach((button) => { if (button) button.rotation.y = Math.PI; });
-    targetReveal?.position.set(1.42, 1.42, -1.02);
+    targetReveal?.position.set(1.45, 3.95, -0.72);
 
     const optionCards = scenarioId === 'numbers'
       ? [`A\n${numberTrial.a}`, `B\n${numberTrial.b}`].map((label, index) => {
@@ -612,6 +625,26 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       const rect = canvas.getBoundingClientRect();
       const width = Math.max(1, Math.round(rect.width));
       const height = Math.max(1, Math.round(rect.height));
+      const narrow = width <= 520;
+      informationScale = narrow ? 1.24 : 1;
+      controlScale = width <= 520 ? 1.35 : 1;
+      const activeFarControlX = narrow ? 2.25 : 2.15;
+      const activeNearControlX = narrow ? 1.62 : controlX;
+      sellerBuy?.position.set(-activeFarControlX, sellerBuy.position.y, farControlZ);
+      sellerPass?.position.set(activeFarControlX, sellerPass.position.y, farControlZ);
+      buyerBuy?.position.set(activeNearControlX, buyerBuy.position.y, nearControlZ);
+      buyerPass?.position.set(-activeNearControlX, buyerPass.position.y, nearControlZ);
+      strongA?.position.set(-activeFarControlX, strongA.position.y, farControlZ);
+      strongB?.position.set(activeFarControlX, strongB.position.y, farControlZ);
+      weakA?.position.set(activeNearControlX, weakA.position.y, nearControlZ);
+      weakB?.position.set(-activeNearControlX, weakB.position.y, nearControlZ);
+      sellerCondition?.position.set(narrow ? -1 : -1.2, narrow ? 3.55 : 3.02, -0.72);
+      pricePanel?.position.set(narrow ? -1.7 : -2, narrow ? 2.2 : 1.95, 0.42);
+      physiologyPanel?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
+      conditionReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
+      exactPanel?.position.set(narrow ? -1.3 : 2.42, narrow ? 3 : 2.08, narrow ? -0.96 : -0.62);
+      rangePanel?.position.set(narrow ? -1.72 : -2.42, narrow ? 1.78 : 2.08, narrow ? 0.96 : 0.62);
+      targetReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       const narrowness = Math.max(0, 1.12 - camera.aspect);
@@ -636,7 +669,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       const elapsed = clock.getElapsedTime();
       const state = stateRef.current;
       const cueVisible = isCueActive(state.phase, state.cueWindow, state.cueSource);
-      const cueBpm = scenarioId === 'lemons'
+      const cueBpm = scenarioId === 'cars'
         ? (state.cueSource === 'replay' ? carTrial.replayBpm : carTrial.hrBpm)
         : (state.cueSource === 'replay' ? numberTrial.replayBpm : numberTrial.hrBpm);
       const beatRate = (cueBpm / 60) * Math.PI * 2;
@@ -644,7 +677,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         Math.pow(Math.max(0, Math.sin(elapsed * beatRate)), reducedMotion ? 1 : 18),
         Math.pow(Math.max(0, Math.sin(elapsed * beatRate - 0.48)), reducedMotion ? 1 : 20) * 0.66,
       );
-      const cardiacPhaseActive = scenarioId === 'lemons' && cueVisible && (state.phase === 3 || state.phase === 4);
+      const cardiacPhaseActive = scenarioId === 'cars' && cueVisible && (state.phase === 3 || state.phase === 4);
       const tablePulse = cardiacPhaseActive ? 0.08 + beat * 1.16 : 0;
       tableMaterial.emissiveIntensity += (tablePulse - tableMaterial.emissiveIntensity) * 0.28;
       red.intensity += (((cardiacPhaseActive ? 1.2 + beat * 12 : 0)) - red.intensity) * 0.2;
@@ -658,17 +691,17 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         heartMaterial.opacity = cardiacPhaseActive ? 0.68 + beat * 0.32 : 0;
       }
 
-      if (scenarioId === 'lemons' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
-        animateScale(toyCar, true, 0.91, 0.1);
-        if (pricePanel) animateScale(pricePanel, true, 1, 0.14);
-        if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, 1, 0.14);
+      if (scenarioId === 'cars' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
+        animateScale(toyCar, true, 0.95, 0.1);
+        if (pricePanel) animateScale(pricePanel, state.phase <= 2, informationScale, 0.14);
+        if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, informationScale, 0.14);
         if (physiologyPanel) {
           const physiologyVisible = cueVisible && (state.phase === 3 || state.phase === 4);
-          animateScale(physiologyPanel, physiologyVisible, 1, 0.14);
+          animateScale(physiologyPanel, physiologyVisible, informationScale, 0.14);
         }
         toyCar.rotation.y = -0.34 + (reducedMotion ? 0 : Math.sin(elapsed * 0.35) * 0.025);
         const paint = toyCar.userData.paint as THREE.MeshStandardMaterial;
-        const revealColor = carTrial.quality === 'LEMON' ? badPaint : goodPaint;
+        const revealColor = carTrial.quality === 'BAD' ? badPaint : goodPaint;
         paint.color.lerp(state.phase === 5 ? revealColor : neutralPaint, 0.08);
         const tintMaterials = toyCar.userData.tintMaterials as Array<{ material: THREE.MeshStandardMaterial; base: THREE.Color }>;
         tintMaterials.forEach(({ material, base }) => {
@@ -679,9 +712,9 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
           material.color.r += (targetR - material.color.r) * 0.08;
           material.color.g += (targetG - material.color.g) * 0.08;
           material.color.b += (targetB - material.color.b) * 0.08;
-          material.roughness += (((state.phase === 5 && carTrial.quality === 'LEMON') ? 0.92 : 0.58) - material.roughness) * 0.06;
+          material.roughness += (((state.phase === 5 && carTrial.quality === 'BAD') ? 0.92 : 0.58) - material.roughness) * 0.06;
         });
-        toyCar.rotation.z += (((state.phase === 5 && carTrial.quality === 'LEMON') ? -0.045 : 0) - toyCar.rotation.z) * 0.08;
+        toyCar.rotation.z += (((state.phase === 5 && carTrial.quality === 'BAD') ? -0.045 : 0) - toyCar.rotation.z) * 0.08;
 
         const carRound = getCarRoundState(trial, state.incentive);
         const sellerChoice = carRound.sellerAction;
@@ -689,10 +722,10 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         const selectedSeller = sellerChoice === 'BUY' ? sellerBuy : sellerPass;
         const selectedBuyer = buyerChoice === 'BUY' ? buyerBuy : buyerPass;
         [sellerBuy, sellerPass].forEach((button) => {
-          animateScale(button, true, 0.88);
+          animateScale(button, true, controlScale);
         });
         [buyerBuy, buyerPass].forEach((button) => {
-          animateScale(button, true, 0.88);
+          animateScale(button, true, controlScale);
         });
         const sellerPressedY = state.phase >= 3 ? 0.32 : 0.4;
         sellerBuy.position.y += ((state.phase >= 3 && selectedSeller === sellerBuy ? sellerPressedY : 0.4) - sellerBuy.position.y) * 0.14;
@@ -703,14 +736,14 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         [sellerBuy, sellerPass].forEach((button) => setSelected(button, state.phase >= 3 && button === selectedSeller));
         [buyerBuy, buyerPass].forEach((button) => setSelected(button, state.phase >= 4 && button === selectedBuyer));
         setEdgeGlow(selectedSeller, cardiacPhaseActive, beat);
-        if (conditionReveal) animateScale(conditionReveal, state.phase === 5, 0.95);
+        if (conditionReveal) animateScale(conditionReveal, state.phase === 5, informationScale);
       }
 
       if (scenarioId === 'numbers' && exactPanel && rangePanel && strongA && strongB && weakA && weakB && targetReveal) {
-        optionCards.forEach((card) => animateScale(card, true, 0.78));
-        animateScale(exactPanel, state.phase === 1 || state.phase === 2, 0.82);
-        animateScale(rangePanel, state.phase === 1 || state.phase === 2, 0.82);
-        animateScale(targetReveal, state.phase === 5, 0.82);
+        optionCards.forEach((card) => animateScale(card, true, 0.9));
+        animateScale(exactPanel, state.phase === 1 || state.phase === 2, informationScale);
+        animateScale(rangePanel, state.phase === 1 || state.phase === 2, informationScale);
+        animateScale(targetReveal, state.phase === 5, informationScale);
         const initialStrong = numberTrial.correct === 'A' ? strongA : strongB;
         const initialWeak = numberTrial.weakInitial === 'A' ? weakA : weakB;
         const numberRound = getNumberRoundState(trial, state.incentive);
@@ -719,7 +752,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         const selectedWeak = numberRound.weakFinal === 'A' ? weakA : weakB;
 
         [strongA, strongB, weakA, weakB].forEach((button) => {
-          animateScale(button, state.phase >= 2, 0.88);
+          animateScale(button, state.phase >= 2, controlScale);
           setEdgeGlow(button, false, beat);
           setSelected(button, false);
         });
@@ -742,7 +775,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       let expressionA = definition.expressionsA[state.phase];
       let expressionB = definition.expressionsB[state.phase];
       if (state.phase === 5) {
-        if (scenarioId === 'lemons') {
+        if (scenarioId === 'cars') {
           const result = getCarRoundState(trial, state.incentive);
           if (result.deceptionSucceeded) {
             expressionA = 'happiness';
@@ -750,7 +783,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
           } else if (result.deceptionDetected) {
             expressionA = 'sadness';
             expressionB = 'happiness';
-          } else if (result.car.quality === 'RELIABLE' && result.buyerAction === 'BUY') {
+          } else if (result.car.quality === 'GOOD' && result.buyerAction === 'BUY') {
             expressionA = 'happiness';
             expressionB = 'happiness';
           } else {
