@@ -1,2 +1,2 @@
-:HL["/cardiac-signals-lab-demo/_next/static/chunks/33-8wjlw1my94.css","style"]
-0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}},"staleTime":300,"buildId":"f_EwDIyhmjl6E08e86X5I"}
+:HL["/cardiac-signals-lab-demo/_next/static/chunks/0mwdehuxlrbrd.css","style"]
+0:{"tree":{"name":"","param":null,"prefetchHints":4176,"slots":{"children":{"name":"__PAGE__","param":null,"prefetchHints":4256,"slots":null}}},"staleTime":300,"buildId":"iQs7B0S2PhXOswERZlgOa"}

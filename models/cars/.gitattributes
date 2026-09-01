@@ -1,0 +1,2 @@
+*.png -filter -diff -merge -text
+Textures/*.png -filter -diff -merge -text
