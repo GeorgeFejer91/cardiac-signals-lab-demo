@@ -1,0 +1,6 @@
+sceneStatus: BUYER CHOOSES PASS · PRICE 20 TOKENS
+thought: BUYER: I’ll follow the recommendation and press PASS.
+captionTitle: The buyer chooses Buy or Pass
+explanation: The buyer sees the 20 tokens, Recommend PASS, and the live cardiac display. The buyer presses PASS; this scripted preview illustrates one possible response, while the experiment measures how often choices change across cue conditions.
+timing: Up to 10 seconds
+cueBadge: Live cardiac cue visible now

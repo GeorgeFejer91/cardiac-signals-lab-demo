@@ -1,0 +1,6 @@
+sceneStatus: LESS-INFORMED PLAYER: INITIAL A → FINAL B
+thought: LESS-INFORMED PLAYER: The calm pulse is ambiguous. I’ll switch to B.
+captionTitle: The less-informed player locks a final answer
+explanation: The less-informed player presses B to lock the final answer. The selected recommendation continues pulsing during this window. No confidence rating or verbal message is added.
+timing: Up to 10 seconds
+cueBadge: Live cardiac cue visible now

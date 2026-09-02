@@ -1,0 +1,6 @@
+sceneStatus: CORRECT B · MISLEADING SIGNAL RESISTED
+thought: LESS-INFORMED PLAYER: I resisted the misleading recommendation.
+captionTitle: The less-informed player resists the misleading signal
+explanation: The target 74 and correct answer B are revealed. The system records initial and final accuracy, revision, information transfer, deceptive-signal success, payoff, timing, and cardiac coupling.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

@@ -1,0 +1,75 @@
+name: Visual validation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate build, frozen matrix, and hidden renderer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test cross-platform render fingerprints
+        run: npm run qa:screenshots:test
+
+      - name: Build GitHub Pages output
+        run: npm run build:pages
+
+      - name: Validate frozen scene snapshots
+        run: npm run qa:screenshots:validate
+
+      - name: Audit every frozen scene visually
+        run: npm run qa:screenshots:audit -- --strict
+
+      - name: Smoke-test isolated headless scene renderer
+        shell: bash
+        run: |
+          browser="$(command -v microsoft-edge-stable || command -v microsoft-edge || command -v google-chrome || command -v chromium || true)"
+          if [ -z "$browser" ]; then
+            echo "No isolated Edge/Chromium executable is available on this runner." >&2
+            exit 1
+          fi
+          SCENE_RENDER_BROWSER="$browser" npm run qa:screenshots:render -- --smoke --output-root tmp/qa/headless-renderer-smoke --force
+
+      - name: Upload scene validation artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scene-validation-${{ github.sha }}
+          path: |
+            validation/scene-snapshots
+            validation/scene-snapshot-audit
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload hidden-renderer smoke output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: scene-renderer-smoke-${{ github.sha }}
+          path: tmp/qa/headless-renderer-smoke
+          if-no-files-found: error
+          retention-days: 14

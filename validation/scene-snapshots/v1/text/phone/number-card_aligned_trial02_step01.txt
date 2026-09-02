@@ -1,0 +1,6 @@
+sceneStatus: SHARED: A = 44 · B = 56
+thought: LESS-INFORMED PLAYER: Which number is closer to the hidden target?
+captionTitle: Two candidate cards appear
+explanation: Cards A = 44 and B = 56 rise into the shared center. Both players see them, but no evidence panel or response is visible yet.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

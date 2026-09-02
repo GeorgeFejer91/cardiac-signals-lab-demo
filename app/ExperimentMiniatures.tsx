@@ -129,7 +129,7 @@ export default function ExperimentMiniatures() {
                       <span>Shown while</span>
                       <select value={cueWindow} disabled={cueSource === 'hidden'} onChange={(event) => { setCueWindow(event.target.value as CueWindow); setAutoAdvance(false); }}>
                         <option value="signal">Recommendation</option>
-                        <option value="decision">Receiver decides</option>
+                        <option value="decision">Final decision</option>
                         <option value="both">Both stages</option>
                       </select>
                     </label>

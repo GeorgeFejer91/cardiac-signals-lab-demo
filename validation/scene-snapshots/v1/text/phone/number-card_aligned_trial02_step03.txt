@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE CHOICES: INFORMED B · LESS-INFORMED B
+thought: LESS-INFORMED PLAYER: My range is ambiguous. I will start with B.
+captionTitle: Both make an initial private choice
+explanation: Two A/B push buttons rise directly in front of each participant. Each player privately depresses one button, visible here only to explain the storyboard, establishing the pre-signal accuracy baseline without speaking or making any free-form gesture.
+timing: Up to 8 seconds
+cueBadge: Cardiac cue not shown in this phase

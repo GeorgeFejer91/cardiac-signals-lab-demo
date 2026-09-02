@@ -1,0 +1,6 @@
+sceneStatus: SHARED: OLDER SEDAN · PRICE 20 TOKENS
+thought: BUYER: 20 TOKENS. Is this car worth buying?
+captionTitle: A priced car enters the shared scene
+explanation: The older sedan and its fixed price of 20 tokens appear together. Both players see the same exterior, price, and four virtual push buttons; the quality and cardiac cue remain hidden.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

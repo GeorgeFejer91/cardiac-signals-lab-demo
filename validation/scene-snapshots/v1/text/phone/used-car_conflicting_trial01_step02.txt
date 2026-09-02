@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE TO SELLER: BAD CAR · PRICE 20 TOKENS
+thought: SELLER: The inspection found a serious fault.
+captionTitle: Only the seller learns the condition
+explanation: The seller’s private headset layer identifies a bad car. The buyer still sees only the car and 20 tokens, so the hidden quality state is known to the seller alone.
+timing: 4 seconds
+cueBadge: Cardiac cue not shown in this phase

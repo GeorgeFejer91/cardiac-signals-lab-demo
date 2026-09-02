@@ -1,0 +1,6 @@
+sceneStatus: BAD CAR · BLUFF SUCCEEDED · PRICE 20 TOKENS
+thought: BUYER: I bought a bad car. The bluff worked.
+captionTitle: The bluff succeeds
+explanation: The hidden condition is revealed. This round pays Buyer -10 and Seller +10 tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

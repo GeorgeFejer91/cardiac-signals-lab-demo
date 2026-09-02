@@ -91,13 +91,13 @@ export const scenarios: ScenarioDefinition[] = [
     roleA: 'Informed player',
     roleB: 'Less-informed player',
     summary: 'Both players choose which of two number cards is closer to a hidden target. One player receives an exact target; the other receives deliberately ambiguous evidence.',
-    logic: 'After private initial A/B choices, the strong-evidence player makes a standardized A/B recommendation. The weak-evidence player then locks a final A/B choice while the selected recommendation button can carry its sender’s heartbeat.',
+    logic: 'After private initial A/B choices, the informed player makes a standardized A/B recommendation. The less-informed player then locks a final A/B choice while the selected recommendation button can carry its sender’s heartbeat.',
     measures: 'initial and final accuracy, information transfer, truthful and misleading signalling, exploitation success, resistance to misleading advice, revision, decision latency, payoff, and cardiac coupling.',
-    cooperate: 'Both players gain only by reaching the correct answer, so the strong-evidence player should transmit useful information.',
-    compete: 'Deadlock incentives pay the strong-evidence player most when they choose correctly but induce the partner to choose incorrectly.',
+    cooperate: 'Both players gain only by reaching the correct answer, so the informed player should transmit useful information.',
+    compete: 'Deadlock incentives pay the informed player most when they choose correctly but induce the less-informed player to choose incorrectly.',
     cueNote: 'The red edge belongs to the selected A/B recommendation button—not to an explicit confidence report—and follows either live beat timing or a matched replay in the selected window; the hidden control shows no cardiac edge.',
-    implementation: 'Both headsets show identical A/B number cards as shared stimuli. Each participant has exactly two push buttons, A and B, positioned on their side of the table. The target-information layer is role-specific, and the only public signal is which recommendation button the strong-evidence player presses.',
-    stakes: 'With aligned payoffs, both players earn the most when the final answer is correct. With conflicting payoffs, the informed player can earn the largest payoff by remaining correct while inducing the other player to choose incorrectly.',
+    implementation: 'Both headsets show identical A/B number cards as shared stimuli. Each participant has exactly two push buttons, A and B, positioned on their side of the table. The target-information layer is role-specific, and the only public signal is which recommendation button the informed player presses.',
+    stakes: 'With aligned payoffs, both players earn the most when the final answer is correct. With conflicting payoffs, the informed player can earn the largest payoff by remaining correct while inducing the less-informed player to choose incorrectly.',
     publications: [
       {
         authors: 'Pulford, Mangiarulo & Colman',
@@ -133,10 +133,10 @@ type NumberChoice = 'A' | 'B';
 type CarAction = 'BUY' | 'PASS';
 
 const numberTrials = [
-  { a: 31, b: 47, target: 34, coarse: '31–47', correct: 'A' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 78, replayBpm: 108 },
-  { a: 44, b: 56, target: 54, coarse: '48–56', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 104, replayBpm: 76 },
-  { a: 62, b: 78, target: 74, coarse: '66–78', correct: 'B' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 92, replayBpm: 70 },
-  { a: 18, b: 32, target: 29, coarse: '21–32', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'A' as NumberChoice, hrBpm: 74, replayBpm: 102 },
+  { a: 31, b: 47, target: 34, coarse: '31\u201147', correct: 'A' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 78, replayBpm: 108 },
+  { a: 44, b: 56, target: 54, coarse: '48\u201156', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'B' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 104, replayBpm: 76 },
+  { a: 62, b: 78, target: 74, coarse: '66\u201178', correct: 'B' as NumberChoice, weakInitial: 'A' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'B' as NumberChoice, hrBpm: 92, replayBpm: 70 },
+  { a: 18, b: 32, target: 29, coarse: '21\u201132', correct: 'B' as NumberChoice, weakInitial: 'B' as NumberChoice, conflictingSignal: 'A' as NumberChoice, conflictingFinal: 'A' as NumberChoice, hrBpm: 74, replayBpm: 102 },
 ];
 
 export function getNumberTrial(trial: number) {
@@ -228,7 +228,9 @@ export function getStoryboardFrame(
     const buyerDecisionThought = cueVisibleAtDecision || cueVisibleAtRecommendation
       ? buyerAction === 'BUY'
         ? 'I’ll trust the recommendation and press BUY.'
-        : 'I won’t follow it; I’ll press PASS.'
+        : sellerAction === 'PASS'
+          ? 'I’ll follow the recommendation and press PASS.'
+          : 'I won’t follow the recommendation; I’ll press PASS.'
       : buyerAction === 'BUY'
         ? 'Without a cardiac cue, I will press BUY.'
         : 'Without a cardiac cue, I will press PASS.';
@@ -244,7 +246,7 @@ export function getStoryboardFrame(
         title: 'A priced car enters the shared scene',
         timing: '2 seconds',
         sceneLabel: `SHARED: ${car.description.toUpperCase()} · PRICE ${car.price}`,
-        explanation: `The ${car.description} and its fixed price of ${car.price.toLowerCase()} appear together. Both players see the same exterior, price, and four physical buttons; the quality and cardiac cue remain hidden.`,
+        explanation: `The ${car.description} and its fixed price of ${car.price.toLowerCase()} appear together. Both players see the same exterior, price, and four virtual push buttons; the quality and cardiac cue remain hidden.`,
         bubbleB: { kind: 'thought', label: 'BUYER', text: `${car.price}. Is this car worth buying?` },
       },
       {
@@ -257,7 +259,7 @@ export function getStoryboardFrame(
       {
         title: round.deceptiveRecommendation ? 'The seller prepares a deceptive recommendation' : round.strategicHonesty ? 'The seller resists the incentive to sell' : 'The seller prepares an honest recommendation',
         timing: 'Up to 8 seconds',
-        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : 'DISCLOSE'} · PRICE ${car.price}`,
+        sceneLabel: `PRIVATE STRATEGY: ${round.deceptiveRecommendation ? 'MISREPRESENT' : 'RECOMMEND ACCURATELY'} · PRICE ${car.price}`,
         explanation: `The seller can press only Recommend Buy or Recommend Pass. With ${incentive === 'cooperate' ? 'aligned payoffs, an accurate recommendation benefits both players' : 'conflicting payoffs, any sale earns the seller 10 tokens regardless of condition'}.`,
         bubbleA: { kind: 'thought', label: 'SELLER', text: sellerRecommendationThought },
       },
@@ -272,7 +274,7 @@ export function getStoryboardFrame(
         title: 'The buyer chooses Buy or Pass',
         timing: 'Up to 10 seconds',
         sceneLabel: `BUYER CHOOSES ${buyerAction} · PRICE ${car.price}`,
-        explanation: `The buyer sees the ${car.price.toLowerCase()}, Recommend ${sellerAction}${cueVisibleAtDecision ? `, and the ${cueSource === 'replay' ? 'replayed control' : 'live'} cardiac display` : ''}. The buyer presses ${buyerAction}; this scripted preview illustrates one possible response, while the experiment measures how often choices change across cue conditions.`,
+        explanation: `The buyer sees the ${car.price.toLowerCase()}, Recommend ${sellerAction}${cueVisibleAtDecision ? `, and the ${cueSource === 'replay' ? 'matched-replay' : 'live'} cardiac display` : ''}. The buyer presses ${buyerAction}; this scripted preview illustrates one possible response, while the experiment measures how often choices change across cue conditions.`,
         bubbleB: { kind: 'thought', label: 'BUYER', text: buyerDecisionThought },
       },
       {
@@ -280,7 +282,7 @@ export function getStoryboardFrame(
         timing: '2 seconds',
         sceneLabel: `${resultLabel} · PRICE ${car.price}`,
         explanation: `The hidden condition is revealed. This round pays Buyer ${buyerScore >= 0 ? '+' : ''}${buyerScore} and Seller ${sellerScore >= 0 ? '+' : ''}${sellerScore} tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.`,
-        bubbleB: { kind: 'thought', label: 'BUYER', text: round.deceptionSucceeded ? 'I bought a bad car. The bluff worked.' : round.deceptionDetected ? 'I rejected the bad car.' : car.quality === 'BAD' ? 'The seller disclosed the fault.' : 'The good car produced a gain.' },
+        bubbleB: { kind: 'thought', label: 'BUYER', text: round.deceptionSucceeded ? 'I bought a bad car. The bluff worked.' : round.deceptionDetected ? 'I rejected the bad car.' : car.quality === 'BAD' ? 'The seller’s PASS recommendation warned me away.' : 'The good car produced a gain.' },
       },
     ];
     return frames[phase % frames.length];
@@ -288,6 +290,8 @@ export function getStoryboardFrame(
 
   const round = getNumberRoundState(trial, incentive);
   const { numbers, signal, weakFinal } = round;
+  const cueVisibleAtSignal = isCueActive(3, cueWindow, cueSource);
+  const cueVisibleAtDecision = isCueActive(4, cueWindow, cueSource);
   const displayedBpm = cueSource === 'replay' ? numbers.replayBpm : numbers.hrBpm;
   const numberCueThought = cueSource === 'hidden'
     ? 'No cardiac cue.'
@@ -307,42 +311,42 @@ export function getStoryboardFrame(
       timing: '2 seconds',
       sceneLabel: `SHARED: A = ${numbers.a} · B = ${numbers.b}`,
       explanation: `Cards A = ${numbers.a} and B = ${numbers.b} rise into the shared center. Both players see them, but no evidence panel or response is visible yet.`,
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: 'Which number is closer to the hidden target?' },
+      bubbleB: { kind: 'thought', label: 'LESS-INFORMED PLAYER', text: 'Which number is closer to the hidden target?' },
     },
     {
       title: 'Evidence quality is assigned privately',
       timing: '4 seconds',
-      sceneLabel: `PRIVATE: STRONG SEES ${numbers.target} · WEAK SEES ${numbers.coarse}`,
-      explanation: `An EXACT ${numbers.target} panel rises beside the strong player while a RANGE ${numbers.coarse} panel rises beside the weak player. Each represents private headset content.`,
-      bubbleA: { kind: 'thought', label: 'STRONG PLAYER', text: `I know the exact target is ${numbers.target}.` },
+      sceneLabel: `PRIVATE: INFORMED SEES ${numbers.target} · LESS-INFORMED SEES ${numbers.coarse}`,
+      explanation: `An EXACT ${numbers.target} panel rises beside the informed player while a RANGE ${numbers.coarse} panel rises beside the less-informed player. Each represents private headset content.`,
+      bubbleA: { kind: 'thought', label: 'INFORMED PLAYER', text: `I know the exact target is ${numbers.target}.` },
     },
     {
       title: 'Both make an initial private choice',
       timing: 'Up to 8 seconds',
-      sceneLabel: `PRIVATE CHOICES: STRONG ${numbers.correct} · WEAK ${numbers.weakInitial}`,
-      explanation: 'Two A/B push buttons rise directly in front of each participant. Each player privately depresses one button, visible here only to explain the storyboard, establishing the pre-signal accuracy baseline without moving or speaking.',
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: `My range is ambiguous. I will start with ${numbers.weakInitial}.` },
+      sceneLabel: `PRIVATE CHOICES: INFORMED ${numbers.correct} · LESS-INFORMED ${numbers.weakInitial}`,
+      explanation: 'Two A/B push buttons rise directly in front of each participant. Each player privately depresses one button, visible here only to explain the storyboard, establishing the pre-signal accuracy baseline without speaking or making any free-form gesture.',
+      bubbleB: { kind: 'thought', label: 'LESS-INFORMED PLAYER', text: `My range is ambiguous. I will start with ${numbers.weakInitial}.` },
     },
     {
       title: round.deceptiveSignal ? `Deception attempt: recommend ${signal}` : round.strategicTruth ? `Truthful recommendation: ${signal}` : `Public recommendation: ${signal}`,
       timing: 'Up to 8 seconds',
-      sceneLabel: `PUBLIC: STRONG PLAYER RECOMMENDS ${signal}`,
-      explanation: `The strong player presses ${signal}. Its mechanical selected state becomes public; when enabled, a separate red edge follows ${cueSource === 'replay' ? 'matched replay' : 'live'} cardiac timing.`,
-      bubbleA: { kind: 'thought', label: 'STRONG PLAYER', text: round.deceptiveSignal ? `${numbers.correct} is correct; I’ll recommend ${signal} to mislead them.` : `I’ll truthfully recommend ${signal}.` },
+      sceneLabel: `PUBLIC: INFORMED PLAYER RECOMMENDS ${signal}`,
+      explanation: `The informed player presses ${signal}. Its mechanical selected state becomes public; when enabled, a separate red edge follows ${cueSource === 'replay' ? 'matched replay' : 'live'} cardiac timing.`,
+      bubbleA: { kind: 'thought', label: 'INFORMED PLAYER', text: round.deceptiveSignal ? `I earn most if they answer incorrectly. ${numbers.correct} is correct, so I’ll recommend ${signal}.` : `I’ll truthfully recommend ${signal}.` },
     },
     {
-      title: 'The weak player locks a final answer',
+      title: 'The less-informed player locks a final answer',
       timing: 'Up to 10 seconds',
-      sceneLabel: `WEAK PLAYER: INITIAL ${numbers.weakInitial} → FINAL ${weakFinal}`,
-      explanation: `The weak player presses ${weakFinal} to lock the final answer. The selected recommendation can continue pulsing during this window, but no confidence rating or verbal message is added.`,
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: round.deceptionSucceeded ? `${numberCueThought} I’ll follow ${signal}.` : round.deceptionResisted ? `${numberCueThought} I’ll keep ${weakFinal}.` : `I’ll lock in ${weakFinal}.` },
+      sceneLabel: `LESS-INFORMED PLAYER: INITIAL ${numbers.weakInitial} → FINAL ${weakFinal}`,
+      explanation: `The less-informed player presses ${weakFinal} to lock the final answer. ${cueVisibleAtDecision ? 'The selected recommendation continues pulsing during this window.' : cueVisibleAtSignal ? 'The cardiac edge no longer pulses, but its earlier rhythm was visible.' : 'No cardiac edge is shown.'} No confidence rating or verbal message is added.`,
+      bubbleB: { kind: 'thought', label: 'LESS-INFORMED PLAYER', text: round.deceptionSucceeded ? `${numberCueThought} I’ll follow ${signal}.` : round.deceptionResisted ? `${numberCueThought} I’ll ${numbers.weakInitial === weakFinal ? 'keep' : 'switch to'} ${weakFinal}.` : `I’ll lock in ${weakFinal}.` },
     },
     {
-      title: round.deceptionSucceeded ? 'The misleading signal succeeds' : round.deceptionResisted ? 'The weak player resists the misleading signal' : round.strategicTruth ? 'The truthful signal leads to the correct answer' : 'Shared information supports the correct answer',
+      title: round.deceptionSucceeded ? 'The misleading signal succeeds' : round.deceptionResisted ? 'The less-informed player resists the misleading signal' : round.strategicTruth ? 'The truthful signal leads to the correct answer' : 'Shared information supports the correct answer',
       timing: '2 seconds',
       sceneLabel: resultLabel,
       explanation: `The target ${numbers.target} and correct answer ${numbers.correct} are revealed. The system records initial and final accuracy, revision, information transfer, deceptive-signal success, payoff, timing, and cardiac coupling.`,
-      bubbleB: { kind: 'thought', label: 'WEAK PLAYER', text: round.deceptionSucceeded ? 'The recommendation moved me away from the target.' : round.deceptionResisted ? 'I resisted the misleading recommendation.' : 'My final answer was correct.' },
+      bubbleB: { kind: 'thought', label: 'LESS-INFORMED PLAYER', text: round.deceptionSucceeded ? 'The recommendation moved me away from the target.' : round.deceptionResisted ? 'I resisted the misleading recommendation.' : 'My final answer was correct.' },
     },
   ];
   return frames[phase % frames.length];

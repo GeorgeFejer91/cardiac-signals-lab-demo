@@ -45,6 +45,125 @@ type MinimalAvatar = {
   morphStarted: number;
 };
 
+const TABLE_WIDTH = 7.1;
+const TABLE_DEPTH = 4.1;
+const TABLE_QA_MARGIN = 0.1;
+const ACTION_BUTTON_GLOW_WIDTH = 1.98;
+const ACTION_BUTTON_GLOW_DEPTH = 0.84;
+const ACTION_BUTTON_FOOTPRINT_HALF_WIDTH = 0.9925;
+const ACTION_BUTTON_FOOTPRINT_HALF_DEPTH = 0.4525;
+const ACTION_BUTTON_MAX_PULSE_SCALE = 1.07;
+const DESKTOP_ACTION_X = 2.05;
+const NARROW_ACTION_X = 1.9;
+const DESKTOP_CONTROL_SCALE = 1;
+const NARROW_CONTROL_SCALE = 1.25;
+const ACTION_BUTTON_SYMMETRY_TOLERANCE = 0.002;
+const MAX_PANEL_AVATAR_OVERLAP_RATIO = 0.03;
+const MAX_PANEL_PAIR_OVERLAP_RATIO = 0.001;
+const PROJECTED_CANVAS_MARGIN_PX = 16;
+
+type QaRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  right: number;
+  bottom: number;
+};
+
+function roundQa(value: number) {
+  return Math.round(value * 1000) / 1000;
+}
+
+function overlapRatio(first: QaRect, second: QaRect) {
+  const width = Math.max(0, Math.min(first.right, second.right) - Math.max(first.x, second.x));
+  const height = Math.max(0, Math.min(first.bottom, second.bottom) - Math.max(first.y, second.y));
+  const smallerArea = Math.min(first.width * first.height, second.width * second.height);
+  return smallerArea > 0 ? (width * height) / smallerArea : 0;
+}
+
+function isPresent<T>(value: T | null): value is T {
+  return value !== null;
+}
+
+function projectObjectBounds(
+  id: string,
+  object: THREE.Object3D,
+  camera: THREE.Camera,
+  canvas: HTMLCanvasElement,
+  sceneRect: DOMRect,
+) {
+  if (!object.visible || object.scale.x < 0.05) return null;
+  const spriteCorners: THREE.Vector3[] = [];
+  const cameraRight = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 0).normalize();
+  const cameraUp = new THREE.Vector3().setFromMatrixColumn(camera.matrixWorld, 1).normalize();
+  object.traverse((child) => {
+    if (!(child instanceof THREE.Sprite) || !child.visible) return;
+    const center = child.getWorldPosition(new THREE.Vector3());
+    const scale = child.getWorldScale(new THREE.Vector3());
+    const rotation = child.material.rotation ?? 0;
+    const cosine = Math.cos(rotation);
+    const sine = Math.sin(rotation);
+    const xOffsets = [-child.center.x, 1 - child.center.x];
+    const yOffsets = [-child.center.y, 1 - child.center.y];
+    for (const xOffset of xOffsets) {
+      for (const yOffset of yOffsets) {
+        const unrotatedX = xOffset * Math.abs(scale.x);
+        const unrotatedY = yOffset * Math.abs(scale.y);
+        const rotatedX = cosine * unrotatedX - sine * unrotatedY;
+        const rotatedY = sine * unrotatedX + cosine * unrotatedY;
+        spriteCorners.push(center.clone()
+          .addScaledVector(cameraRight, rotatedX)
+          .addScaledVector(cameraUp, rotatedY)
+          .project(camera));
+      }
+    }
+  });
+  const bounds = spriteCorners.length === 0 ? new THREE.Box3().setFromObject(object) : null;
+  if (bounds?.isEmpty()) return null;
+  const corners = spriteCorners.length > 0
+    ? spriteCorners
+    : [
+        new THREE.Vector3(bounds!.min.x, bounds!.min.y, bounds!.min.z),
+        new THREE.Vector3(bounds!.min.x, bounds!.min.y, bounds!.max.z),
+        new THREE.Vector3(bounds!.min.x, bounds!.max.y, bounds!.min.z),
+        new THREE.Vector3(bounds!.min.x, bounds!.max.y, bounds!.max.z),
+        new THREE.Vector3(bounds!.max.x, bounds!.min.y, bounds!.min.z),
+        new THREE.Vector3(bounds!.max.x, bounds!.min.y, bounds!.max.z),
+        new THREE.Vector3(bounds!.max.x, bounds!.max.y, bounds!.min.z),
+        new THREE.Vector3(bounds!.max.x, bounds!.max.y, bounds!.max.z),
+      ].map((corner) => corner.project(camera));
+  const canvasRect = canvas.getBoundingClientRect();
+  const xs = corners.map((corner) => canvasRect.left + ((corner.x + 1) / 2) * canvas.clientWidth);
+  const ys = corners.map((corner) => canvasRect.top + ((-corner.y + 1) / 2) * canvas.clientHeight);
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  const right = Math.max(...xs);
+  const bottom = Math.max(...ys);
+  const canvasMargins = {
+    left: x - canvasRect.left,
+    top: y - canvasRect.top,
+    right: canvasRect.right - right,
+    bottom: canvasRect.bottom - bottom,
+  };
+  return {
+    id,
+    coordinateSpace: 'viewport-css' as const,
+    projectionMethod: spriteCorners.length > 0 ? 'sprite-billboard-quad' : 'box3-corners',
+    x: roundQa(x),
+    y: roundQa(y),
+    width: roundQa(right - x),
+    height: roundQa(bottom - y),
+    right: roundQa(right),
+    bottom: roundQa(bottom),
+    requiredCanvasMarginPx: PROJECTED_CANVAS_MARGIN_PX,
+    canvasMargins: Object.fromEntries(Object.entries(canvasMargins).map(([key, value]) => [key, roundQa(value)])),
+    insideCanvas: Object.values(canvasMargins).every((margin) => margin >= PROJECTED_CANVAS_MARGIN_PX),
+    insideScene: x >= sceneRect.left - 1 && y >= sceneRect.top - 1
+      && right <= sceneRect.right + 1 && bottom <= sceneRect.bottom + 1,
+  };
+}
+
 function makeLabelTexture(
   label: string,
   width: number,
@@ -91,7 +210,7 @@ function makeCard(label: string) {
     new THREE.PlaneGeometry(0.87, 1.27),
     new THREE.MeshBasicMaterial({
       map: makeLabelTexture(label, 320, 448, {
-        background: '#f1eee7', border: '#252a31', foreground: '#1d2228', fontSize: 96,
+        background: '#f1eee7', border: '#252a31', foreground: '#1d2228', fontSize: 112,
       }),
       toneMapped: false,
     }),
@@ -110,14 +229,14 @@ function makeActionButton(label: string, accent: string) {
     color: '#ff3049', emissive: '#ff1938', emissiveIntensity: 0, transparent: true, opacity: 0,
   });
   const glow = new THREE.Group();
-  const horizontalEdge = new THREE.BoxGeometry(1.98, 0.035, 0.065);
-  const verticalEdge = new THREE.BoxGeometry(0.065, 0.035, 0.82);
-  [-0.42, 0.42].forEach((z) => {
+  const horizontalEdge = new THREE.BoxGeometry(ACTION_BUTTON_GLOW_WIDTH, 0.035, 0.065);
+  const verticalEdge = new THREE.BoxGeometry(0.065, 0.035, ACTION_BUTTON_GLOW_DEPTH - 0.02);
+  [-ACTION_BUTTON_GLOW_DEPTH / 2, ACTION_BUTTON_GLOW_DEPTH / 2].forEach((z) => {
     const edge = new THREE.Mesh(horizontalEdge, glowMaterial);
     edge.position.set(0, 0.086, z);
     glow.add(edge);
   });
-  [-0.96, 0.96].forEach((x) => {
+  [-(ACTION_BUTTON_GLOW_WIDTH / 2 - 0.03), ACTION_BUTTON_GLOW_WIDTH / 2 - 0.03].forEach((x) => {
     const edge = new THREE.Mesh(verticalEdge, glowMaterial);
     edge.position.set(x, 0.086, 0);
     glow.add(edge);
@@ -134,7 +253,7 @@ function makeActionButton(label: string, accent: string) {
     new THREE.PlaneGeometry(1.68, 0.57),
     new THREE.MeshBasicMaterial({
       map: makeLabelTexture(label, 640, 220, {
-        background: accent, border: '#f6f2e9', foreground: '#ffffff', fontSize: label.includes('\n') ? 90 : 104,
+        background: accent, border: '#f6f2e9', foreground: '#ffffff', fontSize: label.includes('\n') ? 100 : 104,
       }),
       toneMapped: false,
     }),
@@ -457,12 +576,16 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
     if (!canvas) return;
     const definition = getScenario(scenarioId);
     let disposed = false;
+    let lastSceneQaJson = '';
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 40);
     camera.position.set(7.4, 5.8, 8.3);
     let cameraBaseX = 7.4;
     let informationScale = 1;
-    let controlScale = 1;
+    let sellerConditionScale = 0.7;
+    let exactPanelScale = 0.67;
+    let rangePanelScale = 1;
+    let controlScale = DESKTOP_CONTROL_SCALE;
     camera.lookAt(0, 0.72, 0);
 
     const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' });
@@ -487,11 +610,11 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       roughness: 0.64,
       metalness: 0.12,
     });
-    const table = new THREE.Mesh(new THREE.BoxGeometry(6.1, 0.24, 3.65), tableMaterial);
+    const table = new THREE.Mesh(new THREE.BoxGeometry(TABLE_WIDTH, 0.24, TABLE_DEPTH), tableMaterial);
     table.position.y = 0.22;
     scene.add(table);
 
-    // Player A is the far-side role (Seller or Strong evidence); Player B is the near-side role.
+    // Player A is the far-side role (seller or informed player); Player B is the near-side role.
     const avatarYaw = 0.72;
     const avatarA = makeAvatar('#527b7d', -3.45, avatarYaw);
     const avatarB = makeAvatar('#805467', 3.45, Math.PI - avatarYaw);
@@ -553,7 +676,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       button.scale.setScalar(0.001);
       scene.add(button);
     });
-    const controlX = 2.05;
+    const controlX = DESKTOP_ACTION_X;
     const farControlZ = -1.3;
     const nearControlZ = 1.3;
     sellerBuy?.position.set(-controlX, 0.4, farControlZ);
@@ -583,8 +706,8 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
 
     const numberTrial = getNumberTrial(trial);
     const initialNumberRound = getNumberRoundState(trial, incentive);
-    const exactPanel = scenarioId === 'numbers' ? makeInfoPanel('STRONG PLAYER ONLY', [{ label: 'EXACT TARGET', value: `${numberTrial.target}` }], '#66dcd0', 3) : null;
-    const rangePanel = scenarioId === 'numbers' ? makeInfoPanel('WEAK PLAYER ONLY', [{ label: 'TARGET RANGE', value: numberTrial.coarse }], '#d6bb78', 3) : null;
+    const exactPanel = scenarioId === 'numbers' ? makeInfoPanel('INFORMED ONLY', [{ label: 'EXACT TARGET', value: `${numberTrial.target}` }], '#66dcd0', 3) : null;
+    const rangePanel = scenarioId === 'numbers' ? makeInfoPanel('LESS-INFORMED ONLY', [{ label: 'TARGET RANGE', value: numberTrial.coarse }], '#d6bb78', 3) : null;
     const strongA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
     const strongB = scenarioId === 'numbers' ? makeActionButton('B', '#8d7444') : null;
     const weakA = scenarioId === 'numbers' ? makeActionButton('A', '#4b918c') : null;
@@ -627,24 +750,28 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       const height = Math.max(1, Math.round(rect.height));
       const narrow = width <= 520;
       informationScale = narrow ? 1.24 : 1;
-      controlScale = width <= 520 ? 1.35 : 1;
-      const activeFarControlX = narrow ? 2.25 : 2.15;
-      const activeNearControlX = narrow ? 1.62 : controlX;
-      sellerBuy?.position.set(-activeFarControlX, sellerBuy.position.y, farControlZ);
-      sellerPass?.position.set(activeFarControlX, sellerPass.position.y, farControlZ);
-      buyerBuy?.position.set(activeNearControlX, buyerBuy.position.y, nearControlZ);
-      buyerPass?.position.set(-activeNearControlX, buyerPass.position.y, nearControlZ);
-      strongA?.position.set(-activeFarControlX, strongA.position.y, farControlZ);
-      strongB?.position.set(activeFarControlX, strongB.position.y, farControlZ);
-      weakA?.position.set(activeNearControlX, weakA.position.y, nearControlZ);
-      weakB?.position.set(-activeNearControlX, weakB.position.y, nearControlZ);
-      sellerCondition?.position.set(narrow ? -1 : -1.2, narrow ? 3.55 : 3.02, -0.72);
+      sellerConditionScale = narrow ? 0.9 : 0.7;
+      exactPanelScale = narrow ? 0.94 : 0.67;
+      rangePanelScale = narrow ? 1 : 1;
+      controlScale = narrow ? NARROW_CONTROL_SCALE : DESKTOP_CONTROL_SCALE;
+      const activeControlX = narrow ? NARROW_ACTION_X : DESKTOP_ACTION_X;
+      sellerBuy?.position.set(-activeControlX, sellerBuy.position.y, farControlZ);
+      sellerPass?.position.set(activeControlX, sellerPass.position.y, farControlZ);
+      buyerBuy?.position.set(activeControlX, buyerBuy.position.y, nearControlZ);
+      buyerPass?.position.set(-activeControlX, buyerPass.position.y, nearControlZ);
+      strongA?.position.set(-activeControlX, strongA.position.y, farControlZ);
+      strongB?.position.set(activeControlX, strongB.position.y, farControlZ);
+      weakA?.position.set(activeControlX, weakA.position.y, nearControlZ);
+      weakB?.position.set(-activeControlX, weakB.position.y, nearControlZ);
+      // Keep the private condition beside—but clear of—the seller, the price plate,
+      // and the explanatory bubble at both capture aspect ratios.
+      sellerCondition?.position.set(narrow ? 1.25 : 3.6, narrow ? 3.8 : 2.4, -0.72);
       pricePanel?.position.set(narrow ? -1.7 : -2, narrow ? 2.2 : 1.95, 0.42);
-      physiologyPanel?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
-      conditionReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
-      exactPanel?.position.set(narrow ? -1.3 : 3.75, narrow ? 3 : 2.08, narrow ? -0.96 : -0.62);
-      rangePanel?.position.set(narrow ? -1.72 : -2.42, narrow ? 1.78 : 2.08, narrow ? 0.96 : 0.62);
-      targetReveal?.position.set(narrow ? 1.45 : -1, narrow ? 3.95 : 2.7, -0.72);
+      physiologyPanel?.position.set(narrow ? -1.8 : -1.35, narrow ? 2.8 : 2.4, -0.72);
+      conditionReveal?.position.set(narrow ? -1.8 : -1.35, narrow ? 2.8 : 2.4, -0.72);
+      exactPanel?.position.set(narrow ? 1.7 : 3.2, narrow ? 3.95 : 2.5, narrow ? -0.96 : -1);
+      rangePanel?.position.set(narrow ? -1.9 : -2.42, narrow ? 2.8 : 2.08, narrow ? 0.96 : 0.62);
+      targetReveal?.position.set(narrow ? -1.8 : -1.3, narrow ? 2.8 : 2.4, -0.72);
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       const narrowness = Math.max(0, 1.12 - camera.aspect);
@@ -694,7 +821,7 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       if (scenarioId === 'cars' && toyCar && sellerBuy && sellerPass && buyerBuy && buyerPass) {
         animateScale(toyCar, true, 0.95, 0.1);
         if (pricePanel) animateScale(pricePanel, state.phase <= 2, informationScale, 0.14);
-        if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, informationScale, 0.14);
+        if (sellerCondition) animateScale(sellerCondition, state.phase === 1 || state.phase === 2, sellerConditionScale, 0.14);
         if (physiologyPanel) {
           const physiologyVisible = cueVisible && (state.phase === 3 || state.phase === 4);
           animateScale(physiologyPanel, physiologyVisible, informationScale, 0.14);
@@ -741,8 +868,8 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
 
       if (scenarioId === 'numbers' && exactPanel && rangePanel && strongA && strongB && weakA && weakB && targetReveal) {
         optionCards.forEach((card) => animateScale(card, true, 0.9));
-        animateScale(exactPanel, state.phase === 1 || state.phase === 2, informationScale);
-        animateScale(rangePanel, state.phase === 1 || state.phase === 2, informationScale);
+        animateScale(exactPanel, state.phase === 1 || state.phase === 2, exactPanelScale);
+        animateScale(rangePanel, state.phase === 1 || state.phase === 2, rangePanelScale);
         animateScale(targetReveal, state.phase === 5, informationScale);
         const initialStrong = numberTrial.correct === 'A' ? strongA : strongB;
         const initialWeak = numberTrial.weakInitial === 'A' ? weakA : weakB;
@@ -825,6 +952,213 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
         };
         writeHeadPosition('a', avatarA);
         writeHeadPosition('b', avatarB);
+
+        const tableBounds = {
+          minX: -TABLE_WIDTH / 2,
+          maxX: TABLE_WIDTH / 2,
+          minZ: -TABLE_DEPTH / 2,
+          maxZ: TABLE_DEPTH / 2,
+          requiredMargin: TABLE_QA_MARGIN,
+        };
+        const buttonObjects: Array<{ id: string; object: THREE.Group; visible: boolean }> = [];
+        if (scenarioId === 'cars' && sellerBuy && sellerPass && buyerBuy && buyerPass) {
+          buttonObjects.push(
+            { id: 'seller-recommend-buy', object: sellerBuy, visible: true },
+            { id: 'seller-recommend-pass', object: sellerPass, visible: true },
+            { id: 'buyer-buy', object: buyerBuy, visible: true },
+            { id: 'buyer-pass', object: buyerPass, visible: true },
+          );
+        }
+        if (scenarioId === 'numbers' && strongA && strongB && weakA && weakB) {
+          const controlsVisible = state.phase >= 2;
+          buttonObjects.push(
+            { id: 'informed-a', object: strongA, visible: controlsVisible },
+            { id: 'informed-b', object: strongB, visible: controlsVisible },
+            { id: 'less-informed-a', object: weakA, visible: controlsVisible },
+            { id: 'less-informed-b', object: weakB, visible: controlsVisible },
+          );
+        }
+        const buttonContainment = buttonObjects.map(({ id, object, visible }) => {
+          const halfWidth = ACTION_BUTTON_FOOTPRINT_HALF_WIDTH * controlScale * ACTION_BUTTON_MAX_PULSE_SCALE;
+          const halfDepth = ACTION_BUTTON_FOOTPRINT_HALF_DEPTH * controlScale * ACTION_BUTTON_MAX_PULSE_SCALE;
+          const bounds = {
+            minX: object.position.x - halfWidth,
+            maxX: object.position.x + halfWidth,
+            minZ: object.position.z - halfDepth,
+            maxZ: object.position.z + halfDepth,
+          };
+          const minimumMargin = Math.min(
+            bounds.minX - tableBounds.minX,
+            tableBounds.maxX - bounds.maxX,
+            bounds.minZ - tableBounds.minZ,
+            tableBounds.maxZ - bounds.maxZ,
+          );
+          return {
+            id,
+            visible,
+            bounds: Object.fromEntries(Object.entries(bounds).map(([key, value]) => [key, roundQa(value)])),
+            maximumPulseScale: ACTION_BUTTON_MAX_PULSE_SCALE,
+            position: { x: roundQa(object.position.x), z: roundQa(object.position.z) },
+            effectiveScale: roundQa(controlScale * ACTION_BUTTON_MAX_PULSE_SCALE),
+            effectiveFootprint: { width: roundQa(halfWidth * 2), depth: roundQa(halfDepth * 2) },
+            minimumMarginWorld: roundQa(minimumMargin),
+            contained: minimumMargin >= TABLE_QA_MARGIN,
+          };
+        });
+        const actionButtonPairs = buttonContainment.length === 4
+          ? [
+              { participant: 'far', first: buttonContainment[0], second: buttonContainment[1] },
+              { participant: 'near', first: buttonContainment[2], second: buttonContainment[3] },
+            ].map(({ participant, first, second }) => {
+              const mirroredXError = Math.abs(first.position.x + second.position.x);
+              const matchedZRowError = Math.abs(first.position.z - second.position.z);
+              const matchedScaleError = Math.abs(first.effectiveScale - second.effectiveScale);
+              const matchedFootprintWidthError = Math.abs(first.effectiveFootprint.width - second.effectiveFootprint.width);
+              const matchedFootprintDepthError = Math.abs(first.effectiveFootprint.depth - second.effectiveFootprint.depth);
+              return {
+                participant,
+                buttonIds: [first.id, second.id],
+                first: {
+                  x: first.position.x,
+                  z: first.position.z,
+                  effectiveScale: first.effectiveScale,
+                  effectiveFootprint: first.effectiveFootprint,
+                },
+                second: {
+                  x: second.position.x,
+                  z: second.position.z,
+                  effectiveScale: second.effectiveScale,
+                  effectiveFootprint: second.effectiveFootprint,
+                },
+                mirroredXError: roundQa(mirroredXError),
+                matchedZRowError: roundQa(matchedZRowError),
+                matchedScaleError: roundQa(matchedScaleError),
+                matchedFootprintWidthError: roundQa(matchedFootprintWidthError),
+                matchedFootprintDepthError: roundQa(matchedFootprintDepthError),
+                passes: [
+                  mirroredXError,
+                  matchedZRowError,
+                  matchedScaleError,
+                  matchedFootprintWidthError,
+                  matchedFootprintDepthError,
+                ].every((error) => error <= ACTION_BUTTON_SYMMETRY_TOLERANCE),
+              };
+            })
+          : [];
+        const [farPair, nearPair] = actionButtonPairs;
+        const betweenParticipantGeometry = farPair && nearPair
+          ? (() => {
+              const farSpan = Math.abs(farPair.first.x - farPair.second.x);
+              const nearSpan = Math.abs(nearPair.first.x - nearPair.second.x);
+              const farCenter = (farPair.first.x + farPair.second.x) / 2;
+              const nearCenter = (nearPair.first.x + nearPair.second.x) / 2;
+              const spanXError = Math.abs(farSpan - nearSpan);
+              const matchedCenterXError = Math.abs(farCenter - nearCenter);
+              const mirroredZError = Math.abs(farPair.first.z + nearPair.first.z);
+              const matchedScaleError = Math.abs(farPair.first.effectiveScale - nearPair.first.effectiveScale);
+              const matchedFootprintWidthError = Math.abs(
+                farPair.first.effectiveFootprint.width - nearPair.first.effectiveFootprint.width,
+              );
+              const matchedFootprintDepthError = Math.abs(
+                farPair.first.effectiveFootprint.depth - nearPair.first.effectiveFootprint.depth,
+              );
+              return {
+                pairIds: ['far', 'near'],
+                spanXError: roundQa(spanXError),
+                matchedCenterXError: roundQa(matchedCenterXError),
+                mirroredZError: roundQa(mirroredZError),
+                matchedScaleError: roundQa(matchedScaleError),
+                matchedFootprintWidthError: roundQa(matchedFootprintWidthError),
+                matchedFootprintDepthError: roundQa(matchedFootprintDepthError),
+                passes: [
+                  spanXError,
+                  matchedCenterXError,
+                  mirroredZError,
+                  matchedScaleError,
+                  matchedFootprintWidthError,
+                  matchedFootprintDepthError,
+                ].every((error) => error <= ACTION_BUTTON_SYMMETRY_TOLERANCE),
+              };
+            })()
+          : null;
+        const actionButtonSymmetry = {
+          coordinateSpace: 'world',
+          tolerance: ACTION_BUTTON_SYMMETRY_TOLERANCE,
+          pairs: actionButtonPairs,
+          betweenParticipants: betweenParticipantGeometry,
+          passes: actionButtonPairs.length === 2
+            && actionButtonPairs.every(({ passes }) => passes)
+            && betweenParticipantGeometry?.passes === true,
+        };
+
+        const panelObjects: Array<{ id: string; object: THREE.Group; visible: boolean }> = [];
+        if (scenarioId === 'cars') {
+          if (pricePanel) panelObjects.push({ id: 'car-price', object: pricePanel, visible: state.phase <= 2 });
+          if (sellerCondition) panelObjects.push({ id: 'seller-condition', object: sellerCondition, visible: state.phase === 1 || state.phase === 2 });
+          if (physiologyPanel) panelObjects.push({ id: 'cardiac-metrics', object: physiologyPanel, visible: cueVisible && (state.phase === 3 || state.phase === 4) });
+          if (conditionReveal) panelObjects.push({ id: 'car-round-result', object: conditionReveal, visible: state.phase === 5 });
+        } else {
+          if (exactPanel) panelObjects.push({ id: 'informed-target', object: exactPanel, visible: state.phase === 1 || state.phase === 2 });
+          if (rangePanel) panelObjects.push({ id: 'less-informed-range', object: rangePanel, visible: state.phase === 1 || state.phase === 2 });
+          if (targetReveal) panelObjects.push({ id: 'number-round-result', object: targetReveal, visible: state.phase === 5 });
+        }
+        const panels = panelObjects
+          .filter(({ visible }) => visible)
+          .map(({ id, object }) => projectObjectBounds(id, object, camera, canvas, sceneRect))
+          .filter(isPresent);
+        const avatarHeads = [
+          projectObjectBounds('player-a-head', avatarA.head, camera, canvas, sceneRect),
+          projectObjectBounds('player-b-head', avatarB.head, camera, canvas, sceneRect),
+        ].filter(isPresent);
+        const panelAvatarSeparations = panels.flatMap((panel) => avatarHeads.map((head) => {
+          const ratio = overlapRatio(panel, head);
+          return {
+            panel: panel.id,
+            avatar: head.id,
+            overlapRatio: roundQa(ratio),
+            maximumOverlapRatio: MAX_PANEL_AVATAR_OVERLAP_RATIO,
+            passes: ratio <= MAX_PANEL_AVATAR_OVERLAP_RATIO,
+          };
+        }));
+        const panelPairSeparations = panels.flatMap((panel, index) => panels.slice(index + 1).map((otherPanel) => {
+          const ratio = overlapRatio(panel, otherPanel);
+          return {
+            firstPanel: panel.id,
+            secondPanel: otherPanel.id,
+            overlapRatio: roundQa(ratio),
+            maximumOverlapRatio: MAX_PANEL_PAIR_OVERLAP_RATIO,
+            passes: ratio <= MAX_PANEL_PAIR_OVERLAP_RATIO,
+          };
+        }));
+        const violations = [
+          ...buttonContainment.filter(({ contained }) => !contained).map(({ id }) => `button-outside-table:${id}`),
+          ...actionButtonPairs.filter(({ passes }) => !passes).map(({ participant }) => `button-pair-asymmetric:${participant}`),
+          ...(betweenParticipantGeometry?.passes === false ? ['button-pairs-not-equivalent'] : []),
+          ...panels.filter(({ insideCanvas }) => !insideCanvas).map(({ id }) => `panel-clipped-by-canvas:${id}`),
+          ...panelAvatarSeparations.filter(({ passes }) => !passes).map(({ panel, avatar }) => `panel-overlaps-avatar:${panel}:${avatar}`),
+          ...panelPairSeparations.filter(({ passes }) => !passes).map(({ firstPanel, secondPanel }) => `panels-overlap:${firstPanel}:${secondPanel}`),
+        ];
+        const sceneQa = {
+          schema: 'cardiac-scene-qa',
+          schemaVersion: 1,
+          ready: buttonContainment.length === 4 && avatarHeads.length === 2 && actionButtonSymmetry.passes,
+          scenarioId,
+          phase: state.phase,
+          coordinateSpace: 'viewport-css',
+          viewport: { width: canvas.clientWidth, height: canvas.clientHeight, narrow: canvas.clientWidth <= 520 },
+          table: Object.fromEntries(Object.entries(tableBounds).map(([key, value]) => [key, roundQa(value)])),
+          buttonContainment,
+          actionButtonSymmetry,
+          projected: { panels, avatarHeads },
+          panelAvatarSeparations,
+          panelPairSeparations,
+          violations,
+        };
+        const nextSceneQaJson = JSON.stringify(sceneQa);
+        if (nextSceneQaJson !== lastSceneQaJson) {
+          sceneElement.dataset.sceneQa = nextSceneQaJson;
+          lastSceneQaJson = nextSceneQaJson;
+        }
       }
       renderer.render(scene, camera);
     });
@@ -833,6 +1167,8 @@ export default function ThreeTableScene({ scenarioId, phase, incentive, trial, c
       disposed = true;
       renderer.setAnimationLoop(null);
       observer.disconnect();
+      const sceneElement = canvas.parentElement;
+      if (sceneElement) delete sceneElement.dataset.sceneQa;
       scene.traverse((object) => {
         if (object instanceof THREE.Mesh) {
           object.geometry.dispose();

@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE STRATEGY: RECOMMEND ACCURATELY · PRICE 20 TOKENS
+thought: SELLER: It is a bad car. I should recommend PASS.
+captionTitle: The seller prepares an honest recommendation
+explanation: The seller can press only Recommend Buy or Recommend Pass. With aligned payoffs, an accurate recommendation benefits both players.
+timing: Up to 8 seconds
+cueBadge: Cardiac cue not shown in this phase

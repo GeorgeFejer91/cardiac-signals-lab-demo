@@ -1,0 +1,6 @@
+sceneStatus: PUBLIC: SELLER RECOMMENDS BUY · PRICE 20 TOKENS
+thought: BUYER: A calm pulse does not guarantee honesty.
+captionTitle: Public recommendation: BUY
+explanation: The seller presses Recommend BUY. When the cardiac condition is active here, the selected edge, seller’s chest heart, and tabletop flash to the same live beat; no verbal message is available.
+timing: Up to 8 seconds
+cueBadge: Live cardiac cue visible now

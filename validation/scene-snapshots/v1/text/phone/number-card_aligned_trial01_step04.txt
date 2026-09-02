@@ -1,0 +1,6 @@
+sceneStatus: PUBLIC: INFORMED PLAYER RECOMMENDS A
+thought: INFORMED PLAYER: I’ll truthfully recommend A.
+captionTitle: Public recommendation: A
+explanation: The informed player presses A. Its mechanical selected state becomes public; when enabled, a separate red edge follows live cardiac timing.
+timing: Up to 8 seconds
+cueBadge: Live cardiac cue visible now

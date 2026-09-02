@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE: INFORMED SEES 29 · LESS-INFORMED SEES 21‑32
+thought: INFORMED PLAYER: I know the exact target is 29.
+captionTitle: Evidence quality is assigned privately
+explanation: An EXACT 29 panel rises beside the informed player while a RANGE 21‑32 panel rises beside the less-informed player. Each represents private headset content.
+timing: 4 seconds
+cueBadge: Cardiac cue not shown in this phase

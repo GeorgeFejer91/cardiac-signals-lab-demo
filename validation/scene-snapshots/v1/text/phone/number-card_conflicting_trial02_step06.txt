@@ -1,0 +1,6 @@
+sceneStatus: CORRECT B · TRUTHFUL SIGNAL
+thought: LESS-INFORMED PLAYER: My final answer was correct.
+captionTitle: The truthful signal leads to the correct answer
+explanation: The target 54 and correct answer B are revealed. The system records initial and final accuracy, revision, information transfer, deceptive-signal success, payoff, timing, and cardiac coupling.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

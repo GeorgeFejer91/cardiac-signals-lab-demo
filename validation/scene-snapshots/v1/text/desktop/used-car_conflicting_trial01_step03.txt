@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE STRATEGY: MISREPRESENT · PRICE 20 TOKENS
+thought: SELLER: It is faulty, but a sale pays me. I’ll recommend BUY.
+captionTitle: The seller prepares a deceptive recommendation
+explanation: The seller can press only Recommend Buy or Recommend Pass. With conflicting payoffs, any sale earns the seller 10 tokens regardless of condition.
+timing: Up to 8 seconds
+cueBadge: Cardiac cue not shown in this phase

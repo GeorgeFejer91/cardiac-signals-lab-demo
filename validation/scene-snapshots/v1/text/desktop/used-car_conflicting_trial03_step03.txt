@@ -1,0 +1,6 @@
+sceneStatus: PRIVATE STRATEGY: RECOMMEND ACCURATELY · PRICE 20 TOKENS
+thought: SELLER: A sale would pay me, but I’ll recommend PASS.
+captionTitle: The seller resists the incentive to sell
+explanation: The seller can press only Recommend Buy or Recommend Pass. With conflicting payoffs, any sale earns the seller 10 tokens regardless of condition.
+timing: Up to 8 seconds
+cueBadge: Cardiac cue not shown in this phase

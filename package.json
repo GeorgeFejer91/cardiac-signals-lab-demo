@@ -10,7 +10,13 @@
     "build": "vinext build",
     "build:pages": "node scripts/build-pages.mjs",
     "start": "vinext start",
-    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next"
+    "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
+    "qa:screenshots:render": "node scripts/render-scene-snapshots.mjs",
+    "qa:screenshots:preflight": "node scripts/render-scene-snapshots.mjs --preflight",
+    "qa:screenshots:assemble": "node scripts/assemble-scene-snapshots.mjs",
+    "qa:screenshots:validate": "node scripts/validate-scene-snapshots.mjs",
+    "qa:screenshots:audit": "node scripts/audit-scene-visuals.mjs",
+    "qa:screenshots:test": "node --test scripts/render-source-bytes.test.mjs"
   },
   "dependencies": {
     "@types/three": "^0.179.0",

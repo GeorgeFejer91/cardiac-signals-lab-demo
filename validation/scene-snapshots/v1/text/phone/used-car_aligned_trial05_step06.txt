@@ -1,0 +1,6 @@
+sceneStatus: GOOD CAR · ACCURATE CHOICE · PRICE 20 TOKENS
+thought: BUYER: The good car produced a gain.
+captionTitle: The recommendation leads to an accurate choice
+explanation: The hidden condition is revealed. This round pays Buyer +10 and Seller +10 tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase

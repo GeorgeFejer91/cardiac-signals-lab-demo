@@ -1,0 +1,6 @@
+sceneStatus: BAD CAR · BLUFF REJECTED · PRICE 20 TOKENS
+thought: BUYER: I rejected the bad car.
+captionTitle: The buyer rejects the bluff
+explanation: The hidden condition is revealed. This round pays Buyer +0 and Seller +0 tokens under the current rule. The system records recommendation, purchase accuracy, payoff, timing, cardiac change, and dyadic coupling.
+timing: 2 seconds
+cueBadge: Cardiac cue not shown in this phase
