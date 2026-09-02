@@ -338,9 +338,11 @@ async function findBrowser() {
 async function launchHeadlessBrowser() {
   const executable = await findBrowser();
   const profile = await mkdtemp(path.join(os.tmpdir(), 'cardiac-scene-render-'));
-  const child = spawn(executable, [
+  const port = await availablePort();
+  const browserArguments = [
     '--headless=new',
-    '--remote-debugging-port=0',
+    '--remote-debugging-address=127.0.0.1',
+    `--remote-debugging-port=${port}`,
     `--user-data-dir=${profile}`,
     '--no-first-run',
     '--no-default-browser-check',
@@ -353,30 +355,54 @@ async function launchHeadlessBrowser() {
     '--use-angle=swiftshader',
     '--mute-audio',
     'about:blank',
-  ], {
+  ];
+  if (process.platform === 'linux') browserArguments.splice(-1, 0, '--disable-dev-shm-usage');
+  if (process.env.SCENE_RENDER_NO_SANDBOX === '1') browserArguments.splice(-1, 0, '--no-sandbox');
+
+  const child = spawn(executable, browserArguments, {
     cwd: PROJECT_ROOT,
     windowsHide: true,
-    stdio: 'ignore',
+    stdio: ['ignore', 'pipe', 'pipe'],
   });
-  const activePortPath = path.join(profile, 'DevToolsActivePort');
-  const deadline = Date.now() + 25_000;
-  let port = null;
+  let browserLog = '';
+  let launchError = null;
+  const recordLog = (chunk) => {
+    browserLog = `${browserLog}${chunk.toString()}`.slice(-16_000);
+  };
+  child.stdout.on('data', recordLog);
+  child.stderr.on('data', recordLog);
+  child.once('error', (error) => {
+    launchError = error;
+    recordLog(`Browser launch error: ${error.message}`);
+  });
+
+  const endpoint = `http://127.0.0.1:${port}/json/version`;
+  const deadline = Date.now() + 45_000;
   while (Date.now() < deadline) {
-    if (child.exitCode !== null) throw new Error('Headless browser exited before CDP became available.');
+    if (launchError) throw new Error(`Could not launch the hidden browser. ${browserLog.trim()}`);
+    if (child.exitCode !== null || child.signalCode !== null) {
+      throw new Error(
+        `Headless browser exited before CDP became available (${child.signalCode || `exit ${child.exitCode}`}). ${browserLog.trim()}`,
+      );
+    }
     try {
-      const [line] = (await readFile(activePortPath, 'utf8')).trim().split(/\r?\n/u);
-      if (/^\d+$/u.test(line)) {
-        port = Number(line);
-        break;
+      const response = await fetch(endpoint, {
+        cache: 'no-store',
+        signal: AbortSignal.timeout(1500),
+      });
+      if (response.ok) {
+        const version = await response.json();
+        if (!version.webSocketDebuggerUrl) throw new Error('CDP version response omitted its WebSocket URL.');
+        return { child, profile, port, executable, browserWebSocketUrl: version.webSocketDebuggerUrl, version };
       }
     } catch {
-      // The browser writes DevToolsActivePort after initializing its private profile.
+      // The private loopback endpoint is still starting.
     }
     await sleep(100);
   }
-  if (!port) throw new Error('Timed out waiting for the hidden browser CDP endpoint.');
-  const version = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
-  return { child, profile, port, executable, browserWebSocketUrl: version.webSocketDebuggerUrl, version };
+  throw new Error(
+    `Timed out waiting for the hidden browser CDP endpoint at ${endpoint}. ${browserLog.trim()}`,
+  );
 }
 
 class CdpClient {

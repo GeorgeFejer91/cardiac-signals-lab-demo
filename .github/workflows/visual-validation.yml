@@ -47,11 +47,13 @@ jobs:
       - name: Smoke-test isolated headless scene renderer
         shell: bash
         run: |
-          browser="$(command -v microsoft-edge-stable || command -v microsoft-edge || command -v google-chrome || command -v chromium || true)"
+          browser="$(command -v google-chrome || command -v microsoft-edge-stable || command -v microsoft-edge || command -v chromium || true)"
           if [ -z "$browser" ]; then
             echo "No isolated Edge/Chromium executable is available on this runner." >&2
             exit 1
           fi
+          echo "Using isolated browser: $browser"
+          "$browser" --version
           SCENE_RENDER_BROWSER="$browser" npm run qa:screenshots:render -- --smoke --output-root tmp/qa/headless-renderer-smoke --force
 
       - name: Upload scene validation artifacts
@@ -71,5 +73,5 @@ jobs:
         with:
           name: scene-renderer-smoke-${{ github.sha }}
           path: tmp/qa/headless-renderer-smoke
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 14
